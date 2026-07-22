@@ -13,13 +13,13 @@ async function list(req, res) {
 }
 
 function showCreateForm(req, res) {
-  res.render('clients/form', { mode: 'create', client: null, errors: [] });
+  res.render('clients/form', { mode: 'create', clientRow: null, errors: [] });
 }
 
 async function handleCreate(req, res) {
   const name = (req.body.name || '').trim();
   if (!name) {
-    return res.status(400).render('clients/form', { mode: 'create', client: { name }, errors: ['Name is required.'] });
+    return res.status(400).render('clients/form', { mode: 'create', clientRow: { name }, errors: ['Name is required.'] });
   }
   const id = await clientModel.create({ name });
   req.flash('success', `Client "${name}" created.`);
@@ -31,7 +31,7 @@ async function showEditForm(req, res) {
   if (!client) {
     return res.status(404).render('error', { message: 'Client not found.' });
   }
-  res.render('clients/form', { mode: 'edit', client, errors: [] });
+  res.render('clients/form', { mode: 'edit', clientRow: client, errors: [] });
 }
 
 async function handleUpdate(req, res) {
@@ -41,7 +41,7 @@ async function handleUpdate(req, res) {
   }
   const name = (req.body.name || '').trim();
   if (!name) {
-    return res.status(400).render('clients/form', { mode: 'edit', client: { ...client, name }, errors: ['Name is required.'] });
+    return res.status(400).render('clients/form', { mode: 'edit', clientRow: { ...client, name }, errors: ['Name is required.'] });
   }
   await clientModel.update(client.id, { name });
   req.flash('success', 'Client updated.');

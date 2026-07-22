@@ -17,11 +17,11 @@
   <% } %>
 
   <div class="card p-5 sm:p-6">
-    <form action="<%= mode === 'create' ? '/clients' : '/clients/' + client.id %>" method="POST" class="space-y-4">
+    <form action="<%= mode === 'create' ? '/clients' : '/clients/' + clientRow.id %>" method="POST" class="space-y-4">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <div>
         <label class="field-label" for="name">Client name</label>
-        <input class="field-input" type="text" id="name" name="name" value="<%= client ? client.name : '' %>" required autofocus>
+        <input class="field-input" type="text" id="name" name="name" value="<%= clientRow ? clientRow.name : '' %>" required autofocus>
       </div>
       <button type="submit" class="btn-primary w-full sm:w-auto">
         <i class="fa-solid fa-check"></i><%= mode === 'create' ? 'Create Client' : 'Save Changes' %>
