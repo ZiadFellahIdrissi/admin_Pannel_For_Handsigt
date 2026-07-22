@@ -235,16 +235,19 @@
     color: var(--gray-2);
   }
   /* CRA (Timesheet) is the one sub-group that still opens/closes - a
-     native <details>/<summary>, not JS. */
+     native <details>/<summary>. Sized like a normal .sidebar-link (not
+     the small uppercase .sidebar-sublabel) since it's an interactive row,
+     not just a static grouping caption. */
   .sidebar-sublabel-toggle {
-    @apply flex items-center gap-2.5 px-3 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide cursor-pointer select-none transition-colors;
-    color: var(--gray-2);
+    @apply flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium cursor-pointer select-none transition-colors;
+    color: var(--text-light);
   }
   .sidebar-sublabel-toggle:hover {
+    background-color: var(--light);
     color: var(--text);
   }
   .sidebar-sublabel-chevron {
-    @apply text-[10px] ml-auto transition-transform duration-150;
+    @apply text-xs ml-auto transition-transform duration-150;
   }
   details[open] > .sidebar-sublabel-toggle .sidebar-sublabel-chevron {
     transform: rotate(180deg);
@@ -265,13 +268,30 @@
 
   /* Native <dialog> panels (submission details, etc.) */
   .dialog-panel {
-    @apply rounded-xl w-[calc(100vw-2rem)] max-w-lg p-0 m-auto;
+    @apply rounded-xl w-[calc(100vw-2rem)] max-w-xl p-0 m-auto;
     background-color: var(--surface);
     border: 1px solid var(--border-light);
     color: var(--text);
   }
   dialog::backdrop {
     background: rgba(15, 23, 42, 0.5);
+  }
+
+  /* Read-only month calendar grid, matching the Consultant Dashboard's own
+     calendar (day-cell/day-cell-weekend/day-cell-filled) so the admin's
+     "view details" popup looks like the same calendar the consultant
+     filled in - just without the editable <select> per day. */
+  .day-cell {
+    @apply relative rounded-lg sm:rounded-xl flex flex-col items-center justify-center gap-1 py-2 sm:py-2.5 transition-all duration-150;
+    background-color: var(--surface);
+    border: 1px solid var(--border-light);
+  }
+  .day-cell-weekend {
+    background-color: var(--light);
+  }
+  .day-cell-filled {
+    background-color: var(--blue-dim);
+    border-color: var(--blue);
   }
 }
 

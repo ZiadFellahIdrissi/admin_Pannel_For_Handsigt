@@ -4,7 +4,6 @@
   var isApprovals = currentPath.indexOf('/approvals') === 0;
   var isHistory = currentPath.indexOf('/history') === 0;
   var isLoginAttempts = currentPath.indexOf('/login-attempts') === 0;
-  var isHub = currentPath === '/consultants-management';
   var isDashboard = currentPath === '/';
 %>
 <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
@@ -19,7 +18,7 @@
       <i class="fa-solid fa-gauge w-4 text-center"></i>Dashboard
     </a>
 
-    <a href="/consultants-management" class="sidebar-section-title <%= isHub ? '!text-brand-accent' : '' %>">Consultants Management</a>
+    <div class="sidebar-section-title">Consultants Management</div>
     <div class="space-y-1">
       <a href="/consultants" class="<%= isConsultants ? 'sidebar-link-active' : 'sidebar-link' %>">
         <i class="fa-solid fa-users w-4 text-center"></i>Consultants
@@ -33,7 +32,7 @@
           <i class="fa-solid fa-file-invoice w-4 text-center"></i>CRA (Timesheet)
           <i class="fa-solid fa-chevron-down sidebar-sublabel-chevron"></i>
         </summary>
-        <div class="space-y-1 mt-1">
+        <div class="space-y-1 mt-1 pl-4">
           <a href="/approvals" class="<%= isApprovals ? 'sidebar-link-active' : 'sidebar-link' %>">
             <i class="fa-solid fa-clipboard-check w-4 text-center"></i>Approval Queue
             <% if (notificationCount > 0) { %><span class="badge-pending !py-0.5 !px-2 ml-auto"><%= notificationCount %></span><% } %>
@@ -43,13 +42,6 @@
           </a>
         </div>
       </details>
-    </div>
-
-    <div class="sidebar-section-title">Security</div>
-    <div class="space-y-1">
-      <a href="/login-attempts" class="<%= isLoginAttempts ? 'sidebar-link-active' : 'sidebar-link' %>">
-        <i class="fa-solid fa-shield-halved w-4 text-center"></i>Login Attempts
-      </a>
     </div>
 
     <div class="sidebar-section-title">Billing</div>
@@ -68,6 +60,13 @@
     <div class="sidebar-link-disabled">
       <i class="fa-solid fa-chart-line w-4 text-center"></i>Earnings &amp; Spending
       <span class="badge-draft !py-0.5 !px-2 ml-auto">Soon</span>
+    </div>
+
+    <div class="sidebar-section-title">Security</div>
+    <div class="space-y-1">
+      <a href="/login-attempts" class="<%= isLoginAttempts ? 'sidebar-link-active' : 'sidebar-link' %>">
+        <i class="fa-solid fa-shield-halved w-4 text-center"></i>Login Attempts
+      </a>
     </div>
   </nav>
 </aside>

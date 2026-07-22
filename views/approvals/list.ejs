@@ -86,32 +86,24 @@
               </button>
             </div>
 
-            <% var entries = entriesBySubmission.get(p.id) || []; %>
-            <% if (entries.length === 0) { %>
-              <p class="text-sm text-brand-gray2">No days recorded.</p>
-            <% } else { %>
-              <div class="max-h-80 overflow-y-auto rounded-lg border border-brand-borderLight">
-                <table class="w-full text-sm">
-                  <thead>
-                    <tr class="text-left text-xs font-semibold uppercase tracking-wide text-brand-gray2 border-b border-brand-borderLight">
-                      <th class="px-3 py-2">Date</th>
-                      <th class="px-3 py-2">Value</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <% entries.forEach(function(entry) {
-                      var labels = { 0.5: 'Half day', 1: 'Full day', 1.5: 'Late day', 2: 'Holiday (double)' };
-                      var label = labels[Number(entry.value)] || entry.value;
-                    %>
-                      <tr class="border-b border-brand-borderLight last:border-0">
-                        <td class="px-3 py-2"><%= entry.work_date %></td>
-                        <td class="px-3 py-2"><%= Number(entry.value) %> &middot; <span class="text-brand-gray2"><%= label %></span></td>
-                      </tr>
-                    <% }); %>
-                  </tbody>
-                </table>
-              </div>
-            <% } %>
+            <% var cal = calendarBySubmission.get(p.id); %>
+            <div class="grid grid-cols-7 gap-1 sm:gap-1.5">
+              <% cal.weekdayNames.forEach(function(wd) { %>
+                <div class="text-center text-[9px] sm:text-[10px] font-bold text-brand-gray2 uppercase tracking-wide pb-1"><%= wd %></div>
+              <% }); %>
+              <% cal.leadingBlanks.forEach(function() { %>
+                <div></div>
+              <% }); %>
+              <% cal.days.forEach(function(d) {
+                var isWeekend = d.weekday === cal.weekdayNames[0] || d.weekday === cal.weekdayNames[6];
+                var isFilled = d.value !== '';
+              %>
+                <div class="day-cell <%= isWeekend ? 'day-cell-weekend' : '' %> <%= isFilled ? 'day-cell-filled' : '' %>">
+                  <span class="text-[10px] sm:text-xs font-semibold <%= isFilled ? 'text-brand-accent' : 'text-brand-textLight' %>"><%= d.day %></span>
+                  <span class="text-[10px] sm:text-xs font-semibold <%= isFilled ? 'text-brand-accent' : 'text-brand-gray2' %>"><%= isFilled ? Number(d.value) : '&ndash;' %></span>
+                </div>
+              <% }); %>
+            </div>
 
             <div class="flex items-center justify-between mt-4 pt-4 border-t border-brand-borderLight text-sm">
               <span class="font-semibold"><%= p.total_days %> days</span>
