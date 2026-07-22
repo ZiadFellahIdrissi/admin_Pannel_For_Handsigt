@@ -82,6 +82,32 @@ async function listForConsultant(userId) {
   return rows;
 }
 
+// Most-recently-acted-on submissions across all consultants, for the
+// dashboard's activity feed - ordered by whichever timestamp is the most
+// recent thing that happened to the row (decided, then submitted, then
+// just created as a draft).
+async function listRecentActivity(limit = 10) {
+  const safeLimit = Number.isInteger(limit) && limit > 0 ? limit : 10;
+  const [rows] = await pool.query(
+    `SELECT ms.id, ms.user_id, ms.client_id,
+            CONCAT(u.first_name, ' ', u.last_name) AS consultant_name,
+            c.name AS client_name, ms.month, ms.status,
+            COALESCE(SUM(de.value), 0) AS total_days,
+            COALESCE(SUM(de.value), 0) * u.daily_rate AS total_earnings,
+            ms.submitted_at, ms.reviewed_at,
+            COALESCE(ms.reviewed_at, ms.submitted_at, ms.created_at) AS activity_at
+       FROM month_submissions ms
+       JOIN users u ON u.id = ms.user_id
+       JOIN clients c ON c.id = ms.client_id
+       LEFT JOIN daily_entries de ON de.submission_id = ms.id
+      GROUP BY ms.id
+      ORDER BY activity_at DESC
+      LIMIT ?`,
+    [safeLimit]
+  );
+  return rows;
+}
+
 async function findById(id) {
   const [rows] = await pool.query(
     `SELECT ms.*, CONCAT(u.first_name, ' ', u.last_name) AS consultant_name, c.name AS client_name
@@ -126,6 +152,7 @@ module.exports = {
   listPending,
   listHistory,
   listForConsultant,
+  listRecentActivity,
   findById,
   approve,
   reject,

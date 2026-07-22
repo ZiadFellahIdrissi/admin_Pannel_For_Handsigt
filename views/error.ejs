@@ -1,16 +1,20 @@
 <%- include('partials/head', { title: 'Error' }) %>
-<%- include('partials/nav') %>
+<div class="flex min-h-screen">
+  <%- include('partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('partials/topbar', { title: 'Error' }) %>
 
-<div class="min-h-[70vh] flex items-center justify-center px-3 sm:px-4">
-  <div class="card p-8 sm:p-10 max-w-md text-center shadow-xl shadow-slate-900/[0.06]">
-    <div class="icon-circle-amber mx-auto mb-4 !w-14 !h-14 text-2xl">
-      <i class="fa-solid fa-triangle-exclamation"></i>
+    <div class="flex-1 flex items-center justify-center px-3 sm:px-4">
+      <div class="card p-8 sm:p-10 max-w-md text-center shadow-xl shadow-slate-900/[0.06]">
+        <div class="icon-circle-amber mx-auto mb-4 !w-14 !h-14 text-2xl">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <p class="text-brand-textLight"><%= message %></p>
+        <a href="/" class="btn-secondary inline-flex mt-5">
+          <i class="fa-solid fa-arrow-left"></i>Back
+        </a>
+      </div>
     </div>
-    <p class="text-brand-textLight"><%= message %></p>
-    <a href="/" class="btn-secondary inline-flex mt-5">
-      <i class="fa-solid fa-arrow-left"></i>Back
-    </a>
   </div>
 </div>
-
 <%- include('partials/foot') %>

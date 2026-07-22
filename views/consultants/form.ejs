@@ -1,8 +1,10 @@
 <%- include('../partials/head', { title: mode === 'create' ? 'New Consultant' : 'Edit Consultant' }) %>
-<%- include('../partials/nav') %>
-<%- include('../partials/flash') %>
-
-<div class="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
+<div class="flex min-h-screen">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('../partials/topbar', { title: mode === 'create' ? 'New Consultant' : 'Edit Consultant' }) %>
+    <%- include('../partials/flash') %>
+    <div class="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
   <h1 class="text-lg sm:text-xl font-bold mb-6 flex items-center gap-3">
     <div class="icon-circle-accent"><i class="fa-solid <%= mode === 'create' ? 'fa-plus' : 'fa-pen' %>"></i></div>
     <%= mode === 'create' ? 'New Consultant' : 'Edit Consultant' %>
@@ -86,6 +88,8 @@
       <p class="text-xs text-brand-gray2 mt-2">Forces the consultant to choose a new password on next login.</p>
     </div>
   <% } %>
+    </div>
+  </div>
 </div>
 
 <%- include('../partials/foot') %>

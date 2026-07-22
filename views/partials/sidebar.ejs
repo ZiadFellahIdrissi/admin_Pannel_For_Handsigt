@@ -1,0 +1,52 @@
+<% if (currentUser) {
+  var isConsultants = currentPath === '/consultants' || currentPath.indexOf('/consultants/') === 0;
+  var isClients = currentPath === '/clients' || currentPath.indexOf('/clients/') === 0;
+  var isApprovals = currentPath.indexOf('/approvals') === 0;
+  var isHistory = currentPath.indexOf('/history') === 0;
+  var isLoginAttempts = currentPath.indexOf('/login-attempts') === 0;
+  var isHub = currentPath === '/consultants-management';
+  var isDashboard = currentPath === '/';
+  var inConsultantsSection = isConsultants || isClients || isApprovals || isHistory || isLoginAttempts || isHub;
+%>
+<div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+<aside id="sidebar-panel" class="sidebar-panel">
+  <div class="p-4 flex items-center gap-2.5 border-b border-brand-borderLight">
+    <img src="/images/logo.png" alt="Handsight Solutions" class="h-8 w-8 rounded-full ring-2 ring-brand-accentDim">
+    <span class="font-bold text-sm">Admin Panel</span>
+  </div>
+
+  <nav class="p-3 space-y-1">
+    <a href="/" class="<%= isDashboard ? 'sidebar-link-active' : 'sidebar-link' %>">
+      <i class="fa-solid fa-gauge w-4 text-center"></i>Dashboard
+    </a>
+
+    <details <%= inConsultantsSection ? 'open' : '' %>>
+      <summary class="sidebar-group-summary">
+        <i class="fa-solid fa-users-gear w-4 text-center"></i>Consultants Management
+        <i class="fa-solid fa-chevron-down sidebar-chevron"></i>
+      </summary>
+      <div class="pl-4 mt-1 space-y-1">
+        <a href="/consultants-management" class="<%= isHub ? 'sidebar-link-active' : 'sidebar-link' %>">
+          <i class="fa-solid fa-table-cells-large w-4 text-center"></i>Overview
+        </a>
+        <a href="/consultants" class="<%= isConsultants ? 'sidebar-link-active' : 'sidebar-link' %>">
+          <i class="fa-solid fa-users w-4 text-center"></i>Consultants
+        </a>
+        <a href="/clients" class="<%= isClients ? 'sidebar-link-active' : 'sidebar-link' %>">
+          <i class="fa-solid fa-building w-4 text-center"></i>Clients
+        </a>
+        <a href="/approvals" class="<%= isApprovals ? 'sidebar-link-active' : 'sidebar-link' %>">
+          <i class="fa-solid fa-clipboard-check w-4 text-center"></i>Approval Queue
+          <% if (notificationCount > 0) { %><span class="badge-pending !py-0.5 !px-2 ml-auto"><%= notificationCount %></span><% } %>
+        </a>
+        <a href="/history" class="<%= isHistory ? 'sidebar-link-active' : 'sidebar-link' %>">
+          <i class="fa-solid fa-clock-rotate-left w-4 text-center"></i>History
+        </a>
+        <a href="/login-attempts" class="<%= isLoginAttempts ? 'sidebar-link-active' : 'sidebar-link' %>">
+          <i class="fa-solid fa-shield-halved w-4 text-center"></i>Login Attempts
+        </a>
+      </div>
+    </details>
+  </nav>
+</aside>
+<% } %>

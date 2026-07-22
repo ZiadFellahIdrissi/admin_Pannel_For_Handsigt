@@ -1,35 +1,39 @@
 <%- include('partials/head', { title: 'Login' }) %>
-<%- include('partials/nav') %>
-<%- include('partials/flash') %>
+<div class="flex min-h-screen">
+  <%- include('partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('partials/topbar', { title: 'Login' }) %>
+    <%- include('partials/flash') %>
 
-<div class="min-h-[80vh] flex items-center justify-center px-3 sm:px-4">
-  <div class="card w-full max-w-sm p-6 sm:p-8 shadow-xl shadow-slate-900/[0.06]">
-    <div class="text-center mb-7">
-      <img src="/images/logo.png" alt="Handsight Solutions" class="h-16 w-16 mx-auto mb-4 rounded-full ring-4 ring-brand-accentDim">
-      <h1 class="text-xl font-bold text-brand-text">Handsight Admin Panel</h1>
+    <div class="flex-1 flex items-center justify-center px-3 sm:px-4">
+      <div class="card w-full max-w-sm p-6 sm:p-8 shadow-xl shadow-slate-900/[0.06]">
+        <div class="text-center mb-7">
+          <img src="/images/logo.png" alt="Handsight Solutions" class="h-16 w-16 mx-auto mb-4 rounded-full ring-4 ring-brand-accentDim">
+          <h1 class="text-xl font-bold text-brand-text">Handsight Admin Panel</h1>
+        </div>
+
+        <% if (error) { %>
+          <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 px-4 py-2.5 text-sm flex items-center gap-2">
+            <i class="fa-solid fa-circle-exclamation"></i><%= error %>
+          </div>
+        <% } %>
+
+        <form action="/login" method="POST" class="space-y-4" autocomplete="off">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div>
+            <label class="field-label" for="username">Username</label>
+            <input class="field-input" type="text" id="username" name="username" required autofocus>
+          </div>
+          <div>
+            <label class="field-label" for="password">Password</label>
+            <input class="field-input" type="password" id="password" name="password" required>
+          </div>
+          <button type="submit" class="btn-primary w-full">
+            <i class="fa-solid fa-right-to-bracket"></i>Log in
+          </button>
+        </form>
+      </div>
     </div>
-
-    <% if (error) { %>
-      <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 px-4 py-2.5 text-sm flex items-center gap-2">
-        <i class="fa-solid fa-circle-exclamation"></i><%= error %>
-      </div>
-    <% } %>
-
-    <form action="/login" method="POST" class="space-y-4" autocomplete="off">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <div>
-        <label class="field-label" for="username">Username</label>
-        <input class="field-input" type="text" id="username" name="username" required autofocus>
-      </div>
-      <div>
-        <label class="field-label" for="password">Password</label>
-        <input class="field-input" type="password" id="password" name="password" required>
-      </div>
-      <button type="submit" class="btn-primary w-full">
-        <i class="fa-solid fa-right-to-bracket"></i>Log in
-      </button>
-    </form>
   </div>
 </div>
-
 <%- include('partials/foot') %>

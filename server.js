@@ -8,8 +8,11 @@ const fs = require('fs');
 
 const sessionMiddleware = require('./config/session');
 const { attachToken } = require('./middleware/csrf');
-const { requireAuth } = require('./middleware/auth');
 const { formatCurrency, monthLabel } = require('./utils/format');
+const asyncHandler = require('./utils/asyncHandler');
+const monthSubmissionModel = require('./models/monthSubmissionModel');
+const dashboardRoutes = require('./routes/dashboardRoutes');
+const consultantsManagementRoutes = require('./routes/consultantsManagementRoutes');
 const authRoutes = require('./routes/authRoutes');
 const consultantsRoutes = require('./routes/consultantsRoutes');
 const clientsRoutes = require('./routes/clientsRoutes');
@@ -61,6 +64,8 @@ app.use((req, res, next) => {
   res.locals.currentPath = req.path;
   res.locals.successMessages = [];
   res.locals.errorMessages = [];
+  res.locals.notificationPending = [];
+  res.locals.notificationCount = 0;
   next();
 });
 
@@ -76,8 +81,23 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get('/', requireAuth, (req, res) => res.redirect('/approvals'));
+// Powers the sidebar's Approval Queue badge and the topbar's notification
+// bell on every authenticated page - one extra indexed query per request,
+// an accepted cost for a low-traffic internal tool.
+app.use(asyncHandler(async (req, res, next) => {
+  if (res.locals.currentUser) {
+    const pending = await monthSubmissionModel.listPending();
+    res.locals.notificationPending = pending;
+    res.locals.notificationCount = pending.length;
+  } else {
+    res.locals.notificationPending = [];
+    res.locals.notificationCount = 0;
+  }
+  next();
+}));
 
+app.use('/', dashboardRoutes);
+app.use('/', consultantsManagementRoutes);
 app.use('/', authRoutes);
 app.use('/', consultantsRoutes);
 app.use('/', clientsRoutes);

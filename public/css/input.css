@@ -192,6 +192,58 @@
   .theme-toggle {
     @apply inline-flex items-center justify-center w-8 h-8 rounded-lg text-brand-gray transition-colors hover:text-white hover:bg-white/5;
   }
+
+  /* Left sidebar navigation */
+  .sidebar-panel {
+    @apply fixed inset-y-0 left-0 z-30 w-64 shrink-0 -translate-x-full transition-transform duration-200 overflow-y-auto lg:static lg:translate-x-0 lg:z-auto;
+    background-color: var(--surface);
+    border-right: 1px solid var(--border-light);
+  }
+  .sidebar-panel.sidebar-open {
+    @apply translate-x-0;
+  }
+  .sidebar-backdrop {
+    @apply fixed inset-0 bg-black/40 z-20 lg:hidden hidden;
+  }
+  .sidebar-backdrop.sidebar-open {
+    @apply block;
+  }
+  .sidebar-link {
+    @apply flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors;
+    color: var(--text-light);
+  }
+  .sidebar-link:hover {
+    background-color: var(--light);
+    color: var(--text);
+  }
+  .sidebar-link-active {
+    @apply flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors;
+    background-color: var(--blue-dim);
+    color: var(--blue);
+  }
+  .sidebar-group-summary {
+    @apply flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold cursor-pointer select-none transition-colors;
+    color: var(--text-light);
+  }
+  .sidebar-group-summary:hover {
+    background-color: var(--light);
+    color: var(--text);
+  }
+  .sidebar-chevron {
+    @apply text-[10px] ml-auto transition-transform duration-150;
+  }
+  details[open] > .sidebar-group-summary .sidebar-chevron {
+    transform: rotate(180deg);
+  }
+
+  /* Notification bell dropdown in the topbar */
+  .notif-item {
+    @apply block rounded-lg px-3 py-2 text-sm transition-colors;
+    color: var(--text);
+  }
+  .notif-item:hover {
+    background-color: var(--light);
+  }
 }
 
 /* Tailwind's `list-none` only clears `list-style`, which doesn't remove

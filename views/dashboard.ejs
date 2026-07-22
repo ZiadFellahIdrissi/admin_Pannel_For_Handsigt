@@ -1,0 +1,66 @@
+<%- include('partials/head', { title: 'Dashboard' }) %>
+<div class="flex min-h-screen">
+  <%- include('partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('partials/topbar', { title: 'Dashboard' }) %>
+    <%- include('partials/flash') %>
+    <div class="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
+      <h1 class="text-lg sm:text-xl font-bold mb-4 sm:mb-6 flex items-center gap-3">
+        <div class="icon-circle-accent"><i class="fa-solid fa-gauge"></i></div>
+        Dashboard
+      </h1>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <a href="/consultants?active=1" class="stat-tile">
+          <div class="icon-circle-accent"><i class="fa-solid fa-users"></i></div>
+          <div>
+            <div class="stat-tile-value"><%= activeConsultantsCount %></div>
+            <div class="stat-tile-label">Active Consultants</div>
+          </div>
+        </a>
+        <a href="/clients?active=1" class="stat-tile">
+          <div class="icon-circle-accent"><i class="fa-solid fa-building"></i></div>
+          <div>
+            <div class="stat-tile-value"><%= activeClientsCount %></div>
+            <div class="stat-tile-label">Active Clients</div>
+          </div>
+        </a>
+        <a href="/approvals" class="stat-tile">
+          <div class="icon-circle-amber"><i class="fa-solid fa-hourglass-half"></i></div>
+          <div>
+            <div class="stat-tile-value"><%= pendingCount %></div>
+            <div class="stat-tile-label">Pending Submissions</div>
+          </div>
+        </a>
+        <a href="/history?status=approved&month=<%= currentMonth %>" class="stat-tile col-span-2 sm:col-span-1">
+          <div class="icon-circle-emerald"><i class="fa-solid fa-sack-dollar"></i></div>
+          <div>
+            <div class="stat-tile-value text-base sm:text-xl"><%= formatCurrency(approvedEarningsThisMonth) %></div>
+            <div class="stat-tile-label">Approved This Month</div>
+          </div>
+        </a>
+      </div>
+
+      <div class="card p-5 sm:p-6">
+        <h2 class="section-title"><i class="fa-solid fa-clock-rotate-left"></i>Recent Activity</h2>
+
+        <% if (recentActivity.length === 0) { %>
+          <p class="text-sm text-brand-gray2">Nothing has happened yet.</p>
+        <% } else { %>
+          <div class="space-y-3">
+            <% recentActivity.forEach(function(s) { %>
+              <div class="card-interactive p-4 flex items-center justify-between gap-3 flex-wrap">
+                <div class="min-w-0">
+                  <div class="font-semibold truncate"><%= s.consultant_name %> &middot; <%= monthLabel(s.month) %> &middot; <%= s.client_name %></div>
+                  <div class="text-xs text-brand-gray2 mt-0.5"><%= s.total_days %> days &middot; <%= formatCurrency(s.total_earnings) %></div>
+                </div>
+                <span class="badge-<%= s.status %>"><%= s.status.charAt(0).toUpperCase() + s.status.slice(1) %></span>
+              </div>
+            <% }); %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('partials/foot') %>

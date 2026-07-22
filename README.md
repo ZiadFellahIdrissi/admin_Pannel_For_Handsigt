@@ -15,6 +15,20 @@ i18n - English only, since this app is only ever used by admins.
 
 ## How it works
 
+- **Navigation**: a left sidebar with a top-level **Dashboard** link and an
+  expandable **Consultants Management** group (auto-expands when you're
+  inside it). Future modules (facturation, treasury, etc.) become new
+  sibling groups later without redesigning anything.
+- **Dashboard**: landing page - active consultants/clients counts, pending
+  submissions count, this month's approved earnings, and a recent-activity
+  feed across all consultants.
+- **Notification bell** (topbar): live badge showing the count of `pending`
+  `month_submissions` - i.e. a consultant just submitted a month and it's
+  awaiting your decision. No separate "mark as read": an item IS the
+  notification, and it clears itself once you approve/reject it. Also
+  mirrored as a badge next to "Approval Queue" in the sidebar.
+- **Consultants Management hub** (`/consultants-management`): overview
+  cards linking into each of the five pages below.
 - **Consultants**: create accounts (temp password, forces a password change
   on next login), edit details, deactivate, reset passwords, view attached
   clients and full submission history.
@@ -132,8 +146,8 @@ models/       parameterized queries (admins, users, clients, consultant_clients,
 utils/        currency/month formatting, async route wrapper
 controllers/  route handlers
 routes/       Express routers
-views/        EJS templates (+ partials for head/nav/flash/foot)
-public/       Tailwind input/output CSS, theme toggle JS, logo
+views/        EJS templates (+ partials for head/sidebar/topbar/flash/foot)
+public/       Tailwind input/output CSS, theme + sidebar toggle JS, logo
 sql/          schema.sql (run once)
 scripts/      hash-password.js CLI helper for the admin account
 ```

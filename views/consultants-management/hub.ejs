@@ -1,0 +1,56 @@
+<%- include('../partials/head', { title: 'Consultants Management' }) %>
+<div class="flex min-h-screen">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('../partials/topbar', { title: 'Consultants Management' }) %>
+    <%- include('../partials/flash') %>
+    <div class="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
+      <h1 class="text-lg sm:text-xl font-bold mb-6 flex items-center gap-3">
+        <div class="icon-circle-accent"><i class="fa-solid fa-users-gear"></i></div>
+        Consultants Management
+      </h1>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <a href="/consultants" class="card-interactive p-5 flex items-center gap-4">
+          <div class="icon-circle-accent"><i class="fa-solid fa-users"></i></div>
+          <div>
+            <div class="font-semibold">Consultants</div>
+            <div class="text-xs text-brand-gray2 mt-0.5">Accounts, daily rates, client attachments</div>
+          </div>
+        </a>
+        <a href="/clients" class="card-interactive p-5 flex items-center gap-4">
+          <div class="icon-circle-accent"><i class="fa-solid fa-building"></i></div>
+          <div>
+            <div class="font-semibold">Clients</div>
+            <div class="text-xs text-brand-gray2 mt-0.5">Client list, active/inactive status</div>
+          </div>
+        </a>
+        <a href="/approvals" class="card-interactive p-5 flex items-center gap-4">
+          <div class="icon-circle-amber"><i class="fa-solid fa-clipboard-check"></i></div>
+          <div class="flex-1">
+            <div class="font-semibold flex items-center gap-2">
+              Approval Queue
+              <% if (notificationCount > 0) { %><span class="badge-pending"><%= notificationCount %> pending</span><% } %>
+            </div>
+            <div class="text-xs text-brand-gray2 mt-0.5">Approve, reject, or reopen submitted months</div>
+          </div>
+        </a>
+        <a href="/history" class="card-interactive p-5 flex items-center gap-4">
+          <div class="icon-circle-slate"><i class="fa-solid fa-clock-rotate-left"></i></div>
+          <div>
+            <div class="font-semibold">History</div>
+            <div class="text-xs text-brand-gray2 mt-0.5">All submissions, filterable by month/client/status</div>
+          </div>
+        </a>
+        <a href="/login-attempts" class="card-interactive p-5 flex items-center gap-4">
+          <div class="icon-circle-slate"><i class="fa-solid fa-shield-halved"></i></div>
+          <div>
+            <div class="font-semibold">Login Attempts</div>
+            <div class="text-xs text-brand-gray2 mt-0.5">Read-only view of recent login activity</div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('../partials/foot') %>
