@@ -48,6 +48,10 @@ async function update(id, { firstName, lastName, email, dailyRate, active }) {
   );
 }
 
+async function setActive(id, active) {
+  await pool.query('UPDATE users SET active = ? WHERE id = ?', [active ? 1 : 0, id]);
+}
+
 async function resetPassword(id, passwordHash) {
   await pool.query(
     'UPDATE users SET password_hash = ?, must_change_password = 1 WHERE id = ?',
@@ -69,6 +73,7 @@ module.exports = {
   findByUsername,
   create,
   update,
+  setActive,
   resetPassword,
   hasPendingSubmissions
 };

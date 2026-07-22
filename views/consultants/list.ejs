@@ -41,6 +41,11 @@
             <span class="text-sm font-semibold"><%= formatCurrency(c.daily_rate) %></span>
             <span class="<%= c.active ? 'badge-approved' : 'badge-draft' %>"><%= c.active ? 'Active' : 'Inactive' %></span>
             <a href="/consultants/<%= c.id %>/edit" class="btn-secondary text-sm"><i class="fa-solid fa-pen"></i></a>
+            <form action="/consultants/<%= c.id %>/toggle-active" method="POST">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input type="hidden" name="returnTo" value="/consultants?active=<%= activeFilter %>">
+              <button type="submit" class="btn-secondary text-sm"><%= c.active ? 'Deactivate' : 'Activate' %></button>
+            </form>
           </div>
         </div>
       <% }); %>

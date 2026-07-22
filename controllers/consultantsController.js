@@ -121,6 +121,27 @@ async function handleUpdate(req, res) {
   res.redirect(`/consultants/${consultant.id}`);
 }
 
+async function handleToggleActive(req, res) {
+  const consultant = await userModel.findById(req.params.id);
+  if (!consultant) {
+    return res.status(404).render('error', { message: 'Consultant not found.' });
+  }
+
+  if (consultant.active) {
+    const hasPending = await userModel.hasPendingSubmissions(consultant.id);
+    if (hasPending) {
+      req.flash('error', 'Note: this consultant has pending submission(s) - deactivating does not cancel or hide them.');
+    }
+  }
+
+  await userModel.setActive(consultant.id, !consultant.active);
+  req.flash('success', consultant.active ? 'Consultant deactivated.' : 'Consultant activated.');
+
+  const returnTo = req.body.returnTo || '';
+  const isSafeRelativePath = returnTo.startsWith('/') && !returnTo.startsWith('//');
+  res.redirect(isSafeRelativePath ? returnTo : '/consultants');
+}
+
 async function handleResetPassword(req, res) {
   const consultant = await userModel.findById(req.params.id);
   if (!consultant) {
@@ -181,6 +202,7 @@ module.exports = {
   showDetail,
   showEditForm,
   handleUpdate,
+  handleToggleActive,
   handleResetPassword,
   handleAttachClients,
   handleDetachClient

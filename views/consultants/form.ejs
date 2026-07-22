@@ -64,7 +64,12 @@
 
         <div>
           <label class="field-label" for="tempPassword">Temporary password</label>
-          <input class="field-input" type="text" id="tempPassword" name="tempPassword" minlength="8" required>
+          <div class="flex gap-2">
+            <input class="field-input" type="text" id="tempPassword" name="tempPassword" minlength="8" required>
+            <button type="button" id="generate-password-btn" class="btn-secondary shrink-0" title="Generate a random password">
+              <i class="fa-solid fa-dice"></i>Generate
+            </button>
+          </div>
           <p class="text-xs text-brand-gray2 mt-1">The consultant will be asked to choose their own password on first login.</p>
         </div>
       <% } else { %>
@@ -99,5 +104,8 @@
     </div>
   </div>
 </div>
+<% if (mode === 'create') { %>
+  <script src="/js/consultant-form.js?v=<%= assetVersion %>" defer></script>
+<% } %>
 
 <%- include('../partials/foot') %>
