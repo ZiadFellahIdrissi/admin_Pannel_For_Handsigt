@@ -1,0 +1,163 @@
+<%- include('partials/head', { title: 'Summary' }) %>
+<div class="flex min-h-screen">
+  <%- include('partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('partials/topbar', { title: 'Summary' }) %>
+    <%- include('partials/flash') %>
+    <div class="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full viz-root">
+      <h1 class="text-lg sm:text-xl font-bold mb-4 sm:mb-6 flex items-center gap-3">
+        <div class="icon-circle-accent"><i class="fa-solid fa-chart-pie"></i></div>
+        Summary
+      </h1>
+
+      <!-- Month navigation -->
+      <div class="flex items-center gap-2 mb-6">
+        <a href="/summary?month=<%= prevMonth %>" class="btn-secondary !px-3" aria-label="Previous month">
+          <i class="fa-solid fa-chevron-left"></i>
+        </a>
+        <form action="/summary" method="GET" class="flex-1 flex items-center gap-2">
+          <input type="month" name="month" value="<%= month %>" class="field-input">
+          <button type="submit" class="btn-secondary">Go</button>
+        </form>
+        <a href="/summary?month=<%= nextMonth %>" class="btn-secondary !px-3" aria-label="Next month">
+          <i class="fa-solid fa-chevron-right"></i>
+        </a>
+      </div>
+
+      <!-- KPI row -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+        <div class="stat-tile">
+          <div class="icon-circle-accent"><i class="fa-solid fa-users"></i></div>
+          <div>
+            <div class="stat-tile-value"><%= totalConsultants %></div>
+            <div class="stat-tile-label">Consultants Paid &mdash; <%= monthLabelText %></div>
+          </div>
+        </div>
+        <div class="stat-tile">
+          <div class="icon-circle-amber"><i class="fa-solid fa-calendar-day"></i></div>
+          <div>
+            <div class="stat-tile-value"><%= totalDays %></div>
+            <div class="stat-tile-label">Total Approved Days</div>
+          </div>
+        </div>
+        <div class="stat-tile">
+          <div class="icon-circle-emerald"><i class="fa-solid fa-sack-dollar"></i></div>
+          <div>
+            <div class="stat-tile-value text-base sm:text-xl"><%= formatCurrency(totalPayout) %></div>
+            <div class="stat-tile-label">Total Payout</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Per-consultant table -->
+      <div class="card p-5 sm:p-6 mb-6">
+        <h2 class="section-title"><i class="fa-solid fa-list"></i>Approved This Month, By Consultant</h2>
+        <% if (bars.length === 0) { %>
+          <div class="p-6 text-center">
+            <i class="fa-regular fa-folder-open text-2xl text-brand-gray2 mb-2"></i>
+            <p class="text-sm text-brand-gray2">No approved submissions for <%= monthLabelText %>.</p>
+          </div>
+        <% } else { %>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-left text-xs font-semibold uppercase tracking-wide text-brand-gray2 border-b border-brand-borderLight">
+                  <th class="px-3 py-2">Consultant</th>
+                  <th class="px-3 py-2">Client(s)</th>
+                  <th class="px-3 py-2 text-right">Days</th>
+                  <th class="px-3 py-2 text-right">Payout</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% bars.forEach(function(r) { %>
+                  <tr class="border-b border-brand-borderLight last:border-0">
+                    <td class="px-3 py-2.5 font-medium"><%= r.consultantName %></td>
+                    <td class="px-3 py-2.5 text-brand-gray2"><%= r.clientNames %></td>
+                    <td class="px-3 py-2.5 text-right"><%= r.totalDays %></td>
+                    <td class="px-3 py-2.5 text-right font-semibold"><%= formatCurrency(r.totalPayout) %></td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Bar chart: payout per consultant -->
+      <% if (bars.length > 0) { %>
+        <div class="card p-5 sm:p-6 mb-6">
+          <h2 class="section-title"><i class="fa-solid fa-chart-simple"></i>Payout by Consultant</h2>
+          <div class="space-y-2.5">
+            <% bars.forEach(function(r) { %>
+              <div class="flex items-center gap-3" title="<%= r.consultantName %>: <%= formatCurrency(r.totalPayout) %> (<%= r.totalDays %> days)">
+                <div class="w-28 sm:w-36 truncate text-xs sm:text-sm shrink-0"><%= r.consultantName %></div>
+                <div class="flex-1 h-5 rounded-md bg-brand-light overflow-hidden">
+                  <div class="h-5 rounded-md chart-bar" style="width: <%= r.percent.toFixed(1) %>%"></div>
+                </div>
+                <div class="w-20 sm:w-24 text-right text-xs sm:text-sm font-semibold shrink-0"><%= formatCurrency(r.totalPayout) %></div>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Line chart: approved payout trend, last 12 months -->
+      <div class="card p-5 sm:p-6 mb-6">
+        <h2 class="section-title"><i class="fa-solid fa-arrow-trend-up"></i>Approved Payout Trend (12 Months)</h2>
+        <% if (linePoints.length < 2) { %>
+          <div class="p-6 text-center">
+            <i class="fa-solid fa-chart-line text-2xl text-brand-gray2 mb-2"></i>
+            <p class="text-sm text-brand-gray2">Not enough history yet to show a trend.</p>
+          </div>
+        <% } else { %>
+          <svg viewBox="0 0 <%= chartWidth %> <%= chartHeight + 20 %>" class="w-full" role="img" aria-label="Approved payout trend over the last 12 months">
+            <% [0.25, 0.5, 0.75].forEach(function(frac) { %>
+              <line x1="0" x2="<%= chartWidth %>" y1="<%= (chartHeight - 20) * frac + 10 %>" y2="<%= (chartHeight - 20) * frac + 10 %>" class="chart-gridline"></line>
+            <% }); %>
+            <path d="<%= linePath %>" class="chart-line-path"></path>
+            <% linePoints.forEach(function(p, i) { %>
+              <circle cx="<%= p.x %>" cy="<%= p.y %>" r="3.5" class="chart-line-point">
+                <title><%= monthLabel(p.month) %>: <%= formatCurrency(p.value) %></title>
+              </circle>
+              <% if (i === 0 || i === linePoints.length - 1 || i % 3 === 0) { %>
+                <text x="<%= p.x %>" y="<%= chartHeight + 15 %>" text-anchor="middle" class="chart-axis-label"><%= p.month.slice(5) %></text>
+              <% } %>
+            <% }); %>
+          </svg>
+        <% } %>
+      </div>
+
+      <!-- Pie chart: approved days by client, this month -->
+      <div class="card p-5 sm:p-6">
+        <h2 class="section-title"><i class="fa-solid fa-chart-pie"></i>Days by Client &mdash; <%= monthLabelText %></h2>
+        <% if (pieSlices.length === 0) { %>
+          <div class="p-6 text-center">
+            <i class="fa-regular fa-folder-open text-2xl text-brand-gray2 mb-2"></i>
+            <p class="text-sm text-brand-gray2">No approved days for <%= monthLabelText %>.</p>
+          </div>
+        <% } else { %>
+          <div class="flex flex-col sm:flex-row items-center gap-6">
+            <svg viewBox="0 0 120 120" class="w-40 h-40 shrink-0" role="img" aria-label="Approved days by client this month">
+              <% pieSlices.forEach(function(s) { %>
+                <path d="<%= s.path %>" fill="<%= s.color %>">
+                  <title><%= s.label %>: <%= s.value %> days (<%= s.percent.toFixed(0) %>%)</title>
+                </path>
+              <% }); %>
+            </svg>
+            <div class="space-y-1.5 text-sm">
+              <% pieSlices.forEach(function(s) { %>
+                <div class="flex items-center gap-2">
+                  <span class="chart-legend-swatch" style="background-color: <%= s.color %>"></span>
+                  <span class="font-medium"><%= s.label %></span>
+                  <span class="text-brand-gray2">&middot; <%= s.value %> days &middot; <%= s.percent.toFixed(0) %>%</span>
+                </div>
+              <% }); %>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/foot') %>

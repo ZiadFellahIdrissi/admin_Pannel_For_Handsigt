@@ -108,6 +108,66 @@ async function listRecentActivity(limit = 10) {
   return rows;
 }
 
+// One row per consultant with any approved submission in the given month.
+// GROUP_CONCAT handles a consultant approved against more than one client
+// in the same month (the unique key is user+month+client, so that's a
+// legal, if uncommon, combination).
+async function approvedSummaryForMonth(month) {
+  const [rows] = await pool.query(
+    `SELECT u.id AS consultant_id,
+            CONCAT(u.first_name, ' ', u.last_name) AS consultant_name,
+            GROUP_CONCAT(DISTINCT c.name ORDER BY c.name SEPARATOR ', ') AS client_names,
+            COALESCE(SUM(de.value), 0) AS total_days,
+            COALESCE(SUM(de.value), 0) * u.daily_rate AS total_payout
+       FROM month_submissions ms
+       JOIN users u ON u.id = ms.user_id
+       JOIN clients c ON c.id = ms.client_id
+       LEFT JOIN daily_entries de ON de.submission_id = ms.id
+      WHERE ms.status = 'approved' AND ms.month = ?
+      GROUP BY u.id
+      ORDER BY total_payout DESC`,
+    [month]
+  );
+  return rows;
+}
+
+// Last `monthsBack` months' totals across all consultants (approved only),
+// most recent first - the controller reverses this to chronological order
+// for the trend line chart.
+async function approvedMonthlyTrend(monthsBack = 12) {
+  const safeMonthsBack = Number.isInteger(monthsBack) && monthsBack > 0 ? monthsBack : 12;
+  const [rows] = await pool.query(
+    `SELECT ms.month,
+            COALESCE(SUM(de.value), 0) AS total_days,
+            COALESCE(SUM(de.value * u.daily_rate), 0) AS total_payout
+       FROM month_submissions ms
+       JOIN users u ON u.id = ms.user_id
+       LEFT JOIN daily_entries de ON de.submission_id = ms.id
+      WHERE ms.status = 'approved'
+      GROUP BY ms.month
+      ORDER BY ms.month DESC
+      LIMIT ?`,
+    [safeMonthsBack]
+  );
+  return rows;
+}
+
+// Per-client totals for the given month (approved only) - for the pie chart.
+async function approvedByClientForMonth(month) {
+  const [rows] = await pool.query(
+    `SELECT c.id AS client_id, c.name AS client_name,
+            COALESCE(SUM(de.value), 0) AS total_days
+       FROM month_submissions ms
+       JOIN clients c ON c.id = ms.client_id
+       LEFT JOIN daily_entries de ON de.submission_id = ms.id
+      WHERE ms.status = 'approved' AND ms.month = ?
+      GROUP BY c.id
+      ORDER BY total_days DESC`,
+    [month]
+  );
+  return rows;
+}
+
 async function findById(id) {
   const [rows] = await pool.query(
     `SELECT ms.*, CONCAT(u.first_name, ' ', u.last_name) AS consultant_name, c.name AS client_name
@@ -153,6 +213,9 @@ module.exports = {
   listHistory,
   listForConsultant,
   listRecentActivity,
+  approvedSummaryForMonth,
+  approvedMonthlyTrend,
+  approvedByClientForMonth,
   findById,
   approve,
   reject,

@@ -13,6 +13,7 @@ const asyncHandler = require('./utils/asyncHandler');
 const monthSubmissionModel = require('./models/monthSubmissionModel');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const consultantsManagementRoutes = require('./routes/consultantsManagementRoutes');
+const summaryRoutes = require('./routes/summaryRoutes');
 const authRoutes = require('./routes/authRoutes');
 const consultantsRoutes = require('./routes/consultantsRoutes');
 const clientsRoutes = require('./routes/clientsRoutes');
@@ -98,6 +99,7 @@ app.use(asyncHandler(async (req, res, next) => {
 
 app.use('/', dashboardRoutes);
 app.use('/', consultantsManagementRoutes);
+app.use('/', summaryRoutes);
 app.use('/', authRoutes);
 app.use('/', consultantsRoutes);
 app.use('/', clientsRoutes);

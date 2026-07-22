@@ -293,6 +293,68 @@
     background-color: var(--blue-dim);
     border-color: var(--blue);
   }
+
+  /* Data visualization (Summary page charts). Categorical slots follow the
+     dataviz skill's validated reference palette - order is the CVD-safety
+     mechanism, never reshuffle. The pie chart only ever uses slots 1-3
+     (the subset validated "all-pairs" safe) plus the neutral "Other"
+     fold; bar/line charts are single-series so they just use --blue. */
+  .viz-root {
+    --viz-series-1: #2a78d6; /* blue */
+    --viz-series-2: #eb6834; /* orange */
+    --viz-series-3: #1baf7a; /* aqua */
+    --viz-series-other: #898781; /* neutral gray - the "Other" fold, not a real hue slot */
+    --viz-grid: var(--border-light);
+    --viz-axis-label: var(--gray-2);
+    --viz-direct-label: var(--text);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      --viz-series-1: #3987e5;
+      --viz-series-2: #d95926;
+      --viz-series-3: #199e70;
+      --viz-series-other: #6b7280;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    --viz-series-1: #3987e5;
+    --viz-series-2: #d95926;
+    --viz-series-3: #199e70;
+    --viz-series-other: #6b7280;
+  }
+
+  .chart-bar {
+    fill: var(--blue);
+  }
+  .chart-bar:hover {
+    fill: var(--blue-2);
+  }
+  .chart-gridline {
+    stroke: var(--viz-grid);
+    stroke-width: 1;
+  }
+  .chart-axis-label {
+    fill: var(--viz-axis-label);
+    font-size: 11px;
+  }
+  .chart-direct-label {
+    fill: var(--viz-direct-label);
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .chart-line-path {
+    fill: none;
+    stroke: var(--blue);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .chart-line-point {
+    fill: var(--blue);
+  }
+  .chart-legend-swatch {
+    @apply inline-block w-2.5 h-2.5 rounded-sm shrink-0;
+  }
 }
 
 /* Tailwind's `list-none` only clears `list-style`, which doesn't remove

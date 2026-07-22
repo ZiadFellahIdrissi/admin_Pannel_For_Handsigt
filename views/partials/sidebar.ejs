@@ -1,5 +1,6 @@
 <% if (currentUser) {
   var isConsultants = currentPath === '/consultants' || currentPath.indexOf('/consultants/') === 0;
+  var isSummary = currentPath.indexOf('/summary') === 0;
   var isClients = currentPath === '/clients' || currentPath.indexOf('/clients/') === 0;
   var isApprovals = currentPath.indexOf('/approvals') === 0;
   var isHistory = currentPath.indexOf('/history') === 0;
@@ -23,8 +24,8 @@
       <a href="/consultants" class="<%= isConsultants ? 'sidebar-link-active' : 'sidebar-link' %>">
         <i class="fa-solid fa-users w-4 text-center"></i>Consultants
       </a>
-      <a href="/clients" class="<%= isClients ? 'sidebar-link-active' : 'sidebar-link' %>">
-        <i class="fa-solid fa-building w-4 text-center"></i>Clients
+      <a href="/summary" class="<%= isSummary ? 'sidebar-link-active' : 'sidebar-link' %>">
+        <i class="fa-solid fa-chart-pie w-4 text-center"></i>Summary
       </a>
 
       <details <%= (isApprovals || isHistory) ? 'open' : '' %>>
@@ -42,6 +43,13 @@
           </a>
         </div>
       </details>
+    </div>
+
+    <div class="sidebar-section-title">Clients</div>
+    <div class="space-y-1">
+      <a href="/clients" class="<%= isClients ? 'sidebar-link-active' : 'sidebar-link' %>">
+        <i class="fa-solid fa-building w-4 text-center"></i>Clients
+      </a>
     </div>
 
     <div class="sidebar-section-title">Billing</div>
