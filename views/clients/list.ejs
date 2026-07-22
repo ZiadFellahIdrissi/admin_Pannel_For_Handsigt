@@ -1,0 +1,48 @@
+<%- include('../partials/head', { title: 'Clients' }) %>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+
+<div class="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
+  <div class="flex items-center justify-between flex-wrap gap-3 mb-4 sm:mb-6">
+    <h1 class="text-lg sm:text-xl font-bold flex items-center gap-3">
+      <div class="icon-circle-accent"><i class="fa-solid fa-building"></i></div>
+      Clients
+    </h1>
+    <a href="/clients/new" class="btn-primary">
+      <i class="fa-solid fa-plus"></i>New Client
+    </a>
+  </div>
+
+  <div class="flex items-center gap-2 mb-4 text-sm">
+    <a href="/clients?active=1" class="btn-secondary <%= activeFilter === '1' ? '!border-brand-accent !text-brand-accent' : '' %>">Active</a>
+    <a href="/clients?active=0" class="btn-secondary <%= activeFilter === '0' ? '!border-brand-accent !text-brand-accent' : '' %>">Inactive</a>
+    <a href="/clients?active=all" class="btn-secondary <%= activeFilter === 'all' ? '!border-brand-accent !text-brand-accent' : '' %>">All</a>
+  </div>
+
+  <p class="text-xs text-brand-gray2 mb-4">Clients can't be deleted, only deactivated, to preserve historical submissions.</p>
+
+  <% if (clients.length === 0) { %>
+    <div class="card p-8 text-center">
+      <i class="fa-regular fa-folder-open text-2xl text-brand-gray2 mb-2"></i>
+      <p class="text-sm text-brand-gray2">No clients found.</p>
+    </div>
+  <% } else { %>
+    <div class="space-y-3">
+      <% clients.forEach(function(cl) { %>
+        <div class="card-interactive p-4 flex items-center justify-between gap-3 flex-wrap">
+          <div class="font-semibold"><%= cl.name %></div>
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="<%= cl.active ? 'badge-approved' : 'badge-draft' %>"><%= cl.active ? 'Active' : 'Inactive' %></span>
+            <a href="/clients/<%= cl.id %>/edit" class="btn-secondary text-sm"><i class="fa-solid fa-pen"></i></a>
+            <form action="/clients/<%= cl.id %>/toggle-active" method="POST">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn-secondary text-sm"><%= cl.active ? 'Deactivate' : 'Activate' %></button>
+            </form>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/foot') %>

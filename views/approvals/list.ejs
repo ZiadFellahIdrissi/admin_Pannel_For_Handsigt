@@ -1,0 +1,79 @@
+<%- include('../partials/head', { title: 'Approval Queue' }) %>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+
+<div class="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
+  <h1 class="text-lg sm:text-xl font-bold mb-4 sm:mb-6 flex items-center gap-3">
+    <div class="icon-circle-accent"><i class="fa-solid fa-clipboard-check"></i></div>
+    Approval Queue
+  </h1>
+
+  <% if (pending.length > 0) { %>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+      <div class="stat-tile">
+        <div class="icon-circle-amber"><i class="fa-solid fa-hourglass-half"></i></div>
+        <div>
+          <div class="stat-tile-value"><%= pending.length %></div>
+          <div class="stat-tile-label">Pending Submissions</div>
+        </div>
+      </div>
+      <div class="stat-tile">
+        <div class="icon-circle-accent"><i class="fa-solid fa-calendar-day"></i></div>
+        <div>
+          <div class="stat-tile-value"><%= pending.reduce(function(sum, p) { return sum + Number(p.total_days); }, 0) %></div>
+          <div class="stat-tile-label">Total Days</div>
+        </div>
+      </div>
+      <div class="stat-tile col-span-2 sm:col-span-1">
+        <div class="icon-circle-emerald"><i class="fa-solid fa-sack-dollar"></i></div>
+        <div>
+          <div class="stat-tile-value text-base sm:text-xl"><%= formatCurrency(pending.reduce(function(sum, p) { return sum + Number(p.total_earnings); }, 0)) %></div>
+          <div class="stat-tile-label">Total Value</div>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+  <% if (pending.length === 0) { %>
+    <div class="card p-8 text-center">
+      <i class="fa-regular fa-folder-open text-2xl text-brand-gray2 mb-2"></i>
+      <p class="text-sm text-brand-gray2">No pending submissions.</p>
+    </div>
+  <% } else { %>
+    <div class="space-y-3">
+      <% pending.forEach(function(p) { %>
+        <div class="card-interactive p-4">
+          <div class="flex items-center justify-between gap-3 flex-wrap">
+            <div class="min-w-0">
+              <div class="font-semibold truncate"><%= p.consultant_name %> &middot; <%= p.client_name %></div>
+              <div class="text-xs text-brand-gray2 mt-0.5">
+                <%= monthLabel(p.month) %> &middot; <%= p.total_days %> days &middot; <%= formatCurrency(p.total_earnings) %>
+                &middot; submitted <%= p.submitted_at %>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <form action="/approvals/<%= p.id %>/approve" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn-primary text-sm !px-3 !py-1.5"><i class="fa-solid fa-check"></i>Approve</button>
+              </form>
+              <details class="relative">
+                <summary class="btn-danger text-sm !px-3 !py-1.5 list-none cursor-pointer inline-flex items-center gap-2">
+                  <i class="fa-solid fa-xmark"></i>Reject
+                </summary>
+                <form action="/approvals/<%= p.id %>/reject" method="POST"
+                      class="absolute right-0 mt-2 w-64 card p-3 z-20 shadow-xl space-y-2">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <label class="field-label" for="comment-<%= p.id %>">Reason (optional)</label>
+                  <textarea class="field-input" id="comment-<%= p.id %>" name="comment" rows="3" maxlength="500"></textarea>
+                  <button type="submit" class="btn-danger w-full text-sm">Confirm Rejection</button>
+                </form>
+              </details>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/foot') %>

@@ -1,0 +1,69 @@
+<%- include('../partials/head', { title: 'History' }) %>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+
+<div class="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
+  <h1 class="text-lg sm:text-xl font-bold mb-4 sm:mb-6 flex items-center gap-3">
+    <div class="icon-circle-accent"><i class="fa-solid fa-clock-rotate-left"></i></div>
+    History
+  </h1>
+
+  <form action="/history" method="GET" class="card p-4 mb-6 grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+    <div>
+      <label class="field-label" for="month">Month</label>
+      <input class="field-input" type="month" id="month" name="month" value="<%= filters.month %>">
+    </div>
+    <div>
+      <label class="field-label" for="clientId">Client</label>
+      <select class="field-input" id="clientId" name="clientId">
+        <option value="">All</option>
+        <% clients.forEach(function(cl) { %>
+          <option value="<%= cl.id %>" <%= String(filters.clientId) === String(cl.id) ? 'selected' : '' %>><%= cl.name %></option>
+        <% }); %>
+      </select>
+    </div>
+    <div>
+      <label class="field-label" for="status">Status</label>
+      <select class="field-input" id="status" name="status">
+        <option value="">All</option>
+        <% ['draft', 'pending', 'approved', 'rejected'].forEach(function(s) { %>
+          <option value="<%= s %>" <%= filters.status === s ? 'selected' : '' %>><%= s.charAt(0).toUpperCase() + s.slice(1) %></option>
+        <% }); %>
+      </select>
+    </div>
+    <button type="submit" class="btn-primary"><i class="fa-solid fa-filter"></i>Filter</button>
+  </form>
+
+  <% if (submissions.length === 0) { %>
+    <div class="card p-8 text-center">
+      <i class="fa-regular fa-folder-open text-2xl text-brand-gray2 mb-2"></i>
+      <p class="text-sm text-brand-gray2">No submissions match these filters.</p>
+    </div>
+  <% } else { %>
+    <div class="space-y-3">
+      <% submissions.forEach(function(s) { %>
+        <div class="card-interactive p-4 flex items-center justify-between gap-3 flex-wrap">
+          <div class="min-w-0">
+            <div class="font-semibold truncate"><%= s.consultant_name %> &middot; <%= monthLabel(s.month) %> &middot; <%= s.client_name %></div>
+            <div class="text-xs text-brand-gray2 mt-0.5"><%= s.total_days %> days &middot; <%= formatCurrency(s.total_earnings) %></div>
+            <% if (s.status === 'rejected' && s.admin_comment) { %>
+              <div class="text-xs text-red-700 dark:text-red-400 mt-1"><strong>Comment:</strong> <%= s.admin_comment %></div>
+            <% } %>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="badge-<%= s.status %>"><%= s.status.charAt(0).toUpperCase() + s.status.slice(1) %></span>
+            <% if (s.status !== 'draft') { %>
+              <form action="/approvals/<%= s.id %>/reopen" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="returnTo" value="/history">
+                <button type="submit" class="btn-secondary text-xs !px-3 !py-1.5"><i class="fa-solid fa-rotate-left"></i>Reopen</button>
+              </form>
+            <% } %>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/foot') %>

@@ -1,0 +1,31 @@
+<%- include('../partials/head', { title: mode === 'create' ? 'New Client' : 'Edit Client' }) %>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+
+<div class="max-w-lg mx-auto px-3 sm:px-4 py-6 sm:py-8">
+  <h1 class="text-lg sm:text-xl font-bold mb-6 flex items-center gap-3">
+    <div class="icon-circle-accent"><i class="fa-solid <%= mode === 'create' ? 'fa-plus' : 'fa-pen' %>"></i></div>
+    <%= mode === 'create' ? 'New Client' : 'Edit Client' %>
+  </h1>
+
+  <% if (errors && errors.length) { %>
+    <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 px-4 py-2.5 text-sm space-y-1">
+      <% errors.forEach(function(e) { %><div class="flex items-center gap-2"><i class="fa-solid fa-circle-exclamation"></i><%= e %></div><% }); %>
+    </div>
+  <% } %>
+
+  <div class="card p-5 sm:p-6">
+    <form action="<%= mode === 'create' ? '/clients' : '/clients/' + client.id %>" method="POST" class="space-y-4">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div>
+        <label class="field-label" for="name">Client name</label>
+        <input class="field-input" type="text" id="name" name="name" value="<%= client ? client.name : '' %>" required autofocus>
+      </div>
+      <button type="submit" class="btn-primary w-full sm:w-auto">
+        <i class="fa-solid fa-check"></i><%= mode === 'create' ? 'Create Client' : 'Save Changes' %>
+      </button>
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

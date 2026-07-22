@@ -1,0 +1,91 @@
+<%- include('../partials/head', { title: mode === 'create' ? 'New Consultant' : 'Edit Consultant' }) %>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+
+<div class="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
+  <h1 class="text-lg sm:text-xl font-bold mb-6 flex items-center gap-3">
+    <div class="icon-circle-accent"><i class="fa-solid <%= mode === 'create' ? 'fa-plus' : 'fa-pen' %>"></i></div>
+    <%= mode === 'create' ? 'New Consultant' : 'Edit Consultant' %>
+  </h1>
+
+  <% if (errors && errors.length) { %>
+    <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 px-4 py-2.5 text-sm space-y-1">
+      <% errors.forEach(function(e) { %><div class="flex items-center gap-2"><i class="fa-solid fa-circle-exclamation"></i><%= e %></div><% }); %>
+    </div>
+  <% } %>
+
+  <div class="card p-5 sm:p-6">
+    <form action="<%= mode === 'create' ? '/consultants' : '/consultants/' + consultant.id %>" method="POST" class="space-y-4">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <% if (mode === 'create') { %>
+        <div>
+          <label class="field-label" for="username">Username</label>
+          <input class="field-input" type="text" id="username" name="username" value="<%= consultant ? consultant.username : '' %>" required>
+        </div>
+      <% } else { %>
+        <div>
+          <label class="field-label">Username</label>
+          <input class="field-input opacity-60" type="text" value="<%= consultant.username %>" disabled>
+        </div>
+      <% } %>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="field-label" for="firstName">First name</label>
+          <input class="field-input" type="text" id="firstName" name="firstName" value="<%= consultant ? consultant.first_name : '' %>" required>
+        </div>
+        <div>
+          <label class="field-label" for="lastName">Last name</label>
+          <input class="field-input" type="text" id="lastName" name="lastName" value="<%= consultant ? consultant.last_name : '' %>" required>
+        </div>
+      </div>
+
+      <div>
+        <label class="field-label" for="email">Email</label>
+        <input class="field-input" type="email" id="email" name="email" value="<%= consultant ? consultant.email : '' %>" required>
+      </div>
+
+      <div>
+        <label class="field-label" for="dailyRate">Daily rate (TJM, MAD)</label>
+        <input class="field-input" type="number" step="0.01" min="0" id="dailyRate" name="dailyRate" value="<%= consultant ? consultant.daily_rate : '0.00' %>" required>
+      </div>
+
+      <% if (mode === 'create') { %>
+        <div>
+          <label class="field-label" for="tempPassword">Temporary password</label>
+          <input class="field-input" type="text" id="tempPassword" name="tempPassword" minlength="8" required>
+          <p class="text-xs text-brand-gray2 mt-1">The consultant will be asked to choose their own password on first login.</p>
+        </div>
+      <% } else { %>
+        <div class="flex items-center gap-2">
+          <input type="checkbox" id="active" name="active" <%= consultant.active ? 'checked' : '' %> class="rounded">
+          <label class="text-sm font-semibold" for="active">Active</label>
+        </div>
+      <% } %>
+
+      <button type="submit" class="btn-primary w-full sm:w-auto">
+        <i class="fa-solid fa-check"></i><%= mode === 'create' ? 'Create Consultant' : 'Save Changes' %>
+      </button>
+    </form>
+  </div>
+
+  <% if (mode === 'edit') { %>
+    <div class="card p-5 sm:p-6 mt-4">
+      <h2 class="section-title"><i class="fa-solid fa-key"></i>Reset Password</h2>
+      <form action="/consultants/<%= consultant.id %>/reset-password" method="POST" class="flex items-end gap-3 flex-wrap">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="flex-1 min-w-[200px]">
+          <label class="field-label" for="resetTempPassword">New temporary password</label>
+          <input class="field-input" type="text" id="resetTempPassword" name="tempPassword" minlength="8" required>
+        </div>
+        <button type="submit" class="btn-secondary">
+          <i class="fa-solid fa-rotate"></i>Reset Password
+        </button>
+      </form>
+      <p class="text-xs text-brand-gray2 mt-2">Forces the consultant to choose a new password on next login.</p>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/foot') %>

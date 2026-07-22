@@ -1,0 +1,203 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --dark: #070d1a;
+  --dark-2: #0d1628;
+  --dark-3: #111c30;
+  --blue: #1a6eff;
+  --blue-2: #3d7fff;
+  --blue-dim: rgba(26, 110, 255, 0.12);
+  --white: #ffffff;
+  --gray: #8892a4;
+  --gray-2: #6b7280;
+  --text: #111827;
+  --text-light: #374151;
+  --light: #f8fafc;
+  --border-dark: rgba(255, 255, 255, 0.07);
+  --border-light: #e5e7eb;
+  --surface: #ffffff;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+/* Dark theme: same variable names, different values - every component
+   below reads these vars (directly or via the brand-* Tailwind colors in
+   tailwind.config.js), so this single block re-themes the whole app.
+   Declared under both the OS media query (guarded so an explicit light
+   choice can still beat OS-dark) and the toggle's own data-theme scope,
+   which always wins. */
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    --text: #f1f5f9;
+    --text-light: #cbd5e1;
+    --gray-2: #94a3b8;
+    --light: var(--dark);
+    --border-light: var(--border-dark);
+    --surface: var(--dark-2);
+    --blue-dim: rgba(61, 135, 255, 0.16);
+  }
+}
+:root[data-theme="dark"] {
+  --text: #f1f5f9;
+  --text-light: #cbd5e1;
+  --gray-2: #94a3b8;
+  --light: var(--dark);
+  --border-light: var(--border-dark);
+  --surface: var(--dark-2);
+  --blue-dim: rgba(61, 135, 255, 0.16);
+}
+
+@layer base {
+  body {
+    @apply bg-brand-light text-brand-text;
+    background-image: radial-gradient(circle at top right, var(--blue-dim), transparent 45%);
+    background-attachment: fixed;
+  }
+}
+
+/* Component classes are written with plain CSS (not @apply chains between
+   them) so nothing depends on Tailwind's custom-class-referencing-custom-
+   class resolution order - keeps this robust across Tailwind versions. */
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white
+           transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+    background-color: var(--blue);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  }
+  .btn-primary:hover {
+    background-color: var(--blue-2);
+    box-shadow: 0 4px 12px rgba(26, 110, 255, 0.25);
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
+           transition-all duration-150 active:scale-[0.98];
+    background-color: var(--surface);
+    border: 1px solid var(--border-light);
+    color: var(--text-light);
+  }
+  .btn-secondary:hover {
+    border-color: var(--blue);
+    background-color: var(--light);
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
+           transition-all duration-150 active:scale-[0.98]
+           text-red-700 border border-red-200 hover:bg-red-50
+           dark:text-red-400 dark:border-red-800/60 dark:hover:bg-red-950/40;
+    background-color: var(--surface);
+  }
+
+  .field-input {
+    @apply block w-full rounded-lg px-3 py-2.5 text-sm transition-colors focus:outline-none;
+    background-color: var(--surface);
+    border: 1px solid var(--border-light);
+    color: var(--text);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+  .field-input:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px var(--blue-dim);
+  }
+  .field-input option {
+    background-color: var(--surface);
+    color: var(--text);
+  }
+
+  .field-label {
+    @apply block text-sm font-semibold mb-1.5;
+    color: var(--text-light);
+  }
+
+  .card {
+    @apply rounded-xl;
+    background-color: var(--surface);
+    border: 1px solid var(--border-light);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  }
+  .card-interactive {
+    @apply rounded-xl transition-all duration-150;
+    background-color: var(--surface);
+    border: 1px solid var(--border-light);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  }
+  .card-interactive:hover {
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    transform: translateY(-2px);
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold;
+  }
+  .badge::before {
+    content: '';
+    @apply w-1.5 h-1.5 rounded-full bg-current;
+  }
+  .badge-draft {
+    @apply badge bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700;
+  }
+  .badge-pending {
+    @apply badge bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800;
+  }
+  .badge-approved {
+    @apply badge bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800;
+  }
+  .badge-rejected {
+    @apply badge bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800;
+  }
+
+  .icon-circle {
+    @apply w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center text-base shrink-0;
+  }
+  .icon-circle-accent {
+    @apply w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center text-base shrink-0;
+    background-color: var(--blue-dim);
+    color: var(--blue);
+  }
+  .icon-circle-amber {
+    @apply w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center text-base shrink-0 bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400;
+  }
+  .icon-circle-emerald {
+    @apply w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center text-base shrink-0 bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400;
+  }
+  .icon-circle-slate {
+    @apply w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center text-base shrink-0 bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400;
+  }
+
+  .stat-tile {
+    @apply rounded-xl p-3.5 sm:p-4 flex items-center gap-3;
+    background-color: var(--surface);
+    border: 1px solid var(--border-light);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  }
+  .stat-tile-value {
+    @apply text-xl sm:text-2xl font-bold leading-tight;
+    color: var(--text);
+  }
+  .stat-tile-label {
+    @apply text-[11px] sm:text-xs font-medium mt-0.5;
+    color: var(--gray-2);
+  }
+
+  .section-title {
+    @apply text-xs font-bold uppercase tracking-wider mb-3 flex items-center gap-2;
+    color: var(--gray-2);
+  }
+
+  /* Theme toggle switch in the nav */
+  .theme-toggle {
+    @apply inline-flex items-center justify-center w-8 h-8 rounded-lg text-brand-gray transition-colors hover:text-white hover:bg-white/5;
+  }
+}
+
+/* Tailwind's `list-none` only clears `list-style`, which doesn't remove
+   Chrome's disclosure-triangle marker on <summary> (that's a separate
+   ::-webkit-details-marker pseudo-element) - used by the reject-with-
+   comment popover in the approvals queue. */
+summary::-webkit-details-marker {
+  display: none;
+}

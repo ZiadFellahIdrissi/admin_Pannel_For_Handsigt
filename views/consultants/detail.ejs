@@ -1,0 +1,103 @@
+<%- include('../partials/head', { title: consultant.first_name + ' ' + consultant.last_name }) %>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+
+<div class="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
+  <div class="flex items-center justify-between flex-wrap gap-3 mb-6">
+    <h1 class="text-lg sm:text-xl font-bold flex items-center gap-3">
+      <div class="icon-circle-slate font-bold"><%= (consultant.first_name.charAt(0) + consultant.last_name.charAt(0)).toUpperCase() %></div>
+      <span>
+        <%= consultant.first_name %> <%= consultant.last_name %>
+        <span class="ml-2 <%= consultant.active ? 'badge-approved' : 'badge-draft' %>"><%= consultant.active ? 'Active' : 'Inactive' %></span>
+      </span>
+    </h1>
+    <a href="/consultants/<%= consultant.id %>/edit" class="btn-secondary">
+      <i class="fa-solid fa-pen"></i>Edit
+    </a>
+  </div>
+
+  <div class="card p-5 sm:p-6 mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+    <div>
+      <div class="text-brand-gray2 text-xs font-semibold uppercase tracking-wide mb-1">Username</div>
+      <div class="font-semibold"><%= consultant.username %></div>
+    </div>
+    <div>
+      <div class="text-brand-gray2 text-xs font-semibold uppercase tracking-wide mb-1">Email</div>
+      <div class="font-semibold"><%= consultant.email %></div>
+    </div>
+    <div>
+      <div class="text-brand-gray2 text-xs font-semibold uppercase tracking-wide mb-1">Daily rate (TJM)</div>
+      <div class="font-semibold"><%= formatCurrency(consultant.daily_rate) %></div>
+    </div>
+  </div>
+
+  <div class="card p-5 sm:p-6 mb-6">
+    <h2 class="section-title"><i class="fa-solid fa-building"></i>Attached Clients</h2>
+
+    <% if (attachedClients.length === 0) { %>
+      <p class="text-sm text-brand-gray2 mb-4">No clients attached yet.</p>
+    <% } else { %>
+      <div class="space-y-2 mb-4">
+        <% attachedClients.forEach(function(cl) { %>
+          <div class="flex items-center justify-between gap-3 rounded-lg border border-brand-borderLight px-3 py-2">
+            <span class="text-sm font-medium"><%= cl.name %><% if (!cl.active) { %> <span class="badge-draft ml-1">Inactive</span><% } %></span>
+            <form action="/consultants/<%= consultant.id %>/clients/<%= cl.id %>/detach" method="POST">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn-danger text-xs !px-3 !py-1.5">Detach</button>
+            </form>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+
+    <% if (unattachedClients.length > 0) { %>
+      <form action="/consultants/<%= consultant.id %>/clients" method="POST" class="flex items-end gap-3 flex-wrap">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="flex-1 min-w-[200px]">
+          <label class="field-label" for="clientId">Attach a client</label>
+          <select class="field-input" id="clientId" name="clientId" required>
+            <option value="">Choose a client&hellip;</option>
+            <% unattachedClients.forEach(function(cl) { %>
+              <option value="<%= cl.id %>"><%= cl.name %></option>
+            <% }); %>
+          </select>
+        </div>
+        <button type="submit" class="btn-secondary"><i class="fa-solid fa-link"></i>Attach</button>
+      </form>
+    <% } %>
+  </div>
+
+  <div class="card p-5 sm:p-6">
+    <h2 class="section-title"><i class="fa-solid fa-clock-rotate-left"></i>Submission History</h2>
+
+    <% if (submissions.length === 0) { %>
+      <p class="text-sm text-brand-gray2">No submissions yet.</p>
+    <% } else { %>
+      <div class="space-y-3">
+        <% submissions.forEach(function(s) { %>
+          <div class="card-interactive p-4 flex items-center justify-between gap-3 flex-wrap">
+            <div class="min-w-0">
+              <div class="font-semibold truncate"><%= monthLabel(s.month) %> &middot; <%= s.client_name %></div>
+              <div class="text-xs text-brand-gray2 mt-0.5"><%= s.total_days %> days &middot; <%= formatCurrency(s.total_earnings) %></div>
+              <% if (s.status === 'rejected' && s.admin_comment) { %>
+                <div class="text-xs text-red-700 dark:text-red-400 mt-1"><strong>Comment:</strong> <%= s.admin_comment %></div>
+              <% } %>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="badge-<%= s.status %>"><%= s.status.charAt(0).toUpperCase() + s.status.slice(1) %></span>
+              <% if (s.status !== 'draft') { %>
+                <form action="/approvals/<%= s.id %>/reopen" method="POST">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="returnTo" value="/consultants/<%= consultant.id %>">
+                  <button type="submit" class="btn-secondary text-xs !px-3 !py-1.5"><i class="fa-solid fa-rotate-left"></i>Reopen</button>
+                </form>
+              <% } %>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

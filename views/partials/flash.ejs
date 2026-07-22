@@ -1,0 +1,12 @@
+<div class="max-w-6xl mx-auto px-3 sm:px-4 mt-4 space-y-2">
+  <% (typeof successMessages !== 'undefined' ? successMessages : []).forEach(function(msg) { %>
+    <div class="rounded-lg bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 px-4 py-2.5 text-sm font-medium flex items-center gap-2.5 shadow-sm">
+      <i class="fa-solid fa-circle-check"></i><%= msg %>
+    </div>
+  <% }); %>
+  <% (typeof errorMessages !== 'undefined' ? errorMessages : []).forEach(function(msg) { %>
+    <div class="rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 px-4 py-2.5 text-sm font-medium flex items-center gap-2.5 shadow-sm">
+      <i class="fa-solid fa-circle-exclamation"></i><%= msg %>
+    </div>
+  <% }); %>
+</div>
