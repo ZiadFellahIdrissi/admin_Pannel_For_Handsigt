@@ -29,12 +29,16 @@
       <p class="text-sm text-brand-gray2">No clients found.</p>
     </div>
   <% } else { %>
+    <% function show(v) { return (v === null || v === undefined || v === '') ? '—' : v; } %>
     <div class="space-y-3">
       <% clients.forEach(function(cl) { %>
         <div class="card-interactive p-4 flex items-center justify-between gap-3 flex-wrap">
           <div class="font-semibold"><%= cl.name %></div>
           <div class="flex items-center gap-2 shrink-0">
             <span class="<%= cl.active ? 'badge-approved' : 'badge-draft' %>"><%= cl.active ? 'Active' : 'Inactive' %></span>
+            <button type="button" class="btn-secondary text-sm" data-dialog-open="client-details-<%= cl.id %>">
+              <i class="fa-solid fa-eye"></i>
+            </button>
             <a href="/clients/<%= cl.id %>/edit" class="btn-secondary text-sm"><i class="fa-solid fa-pen"></i></a>
             <form action="/clients/<%= cl.id %>/toggle-active" method="POST">
               <input type="hidden" name="_csrf" value="<%= csrfToken %>">
@@ -46,6 +50,69 @@
             </form>
           </div>
         </div>
+
+        <dialog id="client-details-<%= cl.id %>" class="dialog-panel">
+          <div class="p-5 sm:p-6 max-h-[80vh] overflow-y-auto">
+            <div class="flex items-center justify-between gap-3 mb-4">
+              <h3 class="font-bold flex items-center gap-2">
+                <%= cl.name %>
+                <span class="<%= cl.active ? 'badge-approved' : 'badge-draft' %>"><%= cl.active ? 'Active' : 'Inactive' %></span>
+              </h3>
+              <button type="button" class="theme-toggle" data-dialog-close aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <div class="space-y-4 text-sm">
+              <div>
+                <h4 class="section-title"><i class="fa-solid fa-stamp"></i>Enterprise / Legal Identification</h4>
+                <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+                  <div><span class="text-brand-gray2">ICE</span><br><%= show(cl.ice) %></div>
+                  <div><span class="text-brand-gray2">RC</span><br><%= show(cl.rc) %></div>
+                  <div><span class="text-brand-gray2">RC City</span><br><%= show(cl.rc_city) %></div>
+                  <div><span class="text-brand-gray2">Patente</span><br><%= show(cl.patente) %></div>
+                  <div><span class="text-brand-gray2">IF</span><br><%= show(cl.tax_identifier) %></div>
+                  <div><span class="text-brand-gray2">CNSS Number</span><br><%= show(cl.cnss_number) %></div>
+                  <div><span class="text-brand-gray2">Legal Form</span><br><%= show(cl.legal_form) %></div>
+                  <div><span class="text-brand-gray2">Registered Capital</span><br><%= cl.registered_capital ? formatCurrency(cl.registered_capital) : '—' %></div>
+                  <div class="col-span-2"><span class="text-brand-gray2">Registered Address</span><br><%= show(cl.registered_address) %></div>
+                </div>
+              </div>
+
+              <div>
+                <h4 class="section-title"><i class="fa-solid fa-user-tie"></i>Responsable / Main Contact</h4>
+                <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+                  <div><span class="text-brand-gray2">Name</span><br><%= show(cl.contact_name) %></div>
+                  <div><span class="text-brand-gray2">Title / Role</span><br><%= show(cl.contact_title) %></div>
+                  <div><span class="text-brand-gray2">Phone</span><br><%= show(cl.contact_phone) %></div>
+                  <div><span class="text-brand-gray2">Email</span><br><%= show(cl.contact_email) %></div>
+                </div>
+              </div>
+
+              <div>
+                <h4 class="section-title"><i class="fa-solid fa-building-columns"></i>Bank Account Information</h4>
+                <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+                  <div><span class="text-brand-gray2">Bank Name</span><br><%= show(cl.bank_name) %></div>
+                  <div><span class="text-brand-gray2">RIB</span><br><%= show(cl.bank_rib) %></div>
+                  <div><span class="text-brand-gray2">IBAN</span><br><%= show(cl.bank_iban) %></div>
+                  <div><span class="text-brand-gray2">SWIFT / BIC</span><br><%= show(cl.bank_swift) %></div>
+                </div>
+              </div>
+
+              <div>
+                <h4 class="section-title"><i class="fa-solid fa-circle-info"></i>General / Other</h4>
+                <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+                  <div><span class="text-brand-gray2">Company Phone</span><br><%= show(cl.company_phone) %></div>
+                  <div><span class="text-brand-gray2">Company Email</span><br><%= show(cl.company_email) %></div>
+                  <div><span class="text-brand-gray2">Website</span><br><%= show(cl.website) %></div>
+                  <div><span class="text-brand-gray2">Payment Terms</span><br><%= show(cl.payment_terms) %></div>
+                  <div class="col-span-2"><span class="text-brand-gray2">Billing Address</span><br><%= show(cl.billing_address) %></div>
+                  <div class="col-span-2"><span class="text-brand-gray2">Notes</span><br><%= show(cl.notes) %></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </dialog>
       <% }); %>
     </div>
   <% } %>
@@ -53,5 +120,6 @@
   </div>
 </div>
 <script src="/js/confirm-submit.js?v=<%= assetVersion %>" defer></script>
+<script src="/js/dialog-toggle.js?v=<%= assetVersion %>" defer></script>
 
 <%- include('../partials/foot') %>

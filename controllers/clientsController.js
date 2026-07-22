@@ -6,6 +6,42 @@ function parseActiveFilter(value) {
   return undefined;
 }
 
+// All the enterprise/contact/bank/general fields are optional free text -
+// this just trims each one down to null-if-empty, and validates the one
+// field (registeredCapital) that isn't a plain string.
+function extractExtendedFields(body) {
+  const trim = (value) => {
+    const v = (value || '').trim();
+    return v || null;
+  };
+
+  return {
+    ice: trim(body.ice),
+    rc: trim(body.rc),
+    rcCity: trim(body.rcCity),
+    patente: trim(body.patente),
+    taxIdentifier: trim(body.taxIdentifier),
+    cnssNumber: trim(body.cnssNumber),
+    legalForm: trim(body.legalForm),
+    registeredCapital: body.registeredCapital ? Number(body.registeredCapital) : null,
+    registeredAddress: trim(body.registeredAddress),
+    contactName: trim(body.contactName),
+    contactTitle: trim(body.contactTitle),
+    contactPhone: trim(body.contactPhone),
+    contactEmail: trim(body.contactEmail),
+    bankName: trim(body.bankName),
+    bankRib: trim(body.bankRib),
+    bankIban: trim(body.bankIban),
+    bankSwift: trim(body.bankSwift),
+    companyPhone: trim(body.companyPhone),
+    companyEmail: trim(body.companyEmail),
+    website: trim(body.website),
+    billingAddress: trim(body.billingAddress),
+    paymentTerms: trim(body.paymentTerms),
+    notes: trim(body.notes)
+  };
+}
+
 async function list(req, res) {
   const activeFilter = parseActiveFilter(req.query.active);
   const clients = await clientModel.list(activeFilter);
@@ -18,10 +54,19 @@ function showCreateForm(req, res) {
 
 async function handleCreate(req, res) {
   const name = (req.body.name || '').trim();
-  if (!name) {
-    return res.status(400).render('clients/form', { mode: 'create', clientRow: { name }, errors: ['Name is required.'] });
+  const extended = extractExtendedFields(req.body);
+
+  const errors = [];
+  if (!name) errors.push('Name is required.');
+  if (req.body.registeredCapital && (!Number.isFinite(extended.registeredCapital) || extended.registeredCapital < 0)) {
+    errors.push('Registered capital must be a non-negative number.');
   }
-  const id = await clientModel.create({ name });
+
+  if (errors.length) {
+    return res.status(400).render('clients/form', { mode: 'create', clientRow: { name, ...extended }, errors });
+  }
+
+  const id = await clientModel.create({ name, ...extended });
   req.flash('success', `Client "${name}" created.`);
   res.redirect('/clients');
 }
@@ -39,11 +84,21 @@ async function handleUpdate(req, res) {
   if (!client) {
     return res.status(404).render('error', { message: 'Client not found.' });
   }
+
   const name = (req.body.name || '').trim();
-  if (!name) {
-    return res.status(400).render('clients/form', { mode: 'edit', clientRow: { ...client, name }, errors: ['Name is required.'] });
+  const extended = extractExtendedFields(req.body);
+
+  const errors = [];
+  if (!name) errors.push('Name is required.');
+  if (req.body.registeredCapital && (!Number.isFinite(extended.registeredCapital) || extended.registeredCapital < 0)) {
+    errors.push('Registered capital must be a non-negative number.');
   }
-  await clientModel.update(client.id, { name });
+
+  if (errors.length) {
+    return res.status(400).render('clients/form', { mode: 'edit', clientRow: { ...client, name, ...extended }, errors });
+  }
+
+  await clientModel.update(client.id, { name, ...extended });
   req.flash('success', 'Client updated.');
   res.redirect('/clients');
 }

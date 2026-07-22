@@ -4,7 +4,19 @@
   <div class="flex-1 flex flex-col min-w-0">
     <%- include('../partials/topbar', { title: mode === 'create' ? 'New Client' : 'Edit Client' }) %>
     <%- include('../partials/flash') %>
-    <div class="max-w-lg mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
+    <div class="max-w-3xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
+<%
+  // clientRow is either null (new form), a raw DB row (snake_case columns,
+  // GET edit), or a reconstructed object from a failed validation POST
+  // (camelCase keys, matching extractExtendedFields in the controller) -
+  // this checks both shapes so the same markup works for all three.
+  function val(camelKey, snakeKey) {
+    if (!clientRow) return '';
+    if (clientRow[camelKey] !== undefined && clientRow[camelKey] !== null) return clientRow[camelKey];
+    if (clientRow[snakeKey] !== undefined && clientRow[snakeKey] !== null) return clientRow[snakeKey];
+    return '';
+  }
+%>
   <h1 class="text-lg sm:text-xl font-bold mb-6 flex items-center gap-3">
     <div class="icon-circle-accent"><i class="fa-solid <%= mode === 'create' ? 'fa-plus' : 'fa-pen' %>"></i></div>
     <%= mode === 'create' ? 'New Client' : 'Edit Client' %>
@@ -16,18 +28,137 @@
     </div>
   <% } %>
 
-  <div class="card p-5 sm:p-6">
-    <form action="<%= mode === 'create' ? '/clients' : '/clients/' + clientRow.id %>" method="POST" class="space-y-4">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <form action="<%= mode === 'create' ? '/clients' : '/clients/' + clientRow.id %>" method="POST" class="space-y-4">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="card p-5 sm:p-6">
+      <h2 class="section-title"><i class="fa-solid fa-building"></i>Basic Info</h2>
       <div>
         <label class="field-label" for="name">Client name</label>
         <input class="field-input" type="text" id="name" name="name" value="<%= clientRow ? clientRow.name : '' %>" required autofocus>
       </div>
-      <button type="submit" class="btn-primary w-full sm:w-auto">
-        <i class="fa-solid fa-check"></i><%= mode === 'create' ? 'Create Client' : 'Save Changes' %>
-      </button>
-    </form>
-  </div>
+    </div>
+
+    <div class="card p-5 sm:p-6">
+      <h2 class="section-title"><i class="fa-solid fa-stamp"></i>Enterprise / Legal Identification</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="field-label" for="ice">ICE</label>
+          <input class="field-input" type="text" id="ice" name="ice" value="<%= val('ice', 'ice') %>">
+        </div>
+        <div>
+          <label class="field-label" for="rc">RC (Registre de Commerce)</label>
+          <input class="field-input" type="text" id="rc" name="rc" value="<%= val('rc', 'rc') %>">
+        </div>
+        <div>
+          <label class="field-label" for="rcCity">RC City</label>
+          <input class="field-input" type="text" id="rcCity" name="rcCity" value="<%= val('rcCity', 'rc_city') %>">
+        </div>
+        <div>
+          <label class="field-label" for="patente">Patente</label>
+          <input class="field-input" type="text" id="patente" name="patente" value="<%= val('patente', 'patente') %>">
+        </div>
+        <div>
+          <label class="field-label" for="taxIdentifier">IF (Identifiant Fiscal)</label>
+          <input class="field-input" type="text" id="taxIdentifier" name="taxIdentifier" value="<%= val('taxIdentifier', 'tax_identifier') %>">
+        </div>
+        <div>
+          <label class="field-label" for="cnssNumber">CNSS Number</label>
+          <input class="field-input" type="text" id="cnssNumber" name="cnssNumber" value="<%= val('cnssNumber', 'cnss_number') %>">
+        </div>
+        <div>
+          <label class="field-label" for="legalForm">Legal Form</label>
+          <input class="field-input" type="text" id="legalForm" name="legalForm" placeholder="SARL, SA, SARL AU..." value="<%= val('legalForm', 'legal_form') %>">
+        </div>
+        <div>
+          <label class="field-label" for="registeredCapital">Registered Capital (MAD)</label>
+          <input class="field-input" type="number" step="0.01" min="0" id="registeredCapital" name="registeredCapital" value="<%= val('registeredCapital', 'registered_capital') %>">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="field-label" for="registeredAddress">Registered Address (Si&egrave;ge Social)</label>
+          <input class="field-input" type="text" id="registeredAddress" name="registeredAddress" value="<%= val('registeredAddress', 'registered_address') %>">
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-5 sm:p-6">
+      <h2 class="section-title"><i class="fa-solid fa-user-tie"></i>Responsable / Main Contact</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="field-label" for="contactName">Contact Name</label>
+          <input class="field-input" type="text" id="contactName" name="contactName" value="<%= val('contactName', 'contact_name') %>">
+        </div>
+        <div>
+          <label class="field-label" for="contactTitle">Contact Title / Role</label>
+          <input class="field-input" type="text" id="contactTitle" name="contactTitle" value="<%= val('contactTitle', 'contact_title') %>">
+        </div>
+        <div>
+          <label class="field-label" for="contactPhone">Contact Phone</label>
+          <input class="field-input" type="text" id="contactPhone" name="contactPhone" value="<%= val('contactPhone', 'contact_phone') %>">
+        </div>
+        <div>
+          <label class="field-label" for="contactEmail">Contact Email</label>
+          <input class="field-input" type="email" id="contactEmail" name="contactEmail" value="<%= val('contactEmail', 'contact_email') %>">
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-5 sm:p-6">
+      <h2 class="section-title"><i class="fa-solid fa-building-columns"></i>Bank Account Information</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="field-label" for="bankName">Bank Name</label>
+          <input class="field-input" type="text" id="bankName" name="bankName" value="<%= val('bankName', 'bank_name') %>">
+        </div>
+        <div>
+          <label class="field-label" for="bankRib">RIB</label>
+          <input class="field-input" type="text" id="bankRib" name="bankRib" maxlength="24" value="<%= val('bankRib', 'bank_rib') %>">
+        </div>
+        <div>
+          <label class="field-label" for="bankIban">IBAN</label>
+          <input class="field-input" type="text" id="bankIban" name="bankIban" maxlength="34" value="<%= val('bankIban', 'bank_iban') %>">
+        </div>
+        <div>
+          <label class="field-label" for="bankSwift">SWIFT / BIC</label>
+          <input class="field-input" type="text" id="bankSwift" name="bankSwift" maxlength="11" value="<%= val('bankSwift', 'bank_swift') %>">
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-5 sm:p-6">
+      <h2 class="section-title"><i class="fa-solid fa-circle-info"></i>General / Other</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="field-label" for="companyPhone">Company Phone</label>
+          <input class="field-input" type="text" id="companyPhone" name="companyPhone" value="<%= val('companyPhone', 'company_phone') %>">
+        </div>
+        <div>
+          <label class="field-label" for="companyEmail">Company Email</label>
+          <input class="field-input" type="email" id="companyEmail" name="companyEmail" value="<%= val('companyEmail', 'company_email') %>">
+        </div>
+        <div>
+          <label class="field-label" for="website">Website</label>
+          <input class="field-input" type="text" id="website" name="website" placeholder="https://..." value="<%= val('website', 'website') %>">
+        </div>
+        <div>
+          <label class="field-label" for="paymentTerms">Payment Terms</label>
+          <input class="field-input" type="text" id="paymentTerms" name="paymentTerms" placeholder="Net 30..." value="<%= val('paymentTerms', 'payment_terms') %>">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="field-label" for="billingAddress">Billing Address</label>
+          <input class="field-input" type="text" id="billingAddress" name="billingAddress" value="<%= val('billingAddress', 'billing_address') %>">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="field-label" for="notes">Notes</label>
+          <textarea class="field-input" id="notes" name="notes" rows="3"><%= val('notes', 'notes') %></textarea>
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn-primary w-full sm:w-auto">
+      <i class="fa-solid fa-check"></i><%= mode === 'create' ? 'Create Client' : 'Save Changes' %>
+    </button>
+  </form>
     </div>
   </div>
 </div>

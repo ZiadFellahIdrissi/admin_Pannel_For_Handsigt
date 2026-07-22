@@ -24,16 +24,59 @@ async function findById(id) {
   return rows[0] || null;
 }
 
-async function create({ name }) {
+async function create({
+  name,
+  ice, rc, rcCity, patente, taxIdentifier, cnssNumber, legalForm, registeredCapital, registeredAddress,
+  contactName, contactTitle, contactPhone, contactEmail,
+  bankName, bankRib, bankIban, bankSwift,
+  companyPhone, companyEmail, website, billingAddress, paymentTerms, notes
+}) {
   const [result] = await pool.query(
-    'INSERT INTO clients (name, active) VALUES (?, 1)',
-    [name]
+    `INSERT INTO clients (
+       name, active,
+       ice, rc, rc_city, patente, tax_identifier, cnss_number, legal_form, registered_capital, registered_address,
+       contact_name, contact_title, contact_phone, contact_email,
+       bank_name, bank_rib, bank_iban, bank_swift,
+       company_phone, company_email, website, billing_address, payment_terms, notes
+     ) VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      name,
+      ice || null, rc || null, rcCity || null, patente || null, taxIdentifier || null, cnssNumber || null,
+      legalForm || null, registeredCapital || null, registeredAddress || null,
+      contactName || null, contactTitle || null, contactPhone || null, contactEmail || null,
+      bankName || null, bankRib || null, bankIban || null, bankSwift || null,
+      companyPhone || null, companyEmail || null, website || null, billingAddress || null, paymentTerms || null, notes || null
+    ]
   );
   return result.insertId;
 }
 
-async function update(id, { name }) {
-  await pool.query('UPDATE clients SET name = ? WHERE id = ?', [name, id]);
+async function update(id, {
+  name,
+  ice, rc, rcCity, patente, taxIdentifier, cnssNumber, legalForm, registeredCapital, registeredAddress,
+  contactName, contactTitle, contactPhone, contactEmail,
+  bankName, bankRib, bankIban, bankSwift,
+  companyPhone, companyEmail, website, billingAddress, paymentTerms, notes
+}) {
+  await pool.query(
+    `UPDATE clients SET
+       name = ?,
+       ice = ?, rc = ?, rc_city = ?, patente = ?, tax_identifier = ?, cnss_number = ?,
+       legal_form = ?, registered_capital = ?, registered_address = ?,
+       contact_name = ?, contact_title = ?, contact_phone = ?, contact_email = ?,
+       bank_name = ?, bank_rib = ?, bank_iban = ?, bank_swift = ?,
+       company_phone = ?, company_email = ?, website = ?, billing_address = ?, payment_terms = ?, notes = ?
+     WHERE id = ?`,
+    [
+      name,
+      ice || null, rc || null, rcCity || null, patente || null, taxIdentifier || null, cnssNumber || null,
+      legalForm || null, registeredCapital || null, registeredAddress || null,
+      contactName || null, contactTitle || null, contactPhone || null, contactEmail || null,
+      bankName || null, bankRib || null, bankIban || null, bankSwift || null,
+      companyPhone || null, companyEmail || null, website || null, billingAddress || null, paymentTerms || null, notes || null,
+      id
+    ]
+  );
 }
 
 async function setActive(id, active) {
