@@ -221,19 +221,22 @@
     background-color: var(--blue-dim);
     color: var(--blue);
   }
-  .sidebar-group-summary {
-    @apply flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold cursor-pointer select-none transition-colors;
+  /* Static (non-collapsible) section labels in the sidebar - grouping is
+     purely visual, nothing expands/collapses. */
+  .sidebar-section-title {
+    @apply block text-[11px] font-bold uppercase tracking-wider px-3 pt-4 pb-1.5 transition-colors;
+    color: var(--gray-2);
+  }
+  a.sidebar-section-title:hover {
+    color: var(--blue);
+  }
+  .sidebar-sublabel {
+    @apply flex items-center gap-2.5 px-3 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide;
+    color: var(--gray-2);
+  }
+  .sidebar-link-disabled {
+    @apply flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium cursor-not-allowed opacity-50;
     color: var(--text-light);
-  }
-  .sidebar-group-summary:hover {
-    background-color: var(--light);
-    color: var(--text);
-  }
-  .sidebar-chevron {
-    @apply text-[10px] ml-auto transition-transform duration-150;
-  }
-  details[open] > .sidebar-group-summary .sidebar-chevron {
-    transform: rotate(180deg);
   }
 
   /* Notification bell dropdown in the topbar */
@@ -243,6 +246,17 @@
   }
   .notif-item:hover {
     background-color: var(--light);
+  }
+
+  /* Native <dialog> panels (submission details, etc.) */
+  .dialog-panel {
+    @apply rounded-xl w-[calc(100vw-2rem)] max-w-lg p-0 m-auto;
+    background-color: var(--surface);
+    border: 1px solid var(--border-light);
+    color: var(--text);
+  }
+  dialog::backdrop {
+    background: rgba(15, 23, 42, 0.5);
   }
 }
 

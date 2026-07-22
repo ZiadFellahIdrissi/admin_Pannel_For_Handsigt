@@ -29,12 +29,12 @@ async function findByUsername(username) {
   return rows[0] || null;
 }
 
-async function create({ username, firstName, lastName, email, dailyRate, passwordHash }) {
+async function create({ username, firstName, lastName, email, dailyRate, passwordHash, preferredLanguage }) {
   const [result] = await pool.query(
     `INSERT INTO users
-       (username, password_hash, first_name, last_name, email, daily_rate, must_change_password, active)
-     VALUES (?, ?, ?, ?, ?, ?, 1, 1)`,
-    [username, passwordHash, firstName, lastName, email, dailyRate]
+       (username, password_hash, first_name, last_name, email, daily_rate, preferred_language, must_change_password, active)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1)`,
+    [username, passwordHash, firstName, lastName, email, dailyRate, preferredLanguage || 'en']
   );
   return result.insertId;
 }

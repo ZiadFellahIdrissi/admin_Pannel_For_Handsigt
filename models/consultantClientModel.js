@@ -52,4 +52,25 @@ async function detach(userId, clientId) {
   );
 }
 
-module.exports = { listForConsultant, listUnattachedForConsultant, exists, attach, detach };
+// Attaches several clients in one action (checkbox multi-select in the
+// UI). Reuses the same exists()-before-insert pre-check as attach() so a
+// client already attached is silently skipped instead of erroring, and
+// the caller gets a clean count for a single flash message.
+async function attachMany(userId, clientIds) {
+  let attachedCount = 0;
+  let skippedCount = 0;
+
+  for (const clientId of clientIds) {
+    const alreadyAttached = await exists(userId, clientId);
+    if (alreadyAttached) {
+      skippedCount += 1;
+    } else {
+      await attach(userId, clientId);
+      attachedCount += 1;
+    }
+  }
+
+  return { attachedCount, skippedCount };
+}
+
+module.exports = { listForConsultant, listUnattachedForConsultant, exists, attach, attachMany, detach };

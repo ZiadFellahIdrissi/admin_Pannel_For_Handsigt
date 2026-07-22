@@ -54,6 +54,9 @@
               </div>
             </div>
             <div class="flex items-center gap-2 shrink-0">
+              <button type="button" class="btn-secondary text-sm !px-3 !py-1.5" data-dialog-open="details-<%= p.id %>">
+                <i class="fa-solid fa-eye"></i>View Details
+              </button>
               <form action="/approvals/<%= p.id %>/approve" method="POST">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <button type="submit" class="btn-primary text-sm !px-3 !py-1.5"><i class="fa-solid fa-check"></i>Approve</button>
@@ -73,11 +76,55 @@
             </div>
           </div>
         </div>
+
+        <dialog id="details-<%= p.id %>" class="dialog-panel">
+          <div class="p-5 sm:p-6">
+            <div class="flex items-center justify-between gap-3 mb-4">
+              <h3 class="font-bold"><%= p.consultant_name %> &middot; <%= p.client_name %> &middot; <%= monthLabel(p.month) %></h3>
+              <button type="button" class="theme-toggle" data-dialog-close aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <% var entries = entriesBySubmission.get(p.id) || []; %>
+            <% if (entries.length === 0) { %>
+              <p class="text-sm text-brand-gray2">No days recorded.</p>
+            <% } else { %>
+              <div class="max-h-80 overflow-y-auto rounded-lg border border-brand-borderLight">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="text-left text-xs font-semibold uppercase tracking-wide text-brand-gray2 border-b border-brand-borderLight">
+                      <th class="px-3 py-2">Date</th>
+                      <th class="px-3 py-2">Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% entries.forEach(function(entry) {
+                      var labels = { 0.5: 'Half day', 1: 'Full day', 1.5: 'Late day', 2: 'Holiday (double)' };
+                      var label = labels[Number(entry.value)] || entry.value;
+                    %>
+                      <tr class="border-b border-brand-borderLight last:border-0">
+                        <td class="px-3 py-2"><%= entry.work_date %></td>
+                        <td class="px-3 py-2"><%= Number(entry.value) %> &middot; <span class="text-brand-gray2"><%= label %></span></td>
+                      </tr>
+                    <% }); %>
+                  </tbody>
+                </table>
+              </div>
+            <% } %>
+
+            <div class="flex items-center justify-between mt-4 pt-4 border-t border-brand-borderLight text-sm">
+              <span class="font-semibold"><%= p.total_days %> days</span>
+              <span class="font-semibold"><%= formatCurrency(p.total_earnings) %></span>
+            </div>
+          </div>
+        </dialog>
       <% }); %>
     </div>
   <% } %>
     </div>
   </div>
 </div>
+<script src="/js/dialog-toggle.js?v=<%= assetVersion %>" defer></script>
 
 <%- include('../partials/foot') %>

@@ -53,18 +53,18 @@
     <% } %>
 
     <% if (unattachedClients.length > 0) { %>
-      <form action="/consultants/<%= consultant.id %>/clients" method="POST" class="flex items-end gap-3 flex-wrap">
+      <form action="/consultants/<%= consultant.id %>/clients" method="POST">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <div class="flex-1 min-w-[200px]">
-          <label class="field-label" for="clientId">Attach a client</label>
-          <select class="field-input" id="clientId" name="clientId" required>
-            <option value="">Choose a client&hellip;</option>
-            <% unattachedClients.forEach(function(cl) { %>
-              <option value="<%= cl.id %>"><%= cl.name %></option>
-            <% }); %>
-          </select>
+        <label class="field-label">Attach clients</label>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+          <% unattachedClients.forEach(function(cl) { %>
+            <label class="flex items-center gap-2 rounded-lg border border-brand-borderLight px-3 py-2 text-sm cursor-pointer hover:border-brand-accent">
+              <input type="checkbox" name="clientIds" value="<%= cl.id %>" class="rounded">
+              <%= cl.name %>
+            </label>
+          <% }); %>
         </div>
-        <button type="submit" class="btn-secondary"><i class="fa-solid fa-link"></i>Attach</button>
+        <button type="submit" class="btn-secondary"><i class="fa-solid fa-link"></i>Attach Selected</button>
       </form>
     <% } %>
   </div>

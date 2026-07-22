@@ -55,6 +55,14 @@
 
       <% if (mode === 'create') { %>
         <div>
+          <label class="field-label" for="preferredLanguage">Preferred language</label>
+          <select class="field-input" id="preferredLanguage" name="preferredLanguage">
+            <option value="en" <%= (!consultant || consultant.preferred_language !== 'fr') ? 'selected' : '' %>>English</option>
+            <option value="fr" <%= (consultant && consultant.preferred_language === 'fr') ? 'selected' : '' %>>Français</option>
+          </select>
+        </div>
+
+        <div>
           <label class="field-label" for="tempPassword">Temporary password</label>
           <input class="field-input" type="text" id="tempPassword" name="tempPassword" minlength="8" required>
           <p class="text-xs text-brand-gray2 mt-1">The consultant will be asked to choose their own password on first login.</p>

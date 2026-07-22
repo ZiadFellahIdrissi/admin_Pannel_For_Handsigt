@@ -1,8 +1,10 @@
 const monthSubmissionModel = require('../models/monthSubmissionModel');
+const dailyEntryModel = require('../models/dailyEntryModel');
 
 async function list(req, res) {
   const pending = await monthSubmissionModel.listPending();
-  res.render('approvals/list', { pending });
+  const entriesBySubmission = await dailyEntryModel.listForSubmissions(pending.map((p) => p.id));
+  res.render('approvals/list', { pending, entriesBySubmission });
 }
 
 async function handleApprove(req, res) {

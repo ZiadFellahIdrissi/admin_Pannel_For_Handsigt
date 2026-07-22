@@ -4,6 +4,7 @@ const consultantClientModel = require('../models/consultantClientModel');
 const monthSubmissionModel = require('../models/monthSubmissionModel');
 
 const BCRYPT_ROUNDS = 12;
+const VALID_LANGUAGES = ['en', 'fr'];
 
 function parseActiveFilter(value) {
   if (value === '1') return 1;
@@ -31,6 +32,7 @@ async function handleCreate(req, res) {
   const email = (req.body.email || '').trim();
   const dailyRate = Number(req.body.dailyRate);
   const tempPassword = req.body.tempPassword || '';
+  const preferredLanguage = VALID_LANGUAGES.includes(req.body.preferredLanguage) ? req.body.preferredLanguage : 'en';
 
   const errors = [];
   if (!username) errors.push('Username is required.');
@@ -48,13 +50,13 @@ async function handleCreate(req, res) {
   if (errors.length) {
     return res.status(400).render('consultants/form', {
       mode: 'create',
-      consultant: { username, first_name: firstName, last_name: lastName, email, daily_rate: dailyRate },
+      consultant: { username, first_name: firstName, last_name: lastName, email, daily_rate: dailyRate, preferred_language: preferredLanguage },
       errors
     });
   }
 
   const passwordHash = await bcrypt.hash(tempPassword, BCRYPT_ROUNDS);
-  const id = await userModel.create({ username, firstName, lastName, email, dailyRate, passwordHash });
+  const id = await userModel.create({ username, firstName, lastName, email, dailyRate, passwordHash, preferredLanguage });
 
   req.flash('success', `Consultant "${firstName} ${lastName}" created.`);
   res.redirect(`/consultants/${id}`);
@@ -138,23 +140,28 @@ async function handleResetPassword(req, res) {
   res.redirect(`/consultants/${consultant.id}/edit`);
 }
 
-async function handleAttachClient(req, res) {
+async function handleAttachClients(req, res) {
   const userId = Number(req.params.id);
-  const clientId = Number(req.body.clientId);
+  // Checkbox multi-select: a single checked box arrives as a plain string,
+  // several as an array - normalize to an array either way.
+  const rawClientIds = req.body.clientIds;
+  const clientIds = (Array.isArray(rawClientIds) ? rawClientIds : rawClientIds ? [rawClientIds] : [])
+    .map(Number)
+    .filter((id) => Number.isInteger(id) && id > 0);
 
-  if (!clientId) {
-    req.flash('error', 'Choose a client to attach.');
+  if (clientIds.length === 0) {
+    req.flash('error', 'Choose at least one client to attach.');
     return res.redirect(`/consultants/${userId}`);
   }
 
-  const alreadyAttached = await consultantClientModel.exists(userId, clientId);
-  if (alreadyAttached) {
-    req.flash('error', 'That client is already attached to this consultant.');
-    return res.redirect(`/consultants/${userId}`);
-  }
+  const { attachedCount, skippedCount } = await consultantClientModel.attachMany(userId, clientIds);
 
-  await consultantClientModel.attach(userId, clientId);
-  req.flash('success', 'Client attached.');
+  if (attachedCount === 0) {
+    req.flash('error', 'Those client(s) were already attached to this consultant.');
+  } else {
+    const suffix = skippedCount > 0 ? ` (${skippedCount} already attached, skipped)` : '';
+    req.flash('success', `Attached ${attachedCount} client${attachedCount === 1 ? '' : 's'}${suffix}.`);
+  }
   res.redirect(`/consultants/${userId}`);
 }
 
@@ -175,6 +182,6 @@ module.exports = {
   showEditForm,
   handleUpdate,
   handleResetPassword,
-  handleAttachClient,
+  handleAttachClients,
   handleDetachClient
 };
