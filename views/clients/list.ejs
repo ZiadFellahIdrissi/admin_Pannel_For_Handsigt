@@ -21,7 +21,7 @@
     <a href="/clients?active=all" class="btn-secondary <%= activeFilter === 'all' ? '!border-brand-accent !text-brand-accent' : '' %>">All</a>
   </div>
 
-  <p class="text-xs text-brand-gray2 mb-4">Clients can't be deleted, only deactivated, to preserve historical submissions.</p>
+  <p class="text-xs text-brand-gray2 mb-4">A client attached to any consultant or with submission history can only be deactivated, not deleted - this preserves that history.</p>
 
   <% if (clients.length === 0) { %>
     <div class="card p-8 text-center">
@@ -40,6 +40,10 @@
               <input type="hidden" name="_csrf" value="<%= csrfToken %>">
               <button type="submit" class="btn-secondary text-sm"><%= cl.active ? 'Deactivate' : 'Activate' %></button>
             </form>
+            <form action="/clients/<%= cl.id %>/delete" method="POST" data-confirm="Delete &quot;<%= cl.name %>&quot;? This can't be undone.">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn-danger text-sm"><i class="fa-solid fa-trash"></i></button>
+            </form>
           </div>
         </div>
       <% }); %>
@@ -48,5 +52,6 @@
     </div>
   </div>
 </div>
+<script src="/js/confirm-submit.js?v=<%= assetVersion %>" defer></script>
 
 <%- include('../partials/foot') %>

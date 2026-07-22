@@ -13,5 +13,6 @@ router.post('/clients', verifyToken, asyncHandler(clientsController.handleCreate
 router.get('/clients/:id/edit', asyncHandler(clientsController.showEditForm));
 router.post('/clients/:id', verifyToken, asyncHandler(clientsController.handleUpdate));
 router.post('/clients/:id/toggle-active', verifyToken, asyncHandler(clientsController.handleToggleActive));
+router.post('/clients/:id/delete', verifyToken, asyncHandler(clientsController.handleDelete));
 
 module.exports = router;

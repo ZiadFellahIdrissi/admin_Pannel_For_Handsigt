@@ -58,4 +58,25 @@ async function handleToggleActive(req, res) {
   res.redirect('/clients');
 }
 
-module.exports = { list, showCreateForm, handleCreate, showEditForm, handleUpdate, handleToggleActive };
+async function handleDelete(req, res) {
+  const client = await clientModel.findById(req.params.id);
+  if (!client) {
+    return res.status(404).render('error', { message: 'Client not found.' });
+  }
+
+  const [hasAttachments, hasSubmissions] = await Promise.all([
+    clientModel.hasAnyAttachments(client.id),
+    clientModel.hasAnySubmissions(client.id)
+  ]);
+
+  if (hasAttachments || hasSubmissions) {
+    req.flash('error', `"${client.name}" can't be deleted - it's attached to at least one consultant or has submission history. Deactivate it instead.`);
+    return res.redirect('/clients');
+  }
+
+  await clientModel.remove(client.id);
+  req.flash('success', `Client "${client.name}" deleted.`);
+  res.redirect('/clients');
+}
+
+module.exports = { list, showCreateForm, handleCreate, showEditForm, handleUpdate, handleToggleActive, handleDelete };
