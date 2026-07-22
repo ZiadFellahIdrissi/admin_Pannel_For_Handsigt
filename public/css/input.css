@@ -234,6 +234,21 @@
     @apply flex items-center gap-2.5 px-3 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide;
     color: var(--gray-2);
   }
+  /* CRA (Timesheet) is the one sub-group that still opens/closes - a
+     native <details>/<summary>, not JS. */
+  .sidebar-sublabel-toggle {
+    @apply flex items-center gap-2.5 px-3 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide cursor-pointer select-none transition-colors;
+    color: var(--gray-2);
+  }
+  .sidebar-sublabel-toggle:hover {
+    color: var(--text);
+  }
+  .sidebar-sublabel-chevron {
+    @apply text-[10px] ml-auto transition-transform duration-150;
+  }
+  details[open] > .sidebar-sublabel-toggle .sidebar-sublabel-chevron {
+    transform: rotate(180deg);
+  }
   .sidebar-link-disabled {
     @apply flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium cursor-not-allowed opacity-50;
     color: var(--text-light);

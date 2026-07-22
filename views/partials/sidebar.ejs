@@ -28,31 +28,39 @@
         <i class="fa-solid fa-building w-4 text-center"></i>Clients
       </a>
 
-      <div class="sidebar-sublabel">
-        <i class="fa-solid fa-file-invoice w-4 text-center"></i>CRA (Timesheet)
-      </div>
-      <a href="/approvals" class="<%= isApprovals ? 'sidebar-link-active' : 'sidebar-link' %>">
-        <i class="fa-solid fa-clipboard-check w-4 text-center"></i>Approval Queue
-        <% if (notificationCount > 0) { %><span class="badge-pending !py-0.5 !px-2 ml-auto"><%= notificationCount %></span><% } %>
-      </a>
-      <a href="/history" class="<%= isHistory ? 'sidebar-link-active' : 'sidebar-link' %>">
-        <i class="fa-solid fa-clock-rotate-left w-4 text-center"></i>History
-      </a>
+      <details <%= (isApprovals || isHistory) ? 'open' : '' %>>
+        <summary class="sidebar-sublabel-toggle list-none">
+          <i class="fa-solid fa-file-invoice w-4 text-center"></i>CRA (Timesheet)
+          <i class="fa-solid fa-chevron-down sidebar-sublabel-chevron"></i>
+        </summary>
+        <div class="space-y-1 mt-1">
+          <a href="/approvals" class="<%= isApprovals ? 'sidebar-link-active' : 'sidebar-link' %>">
+            <i class="fa-solid fa-clipboard-check w-4 text-center"></i>Approval Queue
+            <% if (notificationCount > 0) { %><span class="badge-pending !py-0.5 !px-2 ml-auto"><%= notificationCount %></span><% } %>
+          </a>
+          <a href="/history" class="<%= isHistory ? 'sidebar-link-active' : 'sidebar-link' %>">
+            <i class="fa-solid fa-clock-rotate-left w-4 text-center"></i>History
+          </a>
+        </div>
+      </details>
+    </div>
 
+    <div class="sidebar-section-title">Security</div>
+    <div class="space-y-1">
       <a href="/login-attempts" class="<%= isLoginAttempts ? 'sidebar-link-active' : 'sidebar-link' %>">
         <i class="fa-solid fa-shield-halved w-4 text-center"></i>Login Attempts
       </a>
     </div>
 
-    <div class="sidebar-section-title">Facturation</div>
+    <div class="sidebar-section-title">Billing</div>
     <div class="sidebar-link-disabled">
       <i class="fa-solid fa-file-invoice-dollar w-4 text-center"></i>Invoicing
       <span class="badge-draft !py-0.5 !px-2 ml-auto">Soon</span>
     </div>
 
-    <div class="sidebar-section-title">Trésorerie</div>
+    <div class="sidebar-section-title">Treasury</div>
     <div class="sidebar-link-disabled">
-      <i class="fa-solid fa-building-columns w-4 text-center"></i>Treasury
+      <i class="fa-solid fa-building-columns w-4 text-center"></i>Cash &amp; Accounts
       <span class="badge-draft !py-0.5 !px-2 ml-auto">Soon</span>
     </div>
 
