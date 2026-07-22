@@ -56,9 +56,9 @@
       <form action="/consultants/<%= consultant.id %>/clients" method="POST">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <label class="field-label" for="client-search">Attach clients</label>
-        <input type="text" id="client-search" class="field-input mb-2" placeholder="Search clients&hellip;"
+        <input type="text" id="client-search" class="field-input mb-2" placeholder="Start typing to search clients&hellip;"
                data-client-search-input="client-checklist" autocomplete="off">
-        <div id="client-checklist" class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+        <div id="client-checklist" class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3" style="display: none;">
           <% unattachedClients.forEach(function(cl) { %>
             <label class="flex items-center gap-2 rounded-lg border border-brand-borderLight px-3 py-2 text-sm cursor-pointer hover:border-brand-accent" data-client-search-item>
               <input type="checkbox" name="clientIds" value="<%= cl.id %>" class="rounded">
