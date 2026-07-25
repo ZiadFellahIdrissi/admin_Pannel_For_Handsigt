@@ -38,7 +38,6 @@
             </div>
           </a>
           <div class="flex items-center gap-2 shrink-0">
-            <span class="text-sm font-semibold"><%= formatCurrency(c.daily_rate) %></span>
             <span class="<%= c.active ? 'badge-approved' : 'badge-draft' %>"><%= c.active ? 'Active' : 'Inactive' %></span>
             <a href="/consultants/<%= c.id %>/edit" class="btn-secondary text-sm"><i class="fa-solid fa-pen"></i></a>
             <form action="/consultants/<%= c.id %>/toggle-active" method="POST">

@@ -114,6 +114,17 @@ UPDATE month_submissions ms
  WHERE ms.consultant_tjm IS NULL;
 
 -- ---------------------------------------------------------------------
+-- OPTIONAL, DO NOT RUN YET - `users.daily_rate` is being retired in
+-- favor of per-(consultant, client) TJM above. The Admin Panel no longer
+-- reads or writes this column anywhere. DO NOT run this DROP until the
+-- Consultant Dashboard has ALSO been updated to stop reading it (see
+-- HANDOFF_TJM_SNAPSHOT.md) - it still uses `users.daily_rate` directly
+-- today (calendar view, dashboard stats) and WILL throw SQL errors the
+-- moment this column disappears if that hasn't shipped yet.
+-- ---------------------------------------------------------------------
+-- ALTER TABLE users DROP COLUMN daily_rate;
+
+-- ---------------------------------------------------------------------
 -- MySQL user privileges (set up in hPanel, not by this script):
 -- The Admin Panel's dedicated DB user needs SELECT/INSERT/UPDATE/DELETE
 -- on: admins, admin_sessions, users, clients, consultant_clients,

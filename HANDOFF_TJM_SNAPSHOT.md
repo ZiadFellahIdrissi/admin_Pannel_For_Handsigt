@@ -1,9 +1,20 @@
-# Handoff: per-(consultant, client) TJM snapshot for the Consultant Dashboard
+# Handoff: per-(consultant, client) TJM, and the removal of `users.daily_rate`
 
 This is for whoever (or whichever Claude Code session) next works on the
-**Consultant Dashboard** repo (`Consultant Dashboard/`, not this one). The
-Admin Panel side of this change is already done; this document is the only
-thing left to make the whole system consistent.
+**Consultant Dashboard** repo (`Consultant Dashboard/`, not this one).
+
+**Update / escalation:** this started as an additive change (new TJM
+columns, `users.daily_rate` kept as a fallback). The user has since decided
+to **drop `users.daily_rate` from the database entirely** — it will stop
+existing, not just stop being the primary source. The Admin Panel side has
+already been fully updated to not reference it anywhere. **This repo (the
+Consultant Dashboard) has NOT been updated yet, and it still reads
+`users.daily_rate` directly in several places — once that column is
+dropped, this app WILL throw SQL errors ("Unknown column 'daily_rate'")
+wherever it does.** This is no longer a "nice to have later" — it needs to
+happen before (or in lockstep with) the column actually being dropped.
+Confirm with the user whether the column has already been dropped or not
+before you start; if it has, expect broken pages until this is fixed.
 
 ## What changed, and why
 
@@ -14,7 +25,7 @@ and there are actually **two** rates per (consultant, client) pairing:
 what Handsight pays the consultant (cost) and what Handsight bills the
 client (revenue). The gap is Handsight's margin.
 
-Two new nullable columns were added (migration already run against the
+Two new nullable columns exist now (migration already run against the
 shared database — nothing for this repo to do schema-wise):
 
 - **`consultant_clients.consultant_tjm`** / **`consultant_clients.client_tjm`**
@@ -27,13 +38,9 @@ shared database — nothing for this repo to do schema-wise):
   payout/billing figures — important for anything that feeds invoices or
   payroll.
 
-`users.daily_rate` still exists and is untouched — it's the fallback the
-Admin Panel's queries use (`COALESCE(ms.consultant_tjm, u.daily_rate)`)
-for any submission that doesn't have its own snapshot yet, which right
-now is *every* submission this app creates, since it doesn't populate
-these columns.
+## Required changes in this repo
 
-## The one required change
+### 1. Populate the snapshot when a submission is created
 
 Wherever this app creates a new `month_submissions` row — currently
 `models/monthSubmissionModel.js`:
@@ -51,7 +58,7 @@ async function create({ userId, clientId, month }) {
 
 — it needs to look up the current `consultant_clients.consultant_tjm` /
 `client_tjm` for that `(userId, clientId)` pair and copy them into the
-new row at creation time. Something like:
+new row at creation time:
 
 ```js
 async function create({ userId, clientId, month }) {
@@ -69,30 +76,35 @@ async function create({ userId, clientId, month }) {
 }
 ```
 
-If `consultant_clients` doesn't have rates set yet for that pairing (the
-admin hasn't gotten to it), both snapshot columns just land `NULL` — that's
-fine, the Admin Panel's queries already fall back to `users.daily_rate` for
-`consultant_tjm` when it's null, and treat `client_tjm` as unbilled (0)
-until it's set.
+If the admin hasn't set rates yet for that pairing, both snapshot columns
+just land `NULL` — treat that as "unknown," not an error (same convention
+the Admin Panel uses: `COALESCE(consultant_tjm, 0)`).
 
-That's the only required change. Everything else keeps working exactly as
-it does today.
+### 2. Remove every remaining read of `users.daily_rate`
 
-## Recommended follow-up (not required immediately)
+Once the column is dropped, any query selecting or referencing
+`daily_rate` on `users` will error. Search this repo for `daily_rate` and
+`dailyRate` and fix each site to use the submission's own `consultant_tjm`
+instead (falling back to `0`/"not set" if it's `NULL`, not to
+`users.daily_rate` — that column won't exist to fall back to). Known
+locations as of this handoff (grep to confirm you got all of them, this
+list may not be exhaustive):
+- `views/calendar.ejs` — the live "estimated earnings" total while filling
+  in a month.
+- Dashboard stats / yearly summary controllers/views that compute
+  earnings from `dailyRate`.
+- `models/userModel.js` and any controller that reads/writes
+  `users.daily_rate` directly (account creation/edit, if this app has its
+  own admin-ish paths — check `controllers/authController.js` and
+  wherever a user's own profile is rendered).
 
-This app's own earnings-estimate displays currently read `users.daily_rate`
-directly:
-- `views/calendar.ejs` (the live "estimated earnings" total while filling
-  in a month)
-- Dashboard stats / yearly summary (wherever `dailyRate` is passed in from
-  `utils/dateHelpers.js`-adjacent controller code)
+### 3. Schema
 
-Once the `create()` change above ships, new submissions will have a real
-`consultant_tjm` snapshot. It'd be worth switching those displays to read
-the relevant submission's `consultant_tjm` (falling back to
-`users.daily_rate` for older submissions that predate this change, same
-pattern as the Admin Panel), so a consultant's own earnings estimate
-matches what the Admin Panel shows for the exact same submission. Not
-urgent — the flat-rate estimate just becomes slightly less accurate for
-consultants who work multiple clients at different rates until this is
-done.
+No migration needed on this side — the Admin Panel owns `sql/schema.sql`
+and already added the TJM columns. The actual `DROP COLUMN daily_rate`
+statement is commented out there, to be run manually once both apps no
+longer reference it. Coordinate with whoever runs that.
+
+That's the full scope. Once both changes above are in, this repo has no
+remaining dependency on `users.daily_rate` and the column can be safely
+dropped.

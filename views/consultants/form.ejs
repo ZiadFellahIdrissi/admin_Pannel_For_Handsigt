@@ -48,11 +48,6 @@
         <input class="field-input" type="email" id="email" name="email" value="<%= consultant ? consultant.email : '' %>" required>
       </div>
 
-      <div>
-        <label class="field-label" for="dailyRate">Daily rate (TJM, MAD)</label>
-        <input class="field-input" type="number" step="0.01" min="0" id="dailyRate" name="dailyRate" value="<%= consultant ? consultant.daily_rate : '0.00' %>" required>
-      </div>
-
       <% if (mode === 'create') { %>
         <div>
           <label class="field-label" for="preferredLanguage">Preferred language</label>

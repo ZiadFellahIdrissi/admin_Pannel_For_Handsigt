@@ -18,7 +18,7 @@
     </a>
   </div>
 
-  <div class="card p-5 sm:p-6 mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+  <div class="card p-5 sm:p-6 mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
     <div>
       <div class="text-brand-gray2 text-xs font-semibold uppercase tracking-wide mb-1">Username</div>
       <div class="font-semibold"><%= consultant.username %></div>
@@ -26,10 +26,6 @@
     <div>
       <div class="text-brand-gray2 text-xs font-semibold uppercase tracking-wide mb-1">Email</div>
       <div class="font-semibold"><%= consultant.email %></div>
-    </div>
-    <div>
-      <div class="text-brand-gray2 text-xs font-semibold uppercase tracking-wide mb-1">Daily rate (TJM)</div>
-      <div class="font-semibold"><%= formatCurrency(consultant.daily_rate) %></div>
     </div>
   </div>
 

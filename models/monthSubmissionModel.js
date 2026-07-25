@@ -12,7 +12,7 @@ async function listPending() {
             CONCAT(u.first_name, ' ', u.last_name) AS consultant_name,
             c.name AS client_name, ms.month, ms.status,
             COALESCE(SUM(de.value), 0) AS total_days,
-            COALESCE(SUM(de.value * COALESCE(ms.consultant_tjm, u.daily_rate)), 0) AS total_payout,
+            COALESCE(SUM(de.value * COALESCE(ms.consultant_tjm, 0)), 0) AS total_payout,
             COALESCE(SUM(de.value * COALESCE(ms.client_tjm, 0)), 0) AS total_billed,
             ms.submitted_at
        FROM month_submissions ms
@@ -50,7 +50,7 @@ async function listHistory({ month, clientId, status } = {}) {
             CONCAT(u.first_name, ' ', u.last_name) AS consultant_name,
             c.name AS client_name, ms.month, ms.status, ms.admin_comment,
             COALESCE(SUM(de.value), 0) AS total_days,
-            COALESCE(SUM(de.value * COALESCE(ms.consultant_tjm, u.daily_rate)), 0) AS total_payout,
+            COALESCE(SUM(de.value * COALESCE(ms.consultant_tjm, 0)), 0) AS total_payout,
             COALESCE(SUM(de.value * COALESCE(ms.client_tjm, 0)), 0) AS total_billed,
             ms.submitted_at, ms.reviewed_at
        FROM month_submissions ms
@@ -70,11 +70,10 @@ async function listForConsultant(userId) {
     `SELECT ms.id, ms.user_id, ms.client_id,
             c.name AS client_name, ms.month, ms.status, ms.admin_comment,
             COALESCE(SUM(de.value), 0) AS total_days,
-            COALESCE(SUM(de.value * COALESCE(ms.consultant_tjm, u.daily_rate)), 0) AS total_payout,
+            COALESCE(SUM(de.value * COALESCE(ms.consultant_tjm, 0)), 0) AS total_payout,
             COALESCE(SUM(de.value * COALESCE(ms.client_tjm, 0)), 0) AS total_billed,
             ms.submitted_at, ms.reviewed_at
        FROM month_submissions ms
-       JOIN users u ON u.id = ms.user_id
        JOIN clients c ON c.id = ms.client_id
        LEFT JOIN daily_entries de ON de.submission_id = ms.id
       WHERE ms.user_id = ?
@@ -96,7 +95,7 @@ async function listRecentActivity(limit = 10) {
             CONCAT(u.first_name, ' ', u.last_name) AS consultant_name,
             c.name AS client_name, ms.month, ms.status,
             COALESCE(SUM(de.value), 0) AS total_days,
-            COALESCE(SUM(de.value * COALESCE(ms.consultant_tjm, u.daily_rate)), 0) AS total_payout,
+            COALESCE(SUM(de.value * COALESCE(ms.consultant_tjm, 0)), 0) AS total_payout,
             COALESCE(SUM(de.value * COALESCE(ms.client_tjm, 0)), 0) AS total_billed,
             ms.submitted_at, ms.reviewed_at,
             COALESCE(ms.reviewed_at, ms.submitted_at, ms.created_at) AS activity_at
@@ -122,7 +121,7 @@ async function approvedSummaryForMonth(month) {
             CONCAT(u.first_name, ' ', u.last_name) AS consultant_name,
             GROUP_CONCAT(DISTINCT c.name ORDER BY c.name SEPARATOR ', ') AS client_names,
             COALESCE(SUM(de.value), 0) AS total_days,
-            COALESCE(SUM(de.value * COALESCE(ms.consultant_tjm, u.daily_rate)), 0) AS total_payout,
+            COALESCE(SUM(de.value * COALESCE(ms.consultant_tjm, 0)), 0) AS total_payout,
             COALESCE(SUM(de.value * COALESCE(ms.client_tjm, 0)), 0) AS total_billed
        FROM month_submissions ms
        JOIN users u ON u.id = ms.user_id
@@ -144,10 +143,9 @@ async function approvedMonthlyTrend(monthsBack = 12) {
   const [rows] = await pool.query(
     `SELECT ms.month,
             COALESCE(SUM(de.value), 0) AS total_days,
-            COALESCE(SUM(de.value * COALESCE(ms.consultant_tjm, u.daily_rate)), 0) AS total_payout,
+            COALESCE(SUM(de.value * COALESCE(ms.consultant_tjm, 0)), 0) AS total_payout,
             COALESCE(SUM(de.value * COALESCE(ms.client_tjm, 0)), 0) AS total_billed
        FROM month_submissions ms
-       JOIN users u ON u.id = ms.user_id
        LEFT JOIN daily_entries de ON de.submission_id = ms.id
       WHERE ms.status = 'approved'
       GROUP BY ms.month

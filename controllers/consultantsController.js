@@ -30,7 +30,6 @@ async function handleCreate(req, res) {
   const lastName = (req.body.lastName || '').trim();
   const username = (req.body.username || '').trim();
   const email = (req.body.email || '').trim();
-  const dailyRate = Number(req.body.dailyRate);
   const tempPassword = req.body.tempPassword || '';
   const preferredLanguage = VALID_LANGUAGES.includes(req.body.preferredLanguage) ? req.body.preferredLanguage : 'en';
 
@@ -39,7 +38,6 @@ async function handleCreate(req, res) {
   if (!firstName) errors.push('First name is required.');
   if (!lastName) errors.push('Last name is required.');
   if (!email) errors.push('Email is required.');
-  if (!Number.isFinite(dailyRate) || dailyRate < 0) errors.push('Daily rate must be a non-negative number.');
   if (!tempPassword || tempPassword.length < 8) errors.push('Temporary password must be at least 8 characters.');
 
   if (username && !errors.length) {
@@ -50,13 +48,13 @@ async function handleCreate(req, res) {
   if (errors.length) {
     return res.status(400).render('consultants/form', {
       mode: 'create',
-      consultant: { username, first_name: firstName, last_name: lastName, email, daily_rate: dailyRate, preferred_language: preferredLanguage },
+      consultant: { username, first_name: firstName, last_name: lastName, email, preferred_language: preferredLanguage },
       errors
     });
   }
 
   const passwordHash = await bcrypt.hash(tempPassword, BCRYPT_ROUNDS);
-  const id = await userModel.create({ username, firstName, lastName, email, dailyRate, passwordHash, preferredLanguage });
+  const id = await userModel.create({ username, firstName, lastName, email, passwordHash, preferredLanguage });
 
   req.flash('success', `Consultant "${firstName} ${lastName}" created.`);
   res.redirect(`/consultants/${id}`);
@@ -91,19 +89,17 @@ async function handleUpdate(req, res) {
   const firstName = (req.body.firstName || '').trim();
   const lastName = (req.body.lastName || '').trim();
   const email = (req.body.email || '').trim();
-  const dailyRate = Number(req.body.dailyRate);
   const active = req.body.active === 'on' || req.body.active === '1';
 
   const errors = [];
   if (!firstName) errors.push('First name is required.');
   if (!lastName) errors.push('Last name is required.');
   if (!email) errors.push('Email is required.');
-  if (!Number.isFinite(dailyRate) || dailyRate < 0) errors.push('Daily rate must be a non-negative number.');
 
   if (errors.length) {
     return res.status(400).render('consultants/form', {
       mode: 'edit',
-      consultant: { ...consultant, first_name: firstName, last_name: lastName, email, daily_rate: dailyRate, active: active ? 1 : 0 },
+      consultant: { ...consultant, first_name: firstName, last_name: lastName, email, active: active ? 1 : 0 },
       errors
     });
   }
@@ -115,7 +111,7 @@ async function handleUpdate(req, res) {
     }
   }
 
-  await userModel.update(consultant.id, { firstName, lastName, email, dailyRate, active });
+  await userModel.update(consultant.id, { firstName, lastName, email, active });
 
   req.flash('success', 'Consultant updated.');
   res.redirect(`/consultants/${consultant.id}`);

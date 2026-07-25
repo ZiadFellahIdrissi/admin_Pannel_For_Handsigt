@@ -29,22 +29,22 @@ async function findByUsername(username) {
   return rows[0] || null;
 }
 
-async function create({ username, firstName, lastName, email, dailyRate, passwordHash, preferredLanguage }) {
+async function create({ username, firstName, lastName, email, passwordHash, preferredLanguage }) {
   const [result] = await pool.query(
     `INSERT INTO users
-       (username, password_hash, first_name, last_name, email, daily_rate, preferred_language, must_change_password, active)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1)`,
-    [username, passwordHash, firstName, lastName, email, dailyRate, preferredLanguage || 'en']
+       (username, password_hash, first_name, last_name, email, preferred_language, must_change_password, active)
+     VALUES (?, ?, ?, ?, ?, ?, 1, 1)`,
+    [username, passwordHash, firstName, lastName, email, preferredLanguage || 'en']
   );
   return result.insertId;
 }
 
-async function update(id, { firstName, lastName, email, dailyRate, active }) {
+async function update(id, { firstName, lastName, email, active }) {
   await pool.query(
     `UPDATE users
-        SET first_name = ?, last_name = ?, email = ?, daily_rate = ?, active = ?
+        SET first_name = ?, last_name = ?, email = ?, active = ?
       WHERE id = ?`,
-    [firstName, lastName, email, dailyRate, active ? 1 : 0, id]
+    [firstName, lastName, email, active ? 1 : 0, id]
   );
 }
 
