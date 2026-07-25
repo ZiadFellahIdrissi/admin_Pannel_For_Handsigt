@@ -4,7 +4,7 @@ const pool = require('../config/db');
 
 async function listForConsultant(userId) {
   const [rows] = await pool.query(
-    `SELECT c.id, c.name, c.active
+    `SELECT c.id, c.name, c.active, cc.consultant_tjm, cc.client_tjm
        FROM clients c
        JOIN consultant_clients cc ON cc.client_id = c.id
       WHERE cc.user_id = ?
@@ -45,6 +45,17 @@ async function attach(userId, clientId) {
   );
 }
 
+// Sets/updates the current rates for this pairing - used both the first
+// time a rate is set and later when a client renegotiates. Does NOT
+// touch any month_submissions already created against this pairing;
+// those keep their own frozen snapshot (see sql/schema.sql).
+async function setRates(userId, clientId, consultantTjm, clientTjm) {
+  await pool.query(
+    'UPDATE consultant_clients SET consultant_tjm = ?, client_tjm = ? WHERE user_id = ? AND client_id = ?',
+    [consultantTjm, clientTjm, userId, clientId]
+  );
+}
+
 async function detach(userId, clientId) {
   await pool.query(
     'DELETE FROM consultant_clients WHERE user_id = ? AND client_id = ?',
@@ -73,4 +84,4 @@ async function attachMany(userId, clientIds) {
   return { attachedCount, skippedCount };
 }
 
-module.exports = { listForConsultant, listUnattachedForConsultant, exists, attach, attachMany, detach };
+module.exports = { listForConsultant, listUnattachedForConsultant, exists, attach, attachMany, setRates, detach };

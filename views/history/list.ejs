@@ -47,7 +47,10 @@
         <div class="card-interactive p-4 flex items-center justify-between gap-3 flex-wrap">
           <div class="min-w-0">
             <div class="font-semibold truncate"><%= s.consultant_name %> &middot; <%= monthLabel(s.month) %> &middot; <%= s.client_name %></div>
-            <div class="text-xs text-brand-gray2 mt-0.5"><%= s.total_days %> days &middot; <%= formatCurrency(s.total_earnings) %></div>
+            <div class="text-xs text-brand-gray2 mt-0.5">
+              <%= s.total_days %> days &middot; Payout <%= formatCurrency(s.total_payout) %>
+              <% if (s.total_billed > 0) { %> &middot; Billed <%= formatCurrency(s.total_billed) %> &middot; Margin <%= formatCurrency(s.total_billed - s.total_payout) %><% } %>
+            </div>
             <% if (s.status === 'rejected' && s.admin_comment) { %>
               <div class="text-xs text-red-700 dark:text-red-400 mt-1"><strong>Comment:</strong> <%= s.admin_comment %></div>
             <% } %>

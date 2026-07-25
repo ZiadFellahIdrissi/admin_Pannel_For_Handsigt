@@ -16,6 +16,7 @@ router.post('/consultants/:id', verifyToken, asyncHandler(consultantsController.
 router.post('/consultants/:id/toggle-active', verifyToken, asyncHandler(consultantsController.handleToggleActive));
 router.post('/consultants/:id/reset-password', verifyToken, asyncHandler(consultantsController.handleResetPassword));
 router.post('/consultants/:id/clients', verifyToken, asyncHandler(consultantsController.handleAttachClients));
+router.post('/consultants/:id/clients/:clientId/rates', verifyToken, asyncHandler(consultantsController.handleUpdateClientRates));
 router.post('/consultants/:id/clients/:clientId/detach', verifyToken, asyncHandler(consultantsController.handleDetachClient));
 
 module.exports = router;

@@ -41,16 +41,27 @@ async function show(req, res) {
   const totalConsultants = summaryRows.length;
   const totalDays = summaryRows.reduce((sum, r) => sum + Number(r.total_days), 0);
   const totalPayout = summaryRows.reduce((sum, r) => sum + Number(r.total_payout), 0);
+  const totalBilled = summaryRows.reduce((sum, r) => sum + Number(r.total_billed), 0);
+  // Only meaningful once client_tjm has actually been set on at least one
+  // pairing - otherwise total_billed is just 0 from COALESCE, and showing
+  // a "margin" of -totalPayout would read as a loss instead of "unknown".
+  const hasBillingData = totalBilled > 0;
+  const totalMargin = hasBillingData ? totalBilled - totalPayout : null;
 
   // Bar chart: each row's width as a percentage of the largest payout.
   const maxPayout = Math.max(1, ...summaryRows.map((r) => Number(r.total_payout)));
-  const bars = summaryRows.map((r) => ({
-    consultantName: r.consultant_name,
-    clientNames: r.client_names,
-    totalDays: Number(r.total_days),
-    totalPayout: Number(r.total_payout),
-    percent: (Number(r.total_payout) / maxPayout) * 100
-  }));
+  const bars = summaryRows.map((r) => {
+    const rowBilled = Number(r.total_billed);
+    return {
+      consultantName: r.consultant_name,
+      clientNames: r.client_names,
+      totalDays: Number(r.total_days),
+      totalPayout: Number(r.total_payout),
+      totalBilled: rowBilled,
+      totalMargin: rowBilled > 0 ? rowBilled - Number(r.total_payout) : null,
+      percent: (Number(r.total_payout) / maxPayout) * 100
+    };
+  });
 
   // Line chart geometry (12-month payout trend).
   const chartWidth = 600;
@@ -102,6 +113,9 @@ async function show(req, res) {
     totalConsultants,
     totalDays,
     totalPayout,
+    totalBilled,
+    totalMargin,
+    hasBillingData,
     linePoints,
     linePath,
     chartWidth,

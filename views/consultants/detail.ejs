@@ -41,13 +41,51 @@
     <% } else { %>
       <div class="space-y-2 mb-4">
         <% attachedClients.forEach(function(cl) { %>
-          <div class="flex items-center justify-between gap-3 rounded-lg border border-brand-borderLight px-3 py-2">
-            <span class="text-sm font-medium"><%= cl.name %><% if (!cl.active) { %> <span class="badge-draft ml-1">Inactive</span><% } %></span>
-            <form action="/consultants/<%= consultant.id %>/clients/<%= cl.id %>/detach" method="POST">
-              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-              <button type="submit" class="btn-danger text-xs !px-3 !py-1.5">Detach</button>
-            </form>
+          <div class="flex items-center justify-between gap-3 rounded-lg border border-brand-borderLight px-3 py-2 flex-wrap">
+            <div>
+              <span class="text-sm font-medium"><%= cl.name %><% if (!cl.active) { %> <span class="badge-draft ml-1">Inactive</span><% } %></span>
+              <div class="text-xs mt-0.5">
+                <% if (cl.consultant_tjm || cl.client_tjm) { %>
+                  <span class="text-brand-gray2">Pay: <%= cl.consultant_tjm ? formatCurrency(cl.consultant_tjm) : '—' %> &middot; Bill: <%= cl.client_tjm ? formatCurrency(cl.client_tjm) : '—' %></span>
+                <% } else { %>
+                  <span class="text-amber-600 dark:text-amber-400">Rates not set</span>
+                <% } %>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <button type="button" class="btn-secondary text-xs !px-3 !py-1.5" data-dialog-open="rates-<%= cl.id %>">
+                <i class="fa-solid fa-money-bill-wave"></i>Edit Rates
+              </button>
+              <form action="/consultants/<%= consultant.id %>/clients/<%= cl.id %>/detach" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn-danger text-xs !px-3 !py-1.5">Detach</button>
+              </form>
+            </div>
           </div>
+
+          <dialog id="rates-<%= cl.id %>" class="dialog-panel">
+            <div class="p-5 sm:p-6">
+              <div class="flex items-center justify-between gap-3 mb-4">
+                <h3 class="font-bold">Rates &middot; <%= cl.name %></h3>
+                <button type="button" class="theme-toggle" data-dialog-close aria-label="Close">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+              <form action="/consultants/<%= consultant.id %>/clients/<%= cl.id %>/rates" method="POST" class="space-y-3">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div>
+                  <label class="field-label" for="consultantTjm-<%= cl.id %>">Pay to consultant (MAD/day)</label>
+                  <input class="field-input" type="number" step="0.01" min="0" id="consultantTjm-<%= cl.id %>" name="consultantTjm" value="<%= cl.consultant_tjm || '' %>">
+                </div>
+                <div>
+                  <label class="field-label" for="clientTjm-<%= cl.id %>">Bill to client (MAD/day)</label>
+                  <input class="field-input" type="number" step="0.01" min="0" id="clientTjm-<%= cl.id %>" name="clientTjm" value="<%= cl.client_tjm || '' %>">
+                </div>
+                <p class="text-xs text-brand-gray2">Only applies to new months going forward - already-submitted months keep the rate they were created with.</p>
+                <button type="submit" class="btn-primary w-full">Save Rates</button>
+              </form>
+            </div>
+          </dialog>
         <% }); %>
       </div>
     <% } %>
@@ -82,7 +120,7 @@
           <div class="card-interactive p-4 flex items-center justify-between gap-3 flex-wrap">
             <div class="min-w-0">
               <div class="font-semibold truncate"><%= monthLabel(s.month) %> &middot; <%= s.client_name %></div>
-              <div class="text-xs text-brand-gray2 mt-0.5"><%= s.total_days %> days &middot; <%= formatCurrency(s.total_earnings) %></div>
+              <div class="text-xs text-brand-gray2 mt-0.5"><%= s.total_days %> days &middot; <%= formatCurrency(s.total_payout) %></div>
               <% if (s.status === 'rejected' && s.admin_comment) { %>
                 <div class="text-xs text-red-700 dark:text-red-400 mt-1"><strong>Comment:</strong> <%= s.admin_comment %></div>
               <% } %>
@@ -106,5 +144,6 @@
   </div>
 </div>
 <script src="/js/client-search.js?v=<%= assetVersion %>" defer></script>
+<script src="/js/dialog-toggle.js?v=<%= assetVersion %>" defer></script>
 
 <%- include('../partials/foot') %>

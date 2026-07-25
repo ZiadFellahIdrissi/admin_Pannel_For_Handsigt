@@ -186,6 +186,31 @@ async function handleAttachClients(req, res) {
   res.redirect(`/consultants/${userId}`);
 }
 
+async function handleUpdateClientRates(req, res) {
+  const userId = Number(req.params.id);
+  const clientId = Number(req.params.clientId);
+
+  const consultantTjm = req.body.consultantTjm ? Number(req.body.consultantTjm) : null;
+  const clientTjm = req.body.clientTjm ? Number(req.body.clientTjm) : null;
+
+  const errors = [];
+  if (consultantTjm !== null && (!Number.isFinite(consultantTjm) || consultantTjm < 0)) {
+    errors.push('Consultant rate must be a non-negative number.');
+  }
+  if (clientTjm !== null && (!Number.isFinite(clientTjm) || clientTjm < 0)) {
+    errors.push('Client rate must be a non-negative number.');
+  }
+
+  if (errors.length) {
+    errors.forEach((e) => req.flash('error', e));
+    return res.redirect(`/consultants/${userId}`);
+  }
+
+  await consultantClientModel.setRates(userId, clientId, consultantTjm, clientTjm);
+  req.flash('success', 'Rates updated. This only applies to new months going forward - already-submitted months keep the rate they were created with.');
+  res.redirect(`/consultants/${userId}`);
+}
+
 async function handleDetachClient(req, res) {
   const userId = Number(req.params.id);
   const clientId = Number(req.params.clientId);
@@ -205,5 +230,6 @@ module.exports = {
   handleToggleActive,
   handleResetPassword,
   handleAttachClients,
+  handleUpdateClientRates,
   handleDetachClient
 };

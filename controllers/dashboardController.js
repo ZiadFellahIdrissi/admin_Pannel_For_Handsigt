@@ -16,7 +16,7 @@ async function show(req, res) {
     monthSubmissionModel.listRecentActivity(8)
   ]);
 
-  const approvedEarningsThisMonth = approvedThisMonth.reduce((sum, s) => sum + Number(s.total_earnings), 0);
+  const approvedPayoutThisMonth = approvedThisMonth.reduce((sum, s) => sum + Number(s.total_payout), 0);
 
   res.render('dashboard', {
     activeConsultantsCount: activeConsultants.length,
@@ -25,7 +25,7 @@ async function show(req, res) {
     // submissions middleware in server.js on every request - reuse it
     // instead of running the same query twice.
     pendingCount: res.locals.notificationCount,
-    approvedEarningsThisMonth,
+    approvedPayoutThisMonth,
     currentMonth: month,
     recentActivity
   });

@@ -25,7 +25,7 @@
       </div>
 
       <!-- KPI row -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         <div class="stat-tile">
           <div class="icon-circle-accent"><i class="fa-solid fa-users"></i></div>
           <div>
@@ -47,6 +47,13 @@
             <div class="stat-tile-label">Total Payout</div>
           </div>
         </div>
+        <div class="stat-tile">
+          <div class="icon-circle-slate"><i class="fa-solid fa-scale-balanced"></i></div>
+          <div>
+            <div class="stat-tile-value text-base sm:text-xl"><%= hasBillingData ? formatCurrency(totalMargin) : '—' %></div>
+            <div class="stat-tile-label">Total Margin</div>
+          </div>
+        </div>
       </div>
 
       <!-- Per-consultant table -->
@@ -66,6 +73,8 @@
                   <th class="px-3 py-2">Client(s)</th>
                   <th class="px-3 py-2 text-right">Days</th>
                   <th class="px-3 py-2 text-right">Payout</th>
+                  <th class="px-3 py-2 text-right">Billed</th>
+                  <th class="px-3 py-2 text-right">Margin</th>
                 </tr>
               </thead>
               <tbody>
@@ -75,6 +84,8 @@
                     <td class="px-3 py-2.5 text-brand-gray2"><%= r.clientNames %></td>
                     <td class="px-3 py-2.5 text-right"><%= r.totalDays %></td>
                     <td class="px-3 py-2.5 text-right font-semibold"><%= formatCurrency(r.totalPayout) %></td>
+                    <td class="px-3 py-2.5 text-right text-brand-gray2"><%= r.totalBilled > 0 ? formatCurrency(r.totalBilled) : '—' %></td>
+                    <td class="px-3 py-2.5 text-right text-brand-gray2"><%= r.totalMargin !== null ? formatCurrency(r.totalMargin) : '—' %></td>
                   </tr>
                 <% }); %>
               </tbody>

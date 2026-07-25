@@ -73,6 +73,47 @@ ALTER TABLE clients
   ADD COLUMN notes TEXT DEFAULT NULL;
 
 -- ---------------------------------------------------------------------
+-- MIGRATION - run once in phpMyAdmin's SQL tab (ALTER privileges needed).
+--
+-- Per-(consultant, client) daily rates ("TJM"). Handsight sits between
+-- the client and the consultant, so a consultant can be paid a different
+-- rate per client, AND there are two separate rates per pairing: what
+-- Handsight pays the consultant (cost) vs what Handsight bills the
+-- client (revenue) - the difference is Handsight's margin.
+--
+-- `consultant_clients` holds the CURRENT/default rates for a pairing -
+-- the starting value for any new month_submission against it.
+-- `month_submissions` holds a FROZEN SNAPSHOT of both rates, copied in
+-- at the moment the submission is created, so a rate renegotiated later
+-- never silently rewrites a past month's payout/billing figures. See
+-- HANDOFF_TJM_SNAPSHOT.md for what the Consultant Dashboard app (which
+-- actually creates month_submissions rows) needs to do to populate this.
+-- ---------------------------------------------------------------------
+ALTER TABLE consultant_clients
+  ADD COLUMN consultant_tjm DECIMAL(10,2) DEFAULT NULL,  -- what Handsight pays the consultant
+  ADD COLUMN client_tjm DECIMAL(10,2) DEFAULT NULL;      -- what Handsight bills the client
+
+-- Backfill: best-effort default from the consultant's existing flat rate.
+-- client_tjm has no historical source at all - stays NULL, the admin
+-- sets it per pairing going forward (via the Admin Panel's "Edit Rates").
+UPDATE consultant_clients cc
+  JOIN users u ON u.id = cc.user_id
+   SET cc.consultant_tjm = u.daily_rate
+ WHERE cc.consultant_tjm IS NULL;
+
+ALTER TABLE month_submissions
+  ADD COLUMN consultant_tjm DECIMAL(10,2) DEFAULT NULL,
+  ADD COLUMN client_tjm DECIMAL(10,2) DEFAULT NULL;
+
+-- Backfill existing submissions the same best-effort way (can't recover
+-- what a rate actually was historically if it has since changed - a
+-- known limitation of backfilling old data).
+UPDATE month_submissions ms
+  JOIN users u ON u.id = ms.user_id
+   SET ms.consultant_tjm = u.daily_rate
+ WHERE ms.consultant_tjm IS NULL;
+
+-- ---------------------------------------------------------------------
 -- MySQL user privileges (set up in hPanel, not by this script):
 -- The Admin Panel's dedicated DB user needs SELECT/INSERT/UPDATE/DELETE
 -- on: admins, admin_sessions, users, clients, consultant_clients,

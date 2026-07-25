@@ -35,7 +35,7 @@
         <a href="/history?status=approved&month=<%= currentMonth %>" class="stat-tile col-span-2 sm:col-span-1">
           <div class="icon-circle-emerald"><i class="fa-solid fa-sack-dollar"></i></div>
           <div>
-            <div class="stat-tile-value text-base sm:text-xl"><%= formatCurrency(approvedEarningsThisMonth) %></div>
+            <div class="stat-tile-value text-base sm:text-xl"><%= formatCurrency(approvedPayoutThisMonth) %></div>
             <div class="stat-tile-label">Approved This Month</div>
           </div>
         </a>
@@ -52,7 +52,7 @@
               <div class="card-interactive p-4 flex items-center justify-between gap-3 flex-wrap">
                 <div class="min-w-0">
                   <div class="font-semibold truncate"><%= s.consultant_name %> &middot; <%= monthLabel(s.month) %> &middot; <%= s.client_name %></div>
-                  <div class="text-xs text-brand-gray2 mt-0.5"><%= s.total_days %> days &middot; <%= formatCurrency(s.total_earnings) %></div>
+                  <div class="text-xs text-brand-gray2 mt-0.5"><%= s.total_days %> days &middot; <%= formatCurrency(s.total_payout) %></div>
                 </div>
                 <span class="badge-<%= s.status %>"><%= s.status.charAt(0).toUpperCase() + s.status.slice(1) %></span>
               </div>
