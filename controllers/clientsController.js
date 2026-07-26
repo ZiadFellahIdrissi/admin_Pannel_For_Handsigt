@@ -92,7 +92,7 @@ async function showDetail(req, res) {
   };
 
   res.render('clients/detail', {
-    client,
+    clientRow: client,
     attachedConsultants,
     submissions: allHistory.slice(0, 10),
     hasMoreHistory: allHistory.length > 10,
