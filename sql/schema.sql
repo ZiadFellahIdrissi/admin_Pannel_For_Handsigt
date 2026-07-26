@@ -114,6 +114,18 @@ UPDATE month_submissions ms
  WHERE ms.consultant_tjm IS NULL;
 
 -- ---------------------------------------------------------------------
+-- MIGRATION - run once in phpMyAdmin's SQL tab (ALTER privileges needed).
+--
+-- What role/title this consultant holds AT that specific client (e.g.
+-- "Lead Developer", "Project Manager") - a property of the pairing, same
+-- as the TJMs above, since a consultant can hold a different role at
+-- each client they work with. Named `role_title`, not `position` -
+-- POSITION is a reserved word/built-in function in MySQL.
+-- ---------------------------------------------------------------------
+ALTER TABLE consultant_clients
+  ADD COLUMN role_title VARCHAR(150) DEFAULT NULL;
+
+-- ---------------------------------------------------------------------
 -- OPTIONAL, DO NOT RUN YET - `users.daily_rate` is being retired in
 -- favor of per-(consultant, client) TJM above. The Admin Panel no longer
 -- reads or writes this column anywhere. DO NOT run this DROP until the

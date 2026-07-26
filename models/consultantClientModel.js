@@ -4,12 +4,29 @@ const pool = require('../config/db');
 
 async function listForConsultant(userId) {
   const [rows] = await pool.query(
-    `SELECT c.id, c.name, c.active, cc.consultant_tjm, cc.client_tjm
+    `SELECT c.id, c.name, c.active, cc.consultant_tjm, cc.client_tjm, cc.role_title
        FROM clients c
        JOIN consultant_clients cc ON cc.client_id = c.id
       WHERE cc.user_id = ?
       ORDER BY c.name ASC`,
     [userId]
+  );
+  return rows;
+}
+
+// Consultants currently attached to this client - the reverse of
+// listForConsultant. Includes inactive consultants too (same reasoning as
+// listForConsultant showing inactive clients: history/context matters
+// even after someone's deactivated).
+async function listConsultantsForClient(clientId) {
+  const [rows] = await pool.query(
+    `SELECT u.id, u.first_name, u.last_name, u.active,
+            cc.consultant_tjm, cc.client_tjm, cc.role_title
+       FROM users u
+       JOIN consultant_clients cc ON cc.user_id = u.id
+      WHERE cc.client_id = ?
+      ORDER BY u.last_name ASC, u.first_name ASC`,
+    [clientId]
   );
   return rows;
 }
@@ -45,14 +62,17 @@ async function attach(userId, clientId) {
   );
 }
 
-// Sets/updates the current rates for this pairing - used both the first
-// time a rate is set and later when a client renegotiates. Does NOT
-// touch any month_submissions already created against this pairing;
-// those keep their own frozen snapshot (see sql/schema.sql).
-async function setRates(userId, clientId, consultantTjm, clientTjm) {
+// Sets/updates the current rates and role for this pairing - used both
+// the first time they're set and later when a client renegotiates or the
+// consultant's role there changes. Does NOT touch any month_submissions
+// already created against this pairing; those keep their own frozen
+// rate snapshot (see sql/schema.sql) - role_title has no per-submission
+// snapshot, it's read live since knowing the current role isn't a
+// financial record the way a rate is.
+async function updateAttachment(userId, clientId, { consultantTjm, clientTjm, roleTitle }) {
   await pool.query(
-    'UPDATE consultant_clients SET consultant_tjm = ?, client_tjm = ? WHERE user_id = ? AND client_id = ?',
-    [consultantTjm, clientTjm, userId, clientId]
+    'UPDATE consultant_clients SET consultant_tjm = ?, client_tjm = ?, role_title = ? WHERE user_id = ? AND client_id = ?',
+    [consultantTjm, clientTjm, roleTitle, userId, clientId]
   );
 }
 
@@ -84,4 +104,4 @@ async function attachMany(userId, clientIds) {
   return { attachedCount, skippedCount };
 }
 
-module.exports = { listForConsultant, listUnattachedForConsultant, exists, attach, attachMany, setRates, detach };
+module.exports = { listForConsultant, listConsultantsForClient, listUnattachedForConsultant, exists, attach, attachMany, updateAttachment, detach };

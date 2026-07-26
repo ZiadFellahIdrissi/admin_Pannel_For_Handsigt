@@ -3,18 +3,47 @@
 This is for whoever (or whichever Claude Code session) next works on the
 **Consultant Dashboard** repo (`Consultant Dashboard/`, not this one).
 
-**Update / escalation:** this started as an additive change (new TJM
-columns, `users.daily_rate` kept as a fallback). The user has since decided
-to **drop `users.daily_rate` from the database entirely** — it will stop
-existing, not just stop being the primary source. The Admin Panel side has
-already been fully updated to not reference it anywhere. **This repo (the
-Consultant Dashboard) has NOT been updated yet, and it still reads
-`users.daily_rate` directly in several places — once that column is
-dropped, this app WILL throw SQL errors ("Unknown column 'daily_rate'")
-wherever it does.** This is no longer a "nice to have later" — it needs to
-happen before (or in lockstep with) the column actually being dropped.
-Confirm with the user whether the column has already been dropped or not
-before you start; if it has, expect broken pages until this is fixed.
+**Bottom line up front: `users.daily_rate` is being deleted from the
+database, full stop — do not design around keeping it, even temporarily.**
+(For context only, in case you see an older version of this doc or old
+commit messages: the very first draft of this plan proposed keeping
+`daily_rate` around as a permanent fallback. That plan was abandoned before
+any of this shipped — ignore it if you encounter it anywhere. The only
+correct target state is: `daily_rate` gone, `consultant_tjm` used
+everywhere instead.)
+
+The Admin Panel side has already been fully updated to not reference
+`daily_rate` anywhere. **This repo (the Consultant Dashboard) has NOT been
+updated yet, and it still reads `users.daily_rate` directly in several
+places — once that column is dropped, this app WILL throw SQL errors
+("Unknown column 'daily_rate'") wherever it does.** This needs to happen
+before (or in lockstep with) the column actually being dropped. Confirm
+with the user whether the column has already been dropped before you
+start; if it has, expect broken pages until this is fixed.
+
+## Critical: the consultant must never see `client_tjm`
+
+`client_tjm` is what Handsight bills the **client** — it is not the
+consultant's business, and showing it (directly, in a total, or in any
+derived number the consultant could reverse-engineer) would reveal
+Handsight's margin to them. This app is **consultant-facing only**, so:
+
+- Never `SELECT client_tjm` (or `consultant_clients.client_tjm`) into any
+  query that backs a page or API response this app renders for the
+  logged-in consultant.
+- Never compute anything from `client_tjm` (billed total, margin, etc.) on
+  the consultant's side, not even server-side-only if there's any chance
+  it leaks into a template, log, or response the consultant's browser
+  receives.
+- Every earnings/payout figure this app shows the consultant — the live
+  calendar total, dashboard stats, yearly summary — must be computed from
+  **`consultant_tjm` only**. That's the consultant's own pay rate; it's
+  the only one of the two rates this app has any business touching.
+- `client_tjm` is exclusively an Admin Panel concern (it's the one that
+  shows billed/margin figures, and only to the admin).
+
+If you're ever unsure whether a piece of code in this repo needs
+`client_tjm` for anything: it doesn't. Delete it if you find it.
 
 ## What changed, and why
 
@@ -80,13 +109,20 @@ If the admin hasn't set rates yet for that pairing, both snapshot columns
 just land `NULL` — treat that as "unknown," not an error (same convention
 the Admin Panel uses: `COALESCE(consultant_tjm, 0)`).
 
+Note this is the one place in this repo that's expected to touch
+`client_tjm` at all — it's a pure storage operation (copying it onto the
+row so the *Admin Panel* can read it later), not something rendered back
+to the consultant. Don't extend this pattern anywhere else; see the
+critical note above.
+
 ### 2. Remove every remaining read of `users.daily_rate`
 
-Once the column is dropped, any query selecting or referencing
-`daily_rate` on `users` will error. Search this repo for `daily_rate` and
-`dailyRate` and fix each site to use the submission's own `consultant_tjm`
-instead (falling back to `0`/"not set" if it's `NULL`, not to
-`users.daily_rate` — that column won't exist to fall back to). Known
+`daily_rate` is being fully removed, not just deprioritized — the column
+is going away. Search this repo for `daily_rate` and `dailyRate` and
+replace every one of them with the submission's own **`consultant_tjm`**
+— never `client_tjm` (see the critical note above) — falling back to
+`0`/"not set" if it's `NULL`, not to `users.daily_rate` (that column won't
+exist to fall back to). Known
 locations as of this handoff (grep to confirm you got all of them, this
 list may not be exhaustive):
 - `views/calendar.ejs` — the live "estimated earnings" total while filling

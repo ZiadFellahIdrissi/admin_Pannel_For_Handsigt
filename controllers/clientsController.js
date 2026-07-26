@@ -1,4 +1,6 @@
 const clientModel = require('../models/clientModel');
+const consultantClientModel = require('../models/consultantClientModel');
+const monthSubmissionModel = require('../models/monthSubmissionModel');
 
 function parseActiveFilter(value) {
   if (value === '1') return 1;
@@ -71,6 +73,33 @@ async function handleCreate(req, res) {
   res.redirect('/clients');
 }
 
+async function showDetail(req, res) {
+  const client = await clientModel.findById(req.params.id);
+  if (!client) {
+    return res.status(404).render('error', { message: 'Client not found.' });
+  }
+
+  const [attachedConsultants, allHistory] = await Promise.all([
+    consultantClientModel.listConsultantsForClient(client.id),
+    monthSubmissionModel.listHistory({ clientId: client.id })
+  ]);
+
+  const approvedRows = allHistory.filter((s) => s.status === 'approved');
+  const stats = {
+    activeConsultantsCount: attachedConsultants.filter((c) => c.active).length,
+    totalApprovedDays: approvedRows.reduce((sum, s) => sum + Number(s.total_days), 0),
+    totalApprovedBilled: approvedRows.reduce((sum, s) => sum + Number(s.total_billed), 0)
+  };
+
+  res.render('clients/detail', {
+    client,
+    attachedConsultants,
+    submissions: allHistory.slice(0, 10),
+    hasMoreHistory: allHistory.length > 10,
+    stats
+  });
+}
+
 async function showEditForm(req, res) {
   const client = await clientModel.findById(req.params.id);
   if (!client) {
@@ -134,4 +163,4 @@ async function handleDelete(req, res) {
   res.redirect('/clients');
 }
 
-module.exports = { list, showCreateForm, handleCreate, showEditForm, handleUpdate, handleToggleActive, handleDelete };
+module.exports = { list, showCreateForm, handleCreate, showDetail, showEditForm, handleUpdate, handleToggleActive, handleDelete };
