@@ -189,6 +189,7 @@ async function handleUpdateClientRates(req, res) {
   const consultantTjm = req.body.consultantTjm ? Number(req.body.consultantTjm) : null;
   const clientTjm = req.body.clientTjm ? Number(req.body.clientTjm) : null;
   const roleTitle = (req.body.roleTitle || '').trim() || null;
+  const feesApplied = req.body.feesApplied === 'on';
 
   const errors = [];
   if (consultantTjm !== null && (!Number.isFinite(consultantTjm) || consultantTjm < 0)) {
@@ -203,7 +204,7 @@ async function handleUpdateClientRates(req, res) {
     return res.redirect(`/consultants/${userId}`);
   }
 
-  await consultantClientModel.updateAttachment(userId, clientId, { consultantTjm, clientTjm, roleTitle });
+  await consultantClientModel.updateAttachment(userId, clientId, { consultantTjm, clientTjm, roleTitle, feesApplied });
   req.flash('success', 'Details updated. Rate changes only apply to new months going forward - already-submitted months keep the rate they were created with.');
   res.redirect(`/consultants/${userId}`);
 }

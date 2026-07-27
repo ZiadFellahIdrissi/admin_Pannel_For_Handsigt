@@ -108,7 +108,7 @@
               <% if (!c.active) { %> <span class="badge-draft ml-1">Inactive</span><% } %>
               <div class="text-xs mt-0.5">
                 <% if (c.consultant_tjm || c.client_tjm) { %>
-                  <span class="text-brand-gray2">Pay: <%= c.consultant_tjm ? formatCurrency(c.consultant_tjm) : '—' %> &middot; Bill: <%= c.client_tjm ? formatCurrency(c.client_tjm) : '—' %></span>
+                  <span class="text-brand-gray2">Pay: <%= c.consultant_tjm ? formatCurrency(c.consultant_tjm) : '—' %> &middot; Bill: <%= c.client_tjm ? formatCurrency(c.client_tjm) : '—' %><% if (c.fees_applied) { %> &middot; 5% fee applied<% } %></span>
                 <% } else { %>
                   <span class="text-amber-600 dark:text-amber-400">Rates not set</span>
                 <% } %>

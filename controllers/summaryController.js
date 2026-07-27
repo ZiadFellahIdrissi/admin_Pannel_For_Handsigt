@@ -42,11 +42,12 @@ async function show(req, res) {
   const totalDays = summaryRows.reduce((sum, r) => sum + Number(r.total_days), 0);
   const totalPayout = summaryRows.reduce((sum, r) => sum + Number(r.total_payout), 0);
   const totalBilled = summaryRows.reduce((sum, r) => sum + Number(r.total_billed), 0);
+  const totalFees = summaryRows.reduce((sum, r) => sum + Number(r.total_fees), 0);
   // Only meaningful once client_tjm has actually been set on at least one
   // pairing - otherwise total_billed is just 0 from COALESCE, and showing
   // a "margin" of -totalPayout would read as a loss instead of "unknown".
   const hasBillingData = totalBilled > 0;
-  const totalMargin = hasBillingData ? totalBilled - totalPayout : null;
+  const totalMargin = hasBillingData ? totalBilled - totalPayout - totalFees : null;
 
   // Bar chart: each row's width as a percentage of the largest payout.
   const maxPayout = Math.max(1, ...summaryRows.map((r) => Number(r.total_payout)));
@@ -58,7 +59,7 @@ async function show(req, res) {
       totalDays: Number(r.total_days),
       totalPayout: Number(r.total_payout),
       totalBilled: rowBilled,
-      totalMargin: rowBilled > 0 ? rowBilled - Number(r.total_payout) : null,
+      totalMargin: rowBilled > 0 ? rowBilled - Number(r.total_payout) - Number(r.total_fees) : null,
       percent: (Number(r.total_payout) / maxPayout) * 100
     };
   });

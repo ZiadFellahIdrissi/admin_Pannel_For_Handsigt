@@ -58,14 +58,17 @@ Two new nullable columns exist now (migration already run against the
 shared database — nothing for this repo to do schema-wise):
 
 - **`consultant_clients.consultant_tjm`** / **`consultant_clients.client_tjm`**
-  — the *current* rates for a pairing. The Admin Panel has a UI (on a
-  consultant's detail page) where the admin sets/updates these.
+  / **`consultant_clients.fees_applied`**
+  — the *current* rates (and optional 5% Handsight fee flag) for a
+  pairing. The Admin Panel has a UI (on a consultant's detail page) where
+  the admin sets/updates these.
 - **`month_submissions.consultant_tjm`** / **`month_submissions.client_tjm`**
-  — a **frozen snapshot** of both rates, meant to be set once, at the
+  / **`month_submissions.fees_applied`**
+  — a **frozen snapshot** of all three, meant to be set once, at the
   moment a submission is created, and never touched again. This is so a
-  rate renegotiated later doesn't silently rewrite a past month's
-  payout/billing figures — important for anything that feeds invoices or
-  payroll.
+  rate (or fee setting) changed later doesn't silently rewrite a past
+  month's payout/billing/margin figures — important for anything that
+  feeds invoices or payroll.
 
 ## Required changes in this repo
 
@@ -86,34 +89,40 @@ async function create({ userId, clientId, month }) {
 ```
 
 — it needs to look up the current `consultant_clients.consultant_tjm` /
-`client_tjm` for that `(userId, clientId)` pair and copy them into the
-new row at creation time:
+`client_tjm` / `fees_applied` for that `(userId, clientId)` pair and copy
+them into the new row at creation time:
 
 ```js
 async function create({ userId, clientId, month }) {
   const [[rates]] = await pool.query(
-    'SELECT consultant_tjm, client_tjm FROM consultant_clients WHERE user_id = ? AND client_id = ?',
+    'SELECT consultant_tjm, client_tjm, fees_applied FROM consultant_clients WHERE user_id = ? AND client_id = ?',
     [userId, clientId]
   );
 
   const [result] = await pool.query(
-    `INSERT INTO month_submissions (user_id, client_id, month, status, consultant_tjm, client_tjm)
-     VALUES (?, ?, ?, 'draft', ?, ?)`,
-    [userId, clientId, month, rates ? rates.consultant_tjm : null, rates ? rates.client_tjm : null]
+    `INSERT INTO month_submissions (user_id, client_id, month, status, consultant_tjm, client_tjm, fees_applied)
+     VALUES (?, ?, ?, 'draft', ?, ?, ?)`,
+    [userId, clientId, month, rates ? rates.consultant_tjm : null, rates ? rates.client_tjm : null, rates ? rates.fees_applied : 0]
   );
   return result.insertId;
 }
 ```
 
-If the admin hasn't set rates yet for that pairing, both snapshot columns
-just land `NULL` — treat that as "unknown," not an error (same convention
-the Admin Panel uses: `COALESCE(consultant_tjm, 0)`).
+If the admin hasn't set rates yet for that pairing, both snapshot rate
+columns just land `NULL` — treat that as "unknown," not an error (same
+convention the Admin Panel uses: `COALESCE(consultant_tjm, 0)`).
+`fees_applied` defaults to `0` (no fee) the same way.
 
 Note this is the one place in this repo that's expected to touch
 `client_tjm` at all — it's a pure storage operation (copying it onto the
 row so the *Admin Panel* can read it later), not something rendered back
 to the consultant. Don't extend this pattern anywhere else; see the
-critical note above.
+critical note above. `fees_applied` is a newer, separate column
+(added after this doc was first written) — it's not as sensitive as
+`client_tjm` on its own (it's just a boolean, not a rate), but it exists
+purely to feed the Admin Panel's margin math, so the same rule applies:
+copy it into the snapshot on create(), never read or display it anywhere
+in this app's own consultant-facing pages.
 
 ### 2. Remove every remaining read of `users.daily_rate`
 

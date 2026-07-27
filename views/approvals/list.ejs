@@ -13,6 +13,7 @@
   <% if (pending.length > 0) { %>
     <% var pendingTotalPayout = pending.reduce(function(sum, p) { return sum + Number(p.total_payout); }, 0); %>
     <% var pendingTotalBilled = pending.reduce(function(sum, p) { return sum + Number(p.total_billed); }, 0); %>
+    <% var pendingTotalFees = pending.reduce(function(sum, p) { return sum + Number(p.total_fees); }, 0); %>
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
       <div class="stat-tile">
         <div class="icon-circle-amber"><i class="fa-solid fa-hourglass-half"></i></div>
@@ -38,7 +39,7 @@
       <div class="stat-tile">
         <div class="icon-circle-slate"><i class="fa-solid fa-scale-balanced"></i></div>
         <div>
-          <div class="stat-tile-value text-base sm:text-xl"><%= pendingTotalBilled > 0 ? formatCurrency(pendingTotalBilled - pendingTotalPayout) : '—' %></div>
+          <div class="stat-tile-value text-base sm:text-xl"><%= pendingTotalBilled > 0 ? formatCurrency(pendingTotalBilled - pendingTotalPayout - pendingTotalFees) : '—' %></div>
           <div class="stat-tile-label">Est. Margin</div>
         </div>
       </div>

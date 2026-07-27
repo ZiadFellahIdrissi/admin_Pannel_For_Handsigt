@@ -14,6 +14,7 @@ async function listPending() {
             COALESCE(SUM(de.value), 0) AS total_days,
             COALESCE(SUM(de.value * COALESCE(ms.consultant_tjm, 0)), 0) AS total_payout,
             COALESCE(SUM(de.value * COALESCE(ms.client_tjm, 0)), 0) AS total_billed,
+            COALESCE(SUM(de.value * COALESCE(ms.consultant_tjm, 0) * IF(ms.fees_applied, 0.05, 0)), 0) AS total_fees,
             ms.submitted_at
        FROM month_submissions ms
        JOIN users u ON u.id = ms.user_id
@@ -52,6 +53,7 @@ async function listHistory({ month, clientId, status } = {}) {
             COALESCE(SUM(de.value), 0) AS total_days,
             COALESCE(SUM(de.value * COALESCE(ms.consultant_tjm, 0)), 0) AS total_payout,
             COALESCE(SUM(de.value * COALESCE(ms.client_tjm, 0)), 0) AS total_billed,
+            COALESCE(SUM(de.value * COALESCE(ms.consultant_tjm, 0) * IF(ms.fees_applied, 0.05, 0)), 0) AS total_fees,
             ms.submitted_at, ms.reviewed_at
        FROM month_submissions ms
        JOIN users u ON u.id = ms.user_id
@@ -122,7 +124,8 @@ async function approvedSummaryForMonth(month) {
             GROUP_CONCAT(DISTINCT c.name ORDER BY c.name SEPARATOR ', ') AS client_names,
             COALESCE(SUM(de.value), 0) AS total_days,
             COALESCE(SUM(de.value * COALESCE(ms.consultant_tjm, 0)), 0) AS total_payout,
-            COALESCE(SUM(de.value * COALESCE(ms.client_tjm, 0)), 0) AS total_billed
+            COALESCE(SUM(de.value * COALESCE(ms.client_tjm, 0)), 0) AS total_billed,
+            COALESCE(SUM(de.value * COALESCE(ms.consultant_tjm, 0) * IF(ms.fees_applied, 0.05, 0)), 0) AS total_fees
        FROM month_submissions ms
        JOIN users u ON u.id = ms.user_id
        JOIN clients c ON c.id = ms.client_id
