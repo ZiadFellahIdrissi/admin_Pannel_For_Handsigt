@@ -2,6 +2,8 @@
   var isConsultants = currentPath === '/consultants' || currentPath.indexOf('/consultants/') === 0;
   var isSummary = currentPath.indexOf('/summary') === 0;
   var isClients = currentPath === '/clients' || currentPath.indexOf('/clients/') === 0;
+  var isAddCandidate = currentPath === '/candidates/new';
+  var isCandidates = (currentPath === '/candidates' || currentPath.indexOf('/candidates/') === 0) && !isAddCandidate;
   var isApprovals = currentPath.indexOf('/approvals') === 0;
   var isHistory = currentPath.indexOf('/history') === 0;
   var isLoginAttempts = currentPath.indexOf('/login-attempts') === 0;
@@ -49,6 +51,16 @@
     <div class="space-y-1">
       <a href="/clients" class="<%= isClients ? 'sidebar-link-active' : 'sidebar-link' %>">
         <i class="fa-solid fa-building w-4 text-center"></i>Clients
+      </a>
+    </div>
+
+    <div class="sidebar-section-title">Candidate Management</div>
+    <div class="space-y-1">
+      <a href="/candidates" class="<%= isCandidates ? 'sidebar-link-active' : 'sidebar-link' %>">
+        <i class="fa-solid fa-address-card w-4 text-center"></i>Candidates
+      </a>
+      <a href="/candidates/new" class="<%= isAddCandidate ? 'sidebar-link-active' : 'sidebar-link' %>">
+        <i class="fa-solid fa-user-plus w-4 text-center"></i>Add Candidate
       </a>
     </div>
 

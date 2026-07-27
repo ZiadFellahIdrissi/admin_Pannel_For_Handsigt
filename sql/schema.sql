@@ -175,10 +175,53 @@ ALTER TABLE month_submissions DROP COLUMN fees_applied;
 -- ALTER TABLE users DROP COLUMN daily_rate;
 
 -- ---------------------------------------------------------------------
+-- MIGRATION - run once in phpMyAdmin's SQL tab.
+--
+-- Candidate Management: prospect/recruiting profiles, entirely separate
+-- from the consultants/clients/month_submissions financial data above -
+-- no FKs to any of it. CVs themselves are NOT stored in the database;
+-- they live on disk (see config/uploadPaths.js), this table just points
+-- at one via cv_filename.
+-- ---------------------------------------------------------------------
+CREATE TABLE candidates (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  first_name VARCHAR(100) NOT NULL,
+  last_name VARCHAR(100) NOT NULL,
+  email VARCHAR(150) DEFAULT NULL,
+  phone VARCHAR(30) DEFAULT NULL,
+  whatsapp VARCHAR(30) DEFAULT NULL,
+  birth_date DATE DEFAULT NULL,
+  address VARCHAR(255) DEFAULT NULL,
+  city VARCHAR(100) DEFAULT NULL,
+  country VARCHAR(100) DEFAULT NULL,
+  experience_years DECIMAL(4,1) DEFAULT NULL,
+  possible_roles VARCHAR(255) DEFAULT NULL,
+  current_position VARCHAR(150) DEFAULT NULL,
+  current_company VARCHAR(150) DEFAULT NULL,
+  education VARCHAR(255) DEFAULT NULL,
+  skills TEXT DEFAULT NULL,
+  languages VARCHAR(150) DEFAULT NULL,
+  linkedin_url VARCHAR(255) DEFAULT NULL,
+  portfolio_url VARCHAR(255) DEFAULT NULL,
+  expected_salary DECIMAL(10,2) DEFAULT NULL,
+  availability VARCHAR(100) DEFAULT NULL,
+  source VARCHAR(100) DEFAULT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'new',
+  rating TINYINT DEFAULT NULL,
+  notes TEXT DEFAULT NULL,
+  cv_filename VARCHAR(255) DEFAULT NULL,
+  cv_original_name VARCHAR(255) DEFAULT NULL,
+  cv_uploaded_at DATETIME DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- ---------------------------------------------------------------------
 -- MySQL user privileges (set up in hPanel, not by this script):
 -- The Admin Panel's dedicated DB user needs SELECT/INSERT/UPDATE/DELETE
 -- on: admins, admin_sessions, users, clients, consultant_clients,
--- month_submissions, daily_entries. It should only ever need SELECT on
--- login_attempts (the app's own model layer never writes to that table -
--- see models/loginAttemptModel.js). It must never have DROP/ALTER/GRANT.
+-- month_submissions, daily_entries, candidates. It should only ever need
+-- SELECT on login_attempts (the app's own model layer never writes to
+-- that table - see models/loginAttemptModel.js). It must never have
+-- DROP/ALTER/GRANT.
 -- ---------------------------------------------------------------------

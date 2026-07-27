@@ -8,7 +8,7 @@ const fs = require('fs');
 
 const sessionMiddleware = require('./config/session');
 const { attachToken } = require('./middleware/csrf');
-const { formatCurrency, monthLabel } = require('./utils/format');
+const { formatCurrency, monthLabel, ageFromBirthDate } = require('./utils/format');
 const asyncHandler = require('./utils/asyncHandler');
 const monthSubmissionModel = require('./models/monthSubmissionModel');
 const dashboardRoutes = require('./routes/dashboardRoutes');
@@ -17,6 +17,7 @@ const summaryRoutes = require('./routes/summaryRoutes');
 const authRoutes = require('./routes/authRoutes');
 const consultantsRoutes = require('./routes/consultantsRoutes');
 const clientsRoutes = require('./routes/clientsRoutes');
+const candidatesRoutes = require('./routes/candidatesRoutes');
 const approvalsRoutes = require('./routes/approvalsRoutes');
 const historyRoutes = require('./routes/historyRoutes');
 const loginAttemptsRoutes = require('./routes/loginAttemptsRoutes');
@@ -39,6 +40,7 @@ try {
 
 app.locals.formatCurrency = formatCurrency;
 app.locals.monthLabel = monthLabel;
+app.locals.ageFromBirthDate = ageFromBirthDate;
 
 app.use(helmet({
   contentSecurityPolicy: {
@@ -103,6 +105,7 @@ app.use('/', summaryRoutes);
 app.use('/', authRoutes);
 app.use('/', consultantsRoutes);
 app.use('/', clientsRoutes);
+app.use('/', candidatesRoutes);
 app.use('/', approvalsRoutes);
 app.use('/', historyRoutes);
 app.use('/', loginAttemptsRoutes);

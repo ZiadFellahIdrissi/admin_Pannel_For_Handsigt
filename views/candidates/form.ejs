@@ -1,0 +1,173 @@
+<%- include('../partials/head', { title: mode === 'create' ? 'New Candidate' : 'Edit Candidate' }) %>
+<div class="flex min-h-screen">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('../partials/topbar', { title: mode === 'create' ? 'New Candidate' : 'Edit Candidate' }) %>
+    <%- include('../partials/flash') %>
+    <div class="max-w-3xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
+<%
+  // candidateRow is either null (new form), a raw DB row (snake_case
+  // columns, GET edit), or a reconstructed object from a failed
+  // validation POST (camelCase keys, matching extractFields in the
+  // controller) - this checks both shapes, same convention as
+  // views/clients/form.ejs's val() helper.
+  function val(camelKey, snakeKey) {
+    if (!candidateRow) return '';
+    if (candidateRow[camelKey] !== undefined && candidateRow[camelKey] !== null) return candidateRow[camelKey];
+    if (candidateRow[snakeKey] !== undefined && candidateRow[snakeKey] !== null) return candidateRow[snakeKey];
+    return '';
+  }
+  var currentStatus = candidateRow ? (candidateRow.status || 'new') : 'new';
+%>
+  <h1 class="text-lg sm:text-xl font-bold mb-6 flex items-center gap-3">
+    <div class="icon-circle-accent"><i class="fa-solid <%= mode === 'create' ? 'fa-user-plus' : 'fa-pen' %>"></i></div>
+    <%= mode === 'create' ? 'New Candidate' : 'Edit Candidate' %>
+  </h1>
+
+  <% if (errors && errors.length) { %>
+    <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 px-4 py-2.5 text-sm space-y-1">
+      <% errors.forEach(function(e) { %><div class="flex items-center gap-2"><i class="fa-solid fa-circle-exclamation"></i><%= e %></div><% }); %>
+    </div>
+  <% } %>
+
+  <form action="<%= mode === 'create' ? '/candidates' : '/candidates/' + candidateRow.id %>" method="POST" enctype="multipart/form-data" class="space-y-4">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="card p-5 sm:p-6">
+      <h2 class="section-title"><i class="fa-solid fa-id-card"></i>Personal Info</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="field-label" for="firstName">First name</label>
+          <input class="field-input" type="text" id="firstName" name="firstName" value="<%= val('firstName', 'first_name') %>" required autofocus>
+        </div>
+        <div>
+          <label class="field-label" for="lastName">Last name</label>
+          <input class="field-input" type="text" id="lastName" name="lastName" value="<%= val('lastName', 'last_name') %>" required>
+        </div>
+        <div>
+          <label class="field-label" for="email">Email</label>
+          <input class="field-input" type="email" id="email" name="email" value="<%= val('email', 'email') %>">
+        </div>
+        <div>
+          <label class="field-label" for="phone">Phone</label>
+          <input class="field-input" type="text" id="phone" name="phone" value="<%= val('phone', 'phone') %>">
+        </div>
+        <div>
+          <label class="field-label" for="whatsapp">WhatsApp</label>
+          <input class="field-input" type="text" id="whatsapp" name="whatsapp" value="<%= val('whatsapp', 'whatsapp') %>">
+        </div>
+        <div>
+          <label class="field-label" for="birthDate">Date of birth</label>
+          <input class="field-input" type="date" id="birthDate" name="birthDate" value="<%= val('birthDate', 'birth_date') %>">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="field-label" for="address">Address</label>
+          <input class="field-input" type="text" id="address" name="address" value="<%= val('address', 'address') %>">
+        </div>
+        <div>
+          <label class="field-label" for="city">City</label>
+          <input class="field-input" type="text" id="city" name="city" value="<%= val('city', 'city') %>">
+        </div>
+        <div>
+          <label class="field-label" for="country">Country</label>
+          <input class="field-input" type="text" id="country" name="country" value="<%= val('country', 'country') %>">
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-5 sm:p-6">
+      <h2 class="section-title"><i class="fa-solid fa-briefcase"></i>Professional Background</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="field-label" for="experienceYears">Years of experience</label>
+          <input class="field-input" type="number" step="0.5" min="0" id="experienceYears" name="experienceYears" value="<%= val('experienceYears', 'experience_years') %>">
+        </div>
+        <div>
+          <label class="field-label" for="possibleRoles">Possible roles</label>
+          <input class="field-input" type="text" id="possibleRoles" name="possibleRoles" placeholder="Frontend Developer, DevOps..." value="<%= val('possibleRoles', 'possible_roles') %>">
+        </div>
+        <div>
+          <label class="field-label" for="currentPosition">Current position</label>
+          <input class="field-input" type="text" id="currentPosition" name="currentPosition" value="<%= val('currentPosition', 'current_position') %>">
+        </div>
+        <div>
+          <label class="field-label" for="currentCompany">Current company</label>
+          <input class="field-input" type="text" id="currentCompany" name="currentCompany" value="<%= val('currentCompany', 'current_company') %>">
+        </div>
+        <div>
+          <label class="field-label" for="education">Education</label>
+          <input class="field-input" type="text" id="education" name="education" placeholder="Master's in Computer Science..." value="<%= val('education', 'education') %>">
+        </div>
+        <div>
+          <label class="field-label" for="languages">Languages</label>
+          <input class="field-input" type="text" id="languages" name="languages" placeholder="French, English, Arabic..." value="<%= val('languages', 'languages') %>">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="field-label" for="skills">Skills</label>
+          <textarea class="field-input" id="skills" name="skills" rows="2"><%= val('skills', 'skills') %></textarea>
+        </div>
+        <div>
+          <label class="field-label" for="linkedinUrl">LinkedIn URL</label>
+          <input class="field-input" type="text" id="linkedinUrl" name="linkedinUrl" placeholder="https://linkedin.com/in/..." value="<%= val('linkedinUrl', 'linkedin_url') %>">
+        </div>
+        <div>
+          <label class="field-label" for="portfolioUrl">Portfolio URL</label>
+          <input class="field-input" type="text" id="portfolioUrl" name="portfolioUrl" placeholder="https://..." value="<%= val('portfolioUrl', 'portfolio_url') %>">
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-5 sm:p-6">
+      <h2 class="section-title"><i class="fa-solid fa-clipboard-list"></i>Application</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="field-label" for="status">Pipeline status</label>
+          <select class="field-input" id="status" name="status">
+            <% statuses.forEach(function(s) { %>
+              <option value="<%= s %>" <%= currentStatus === s ? 'selected' : '' %>><%= statusLabels[s] %></option>
+            <% }); %>
+          </select>
+        </div>
+        <div>
+          <label class="field-label" for="source">Source</label>
+          <input class="field-input" type="text" id="source" name="source" placeholder="Referral, LinkedIn, spontaneous..." value="<%= val('source', 'source') %>">
+        </div>
+        <div>
+          <label class="field-label" for="expectedSalary">Expected salary (MAD)</label>
+          <input class="field-input" type="number" step="0.01" min="0" id="expectedSalary" name="expectedSalary" value="<%= val('expectedSalary', 'expected_salary') %>">
+        </div>
+        <div>
+          <label class="field-label" for="availability">Availability</label>
+          <input class="field-input" type="text" id="availability" name="availability" placeholder="Immediate, 1 month notice..." value="<%= val('availability', 'availability') %>">
+        </div>
+        <div>
+          <label class="field-label" for="rating">Rating (1-5)</label>
+          <input class="field-input" type="number" step="1" min="1" max="5" id="rating" name="rating" value="<%= val('rating', 'rating') %>">
+        </div>
+      </div>
+    </div>
+
+    <% if (mode === 'create') { %>
+      <div class="card p-5 sm:p-6">
+        <h2 class="section-title"><i class="fa-solid fa-file-pdf"></i>CV / Resume</h2>
+        <div>
+          <label class="field-label" for="cv">Upload PDF (optional, can also be added later)</label>
+          <input class="field-input" type="file" id="cv" name="cv" accept="application/pdf">
+        </div>
+      </div>
+    <% } %>
+
+    <div class="card p-5 sm:p-6">
+      <h2 class="section-title"><i class="fa-solid fa-circle-info"></i>Notes</h2>
+      <textarea class="field-input" id="notes" name="notes" rows="3"><%= val('notes', 'notes') %></textarea>
+    </div>
+
+    <button type="submit" class="btn-primary w-full sm:w-auto">
+      <i class="fa-solid fa-check"></i><%= mode === 'create' ? 'Create Candidate' : 'Save Changes' %>
+    </button>
+  </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

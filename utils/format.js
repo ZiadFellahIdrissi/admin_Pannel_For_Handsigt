@@ -16,4 +16,18 @@ function monthLabel(month) {
   return `${name} ${year}`;
 }
 
-module.exports = { formatCurrency, monthLabel };
+// Computed on render, not stored - a raw "age" number would silently go
+// stale, birth_date never does.
+function ageFromBirthDate(birthDate) {
+  if (!birthDate) return null;
+  const dob = new Date(birthDate);
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const hasHadBirthdayThisYear =
+    today.getMonth() > dob.getMonth() ||
+    (today.getMonth() === dob.getMonth() && today.getDate() >= dob.getDate());
+  if (!hasHadBirthdayThisYear) age -= 1;
+  return age;
+}
+
+module.exports = { formatCurrency, monthLabel, ageFromBirthDate };

@@ -1,0 +1,133 @@
+<%- include('../partials/head', { title: candidateRow.first_name + ' ' + candidateRow.last_name }) %>
+<div class="flex min-h-screen">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('../partials/topbar', { title: candidateRow.first_name + ' ' + candidateRow.last_name }) %>
+    <%- include('../partials/flash') %>
+    <div class="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
+<% function show(v) { return (v === null || v === undefined || v === '') ? '—' : v; } %>
+  <div class="flex items-center justify-between flex-wrap gap-3 mb-6">
+    <h1 class="text-lg sm:text-xl font-bold flex items-center gap-3">
+      <div class="icon-circle-slate font-bold"><%= (candidateRow.first_name.charAt(0) + candidateRow.last_name.charAt(0)).toUpperCase() %></div>
+      <span>
+        <%= candidateRow.first_name %> <%= candidateRow.last_name %>
+        <span class="ml-2 <%= statusBadgeClass[candidateRow.status] %>"><%= statusLabels[candidateRow.status] %></span>
+      </span>
+    </h1>
+    <div class="flex items-center gap-2">
+      <a href="/candidates/<%= candidateRow.id %>/edit" class="btn-secondary">
+        <i class="fa-solid fa-pen"></i>Edit
+      </a>
+      <form action="/candidates/<%= candidateRow.id %>/delete" method="POST" data-confirm="Delete &quot;<%= candidateRow.first_name %> <%= candidateRow.last_name %>&quot;? This can't be undone.">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn-danger"><i class="fa-solid fa-trash"></i>Delete</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 items-start">
+    <!-- Left: info -->
+    <div class="space-y-4 sm:space-y-6">
+      <div class="card p-5 sm:p-6">
+        <div class="space-y-4 text-sm">
+          <div>
+            <h2 class="section-title"><i class="fa-solid fa-id-card"></i>Personal Info</h2>
+            <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+              <div><span class="text-brand-gray2">Age</span><br><%= age !== null ? age : '—' %></div>
+              <div><span class="text-brand-gray2">Email</span><br><%= show(candidateRow.email) %></div>
+              <div><span class="text-brand-gray2">Phone</span><br><%= show(candidateRow.phone) %></div>
+              <div><span class="text-brand-gray2">WhatsApp</span><br><%= show(candidateRow.whatsapp) %></div>
+              <div class="col-span-2"><span class="text-brand-gray2">Address</span><br><%= show(candidateRow.address) %></div>
+              <div><span class="text-brand-gray2">City</span><br><%= show(candidateRow.city) %></div>
+              <div><span class="text-brand-gray2">Country</span><br><%= show(candidateRow.country) %></div>
+            </div>
+          </div>
+
+          <div>
+            <h2 class="section-title"><i class="fa-solid fa-briefcase"></i>Professional Background</h2>
+            <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+              <div><span class="text-brand-gray2">Experience</span><br><%= candidateRow.experience_years !== null ? candidateRow.experience_years + ' yrs' : '—' %></div>
+              <div><span class="text-brand-gray2">Possible Roles</span><br><%= show(candidateRow.possible_roles) %></div>
+              <div><span class="text-brand-gray2">Current Position</span><br><%= show(candidateRow.current_position) %></div>
+              <div><span class="text-brand-gray2">Current Company</span><br><%= show(candidateRow.current_company) %></div>
+              <div><span class="text-brand-gray2">Education</span><br><%= show(candidateRow.education) %></div>
+              <div><span class="text-brand-gray2">Languages</span><br><%= show(candidateRow.languages) %></div>
+              <div class="col-span-2"><span class="text-brand-gray2">Skills</span><br><%= show(candidateRow.skills) %></div>
+              <div>
+                <span class="text-brand-gray2">LinkedIn</span><br>
+                <% if (candidateRow.linkedin_url) { %><a href="<%= candidateRow.linkedin_url %>" target="_blank" rel="noopener" class="text-brand-accent hover:underline">Profile</a><% } else { %>—<% } %>
+              </div>
+              <div>
+                <span class="text-brand-gray2">Portfolio</span><br>
+                <% if (candidateRow.portfolio_url) { %><a href="<%= candidateRow.portfolio_url %>" target="_blank" rel="noopener" class="text-brand-accent hover:underline">Link</a><% } else { %>—<% } %>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h2 class="section-title"><i class="fa-solid fa-clipboard-list"></i>Application</h2>
+            <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+              <div><span class="text-brand-gray2">Source</span><br><%= show(candidateRow.source) %></div>
+              <div><span class="text-brand-gray2">Expected Salary</span><br><%= candidateRow.expected_salary ? formatCurrency(candidateRow.expected_salary) : '—' %></div>
+              <div><span class="text-brand-gray2">Availability</span><br><%= show(candidateRow.availability) %></div>
+              <div><span class="text-brand-gray2">Rating</span><br><%= candidateRow.rating ? candidateRow.rating + ' / 5' : '—' %></div>
+            </div>
+          </div>
+
+          <% if (candidateRow.notes) { %>
+            <div>
+              <h2 class="section-title"><i class="fa-solid fa-circle-info"></i>Notes</h2>
+              <p class="text-brand-gray2 whitespace-pre-wrap"><%= candidateRow.notes %></p>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: resume -->
+    <div class="card p-5 sm:p-6 lg:sticky lg:top-6">
+      <div class="flex items-center justify-between gap-3 mb-4">
+        <h2 class="section-title mb-0"><i class="fa-solid fa-file-pdf"></i>Resume</h2>
+        <button type="button" class="btn-secondary text-sm !px-3 !py-1.5" data-dialog-open="reupload-cv">
+          <i class="fa-solid fa-upload"></i>Reupload
+        </button>
+      </div>
+
+      <% if (candidateRow.cv_filename) { %>
+        <iframe src="/candidates/<%= candidateRow.id %>/cv" class="w-full rounded-lg border border-brand-borderLight" style="height: 70vh;" title="CV"></iframe>
+        <p class="text-xs text-brand-gray2 mt-2 truncate"><%= candidateRow.cv_original_name || 'cv.pdf' %></p>
+      <% } else { %>
+        <div class="rounded-lg border border-dashed border-brand-borderLight flex flex-col items-center justify-center text-center p-8" style="height: 40vh;">
+          <i class="fa-regular fa-file-pdf text-3xl text-brand-gray2 mb-2"></i>
+          <p class="text-sm text-brand-gray2">No CV uploaded yet.</p>
+        </div>
+      <% } %>
+    </div>
+
+    <dialog id="reupload-cv" class="dialog-panel">
+      <div class="p-5 sm:p-6">
+        <div class="flex items-center justify-between gap-3 mb-4">
+          <h3 class="font-bold">Reupload CV</h3>
+          <button type="button" class="theme-toggle" data-dialog-close aria-label="Close">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <form action="/candidates/<%= candidateRow.id %>/cv" method="POST" enctype="multipart/form-data" class="space-y-3">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div>
+            <label class="field-label" for="cv-reupload">PDF file</label>
+            <input class="field-input" type="file" id="cv-reupload" name="cv" accept="application/pdf" required>
+          </div>
+          <p class="text-xs text-brand-gray2">Replaces the current CV, if any.</p>
+          <button type="submit" class="btn-primary w-full">Upload</button>
+        </form>
+      </div>
+    </dialog>
+  </div>
+    </div>
+  </div>
+</div>
+<script src="/js/confirm-submit.js?v=<%= assetVersion %>" defer></script>
+<script src="/js/dialog-toggle.js?v=<%= assetVersion %>" defer></script>
+
+<%- include('../partials/foot') %>

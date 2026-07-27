@@ -1,0 +1,71 @@
+<%- include('../partials/head', { title: 'Candidates' }) %>
+<div class="flex min-h-screen">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('../partials/topbar', { title: 'Candidates' }) %>
+    <%- include('../partials/flash') %>
+    <div class="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
+  <div class="flex items-center justify-between flex-wrap gap-3 mb-4 sm:mb-6">
+    <h1 class="text-lg sm:text-xl font-bold flex items-center gap-3">
+      <div class="icon-circle-accent"><i class="fa-solid fa-address-card"></i></div>
+      Candidates
+    </h1>
+    <a href="/candidates/new" class="btn-primary">
+      <i class="fa-solid fa-user-plus"></i>Add Candidate
+    </a>
+  </div>
+
+  <form action="/candidates" method="GET" class="card p-4 mb-6 grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+    <div class="sm:col-span-2">
+      <label class="field-label" for="q">Search</label>
+      <input class="field-input" type="text" id="q" name="q" placeholder="Name or email..." value="<%= q %>">
+    </div>
+    <div>
+      <label class="field-label" for="status">Status</label>
+      <select class="field-input" id="status" name="status">
+        <option value="">All</option>
+        <% statuses.forEach(function(s) { %>
+          <option value="<%= s %>" <%= status === s ? 'selected' : '' %>><%= statusLabels[s] %></option>
+        <% }); %>
+      </select>
+    </div>
+    <button type="submit" class="btn-primary sm:col-span-3"><i class="fa-solid fa-filter"></i>Filter</button>
+  </form>
+
+  <% if (candidates.length === 0) { %>
+    <div class="card p-8 text-center">
+      <i class="fa-regular fa-folder-open text-2xl text-brand-gray2 mb-2"></i>
+      <p class="text-sm text-brand-gray2">No candidates found.</p>
+    </div>
+  <% } else { %>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <% candidates.forEach(function(c) { %>
+        <a href="/candidates/<%= c.id %>" class="card-interactive p-4 block">
+          <div class="flex items-start gap-3 mb-3">
+            <div class="icon-circle-slate font-bold shrink-0"><%= (c.first_name.charAt(0) + c.last_name.charAt(0)).toUpperCase() %></div>
+            <div class="min-w-0">
+              <div class="font-semibold truncate"><%= c.first_name %> <%= c.last_name %></div>
+              <div class="text-xs text-brand-gray2 truncate"><%= c.current_position || c.possible_roles || '—' %></div>
+            </div>
+            <span class="<%= statusBadgeClass[c.status] %> ml-auto shrink-0"><%= statusLabels[c.status] %></span>
+          </div>
+          <div class="text-xs text-brand-gray2 space-y-1">
+            <% if (c.experience_years !== null) { %>
+              <div><i class="fa-solid fa-briefcase w-4 text-center"></i> <%= c.experience_years %> yrs experience</div>
+            <% } %>
+            <% if (c.phone) { %>
+              <div><i class="fa-solid fa-phone w-4 text-center"></i> <%= c.phone %></div>
+            <% } %>
+            <% if (c.city) { %>
+              <div><i class="fa-solid fa-location-dot w-4 text-center"></i> <%= c.city %></div>
+            <% } %>
+          </div>
+        </a>
+      <% }); %>
+    </div>
+  <% } %>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>
