@@ -153,6 +153,17 @@ ALTER TABLE month_submissions
   ADD COLUMN extra_fee_percent DECIMAL(5,2) NOT NULL DEFAULT 0;
 
 -- ---------------------------------------------------------------------
+-- CLEANUP - run only if you already applied an earlier draft of the
+-- migration above, back when this feature was a `fees_applied` boolean
+-- checkbox instead of a percentage. It was redesigned before shipping;
+-- no code anywhere references `fees_applied` anymore. If you never ran
+-- that earlier ALTER TABLE, skip this - it'll just error "unknown
+-- column" harmlessly, there's nothing to clean up.
+-- ---------------------------------------------------------------------
+ALTER TABLE consultant_clients DROP COLUMN fees_applied;
+ALTER TABLE month_submissions DROP COLUMN fees_applied;
+
+-- ---------------------------------------------------------------------
 -- OPTIONAL, DO NOT RUN YET - `users.daily_rate` is being retired in
 -- favor of per-(consultant, client) TJM above. The Admin Panel no longer
 -- reads or writes this column anywhere. DO NOT run this DROP until the
