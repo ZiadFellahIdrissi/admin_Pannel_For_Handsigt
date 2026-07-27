@@ -4,7 +4,7 @@ const pool = require('../config/db');
 
 async function listForConsultant(userId) {
   const [rows] = await pool.query(
-    `SELECT c.id, c.name, c.active, cc.consultant_tjm, cc.client_tjm, cc.role_title, cc.fees_applied
+    `SELECT c.id, c.name, c.active, cc.consultant_tjm, cc.client_tjm, cc.role_title, cc.extra_fee_percent
        FROM clients c
        JOIN consultant_clients cc ON cc.client_id = c.id
       WHERE cc.user_id = ?
@@ -21,7 +21,7 @@ async function listForConsultant(userId) {
 async function listConsultantsForClient(clientId) {
   const [rows] = await pool.query(
     `SELECT u.id, u.first_name, u.last_name, u.active,
-            cc.consultant_tjm, cc.client_tjm, cc.role_title, cc.fees_applied
+            cc.consultant_tjm, cc.client_tjm, cc.role_title, cc.extra_fee_percent
        FROM users u
        JOIN consultant_clients cc ON cc.user_id = u.id
       WHERE cc.client_id = ?
@@ -62,17 +62,17 @@ async function attach(userId, clientId) {
   );
 }
 
-// Sets/updates the current rates, role, and fee setting for this pairing -
-// used both the first time they're set and later when a client
+// Sets/updates the current rates, role, and extra fee percent for this
+// pairing - used both the first time they're set and later when a client
 // renegotiates or the consultant's role there changes. Does NOT touch any
 // month_submissions already created against this pairing; those keep
 // their own frozen rate/fee snapshot (see sql/schema.sql) - role_title
 // has no per-submission snapshot, it's read live since knowing the
 // current role isn't a financial record the way a rate/fee is.
-async function updateAttachment(userId, clientId, { consultantTjm, clientTjm, roleTitle, feesApplied }) {
+async function updateAttachment(userId, clientId, { consultantTjm, clientTjm, roleTitle, extraFeePercent }) {
   await pool.query(
-    'UPDATE consultant_clients SET consultant_tjm = ?, client_tjm = ?, role_title = ?, fees_applied = ? WHERE user_id = ? AND client_id = ?',
-    [consultantTjm, clientTjm, roleTitle, feesApplied ? 1 : 0, userId, clientId]
+    'UPDATE consultant_clients SET consultant_tjm = ?, client_tjm = ?, role_title = ?, extra_fee_percent = ? WHERE user_id = ? AND client_id = ?',
+    [consultantTjm, clientTjm, roleTitle, extraFeePercent || 0, userId, clientId]
   );
 }
 

@@ -59,6 +59,7 @@ async function show(req, res) {
       totalDays: Number(r.total_days),
       totalPayout: Number(r.total_payout),
       totalBilled: rowBilled,
+      totalFees: Number(r.total_fees),
       totalMargin: rowBilled > 0 ? rowBilled - Number(r.total_payout) - Number(r.total_fees) : null,
       percent: (Number(r.total_payout) / maxPayout) * 100
     };
@@ -115,6 +116,7 @@ async function show(req, res) {
     totalDays,
     totalPayout,
     totalBilled,
+    totalFees,
     totalMargin,
     hasBillingData,
     linePoints,

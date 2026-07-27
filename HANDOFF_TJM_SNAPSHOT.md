@@ -58,15 +58,16 @@ Two new nullable columns exist now (migration already run against the
 shared database — nothing for this repo to do schema-wise):
 
 - **`consultant_clients.consultant_tjm`** / **`consultant_clients.client_tjm`**
-  / **`consultant_clients.fees_applied`**
-  — the *current* rates (and optional 5% Handsight fee flag) for a
-  pairing. The Admin Panel has a UI (on a consultant's detail page) where
-  the admin sets/updates these.
+  / **`consultant_clients.extra_fee_percent`**
+  — the *current* rates (and optional extra fee percentage — a cost
+  Handsight itself pays out on top of `consultant_tjm`, not something
+  charged to the client or consultant) for a pairing. The Admin Panel has
+  a UI (on a consultant's detail page) where the admin sets/updates these.
 - **`month_submissions.consultant_tjm`** / **`month_submissions.client_tjm`**
-  / **`month_submissions.fees_applied`**
+  / **`month_submissions.extra_fee_percent`**
   — a **frozen snapshot** of all three, meant to be set once, at the
   moment a submission is created, and never touched again. This is so a
-  rate (or fee setting) changed later doesn't silently rewrite a past
+  rate (or fee percentage) changed later doesn't silently rewrite a past
   month's payout/billing/margin figures — important for anything that
   feeds invoices or payroll.
 
@@ -89,20 +90,20 @@ async function create({ userId, clientId, month }) {
 ```
 
 — it needs to look up the current `consultant_clients.consultant_tjm` /
-`client_tjm` / `fees_applied` for that `(userId, clientId)` pair and copy
-them into the new row at creation time:
+`client_tjm` / `extra_fee_percent` for that `(userId, clientId)` pair and
+copy them into the new row at creation time:
 
 ```js
 async function create({ userId, clientId, month }) {
   const [[rates]] = await pool.query(
-    'SELECT consultant_tjm, client_tjm, fees_applied FROM consultant_clients WHERE user_id = ? AND client_id = ?',
+    'SELECT consultant_tjm, client_tjm, extra_fee_percent FROM consultant_clients WHERE user_id = ? AND client_id = ?',
     [userId, clientId]
   );
 
   const [result] = await pool.query(
-    `INSERT INTO month_submissions (user_id, client_id, month, status, consultant_tjm, client_tjm, fees_applied)
+    `INSERT INTO month_submissions (user_id, client_id, month, status, consultant_tjm, client_tjm, extra_fee_percent)
      VALUES (?, ?, ?, 'draft', ?, ?, ?)`,
-    [userId, clientId, month, rates ? rates.consultant_tjm : null, rates ? rates.client_tjm : null, rates ? rates.fees_applied : 0]
+    [userId, clientId, month, rates ? rates.consultant_tjm : null, rates ? rates.client_tjm : null, rates ? rates.extra_fee_percent : 0]
   );
   return result.insertId;
 }
@@ -111,18 +112,20 @@ async function create({ userId, clientId, month }) {
 If the admin hasn't set rates yet for that pairing, both snapshot rate
 columns just land `NULL` — treat that as "unknown," not an error (same
 convention the Admin Panel uses: `COALESCE(consultant_tjm, 0)`).
-`fees_applied` defaults to `0` (no fee) the same way.
+`extra_fee_percent` defaults to `0` (no extra fee) the same way.
 
 Note this is the one place in this repo that's expected to touch
 `client_tjm` at all — it's a pure storage operation (copying it onto the
 row so the *Admin Panel* can read it later), not something rendered back
 to the consultant. Don't extend this pattern anywhere else; see the
-critical note above. `fees_applied` is a newer, separate column
-(added after this doc was first written) — it's not as sensitive as
-`client_tjm` on its own (it's just a boolean, not a rate), but it exists
-purely to feed the Admin Panel's margin math, so the same rule applies:
-copy it into the snapshot on create(), never read or display it anywhere
-in this app's own consultant-facing pages.
+critical note above. `extra_fee_percent` is a newer, separate column
+(added after this doc was first written) — it's a cost Handsight itself
+absorbs (paid out to the consultant on top of `consultant_tjm`), not
+something charged to the client or consultant, and it's not as sensitive
+as `client_tjm` on its own (it's just a percentage, not a rate). But it
+exists purely to feed the Admin Panel's margin math, so the same rule
+applies: copy it into the snapshot on create(), never read or display it
+anywhere in this app's own consultant-facing pages.
 
 ### 2. Remove every remaining read of `users.daily_rate`
 

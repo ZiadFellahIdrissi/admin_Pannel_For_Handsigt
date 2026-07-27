@@ -42,7 +42,7 @@
               <span class="text-sm font-medium"><%= cl.name %><% if (cl.role_title) { %> <span class="text-brand-gray2 font-normal">&middot; <%= cl.role_title %></span><% } %><% if (!cl.active) { %> <span class="badge-draft ml-1">Inactive</span><% } %></span>
               <div class="text-xs mt-0.5">
                 <% if (cl.consultant_tjm || cl.client_tjm) { %>
-                  <span class="text-brand-gray2">Pay: <%= cl.consultant_tjm ? formatCurrency(cl.consultant_tjm) : '—' %> &middot; Bill: <%= cl.client_tjm ? formatCurrency(cl.client_tjm) : '—' %><% if (cl.fees_applied) { %> &middot; 5% fee applied<% } %></span>
+                  <span class="text-brand-gray2">Pay: <%= cl.consultant_tjm ? formatCurrency(cl.consultant_tjm) : '—' %> &middot; Bill: <%= cl.client_tjm ? formatCurrency(cl.client_tjm) : '—' %><% if (Number(cl.extra_fee_percent) > 0) { %> &middot; +<%= Number(cl.extra_fee_percent) %>% extra fee<% } %></span>
                 <% } else { %>
                   <span class="text-amber-600 dark:text-amber-400">Rates not set</span>
                 <% } %>
@@ -81,10 +81,10 @@
                   <label class="field-label" for="clientTjm-<%= cl.id %>">Bill to client (MAD/day)</label>
                   <input class="field-input" type="number" step="0.01" min="0" id="clientTjm-<%= cl.id %>" name="clientTjm" value="<%= cl.client_tjm || '' %>">
                 </div>
-                <label class="flex items-center gap-2 text-sm cursor-pointer">
-                  <input type="checkbox" id="feesApplied-<%= cl.id %>" name="feesApplied" class="rounded" <%= cl.fees_applied ? 'checked' : '' %>>
-                  Apply Handsight's 5% fee (deducted from margin)
-                </label>
+                <div>
+                  <label class="field-label" for="extraFeePercent-<%= cl.id %>">Extra fee (%) — cost Handsight pays out, deducted from margin</label>
+                  <input class="field-input" type="number" step="0.01" min="0" max="100" id="extraFeePercent-<%= cl.id %>" name="extraFeePercent" placeholder="0" value="<%= Number(cl.extra_fee_percent) || '' %>">
+                </div>
                 <p class="text-xs text-brand-gray2">Rate/fee changes only apply to new months going forward - already-submitted months keep what they were created with.</p>
                 <button type="submit" class="btn-primary w-full">Save</button>
               </form>

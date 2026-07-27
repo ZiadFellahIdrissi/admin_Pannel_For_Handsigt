@@ -128,26 +128,29 @@ ALTER TABLE consultant_clients
 -- ---------------------------------------------------------------------
 -- MIGRATION - run once in phpMyAdmin's SQL tab (ALTER privileges needed).
 --
--- Optional 5% Handsight fee per (consultant, client) pairing. When on,
--- margin gets an extra deduction of 5% of what Handsight pays the
--- consultant, on top of the normal billed-minus-payout gap:
---   fees off (default): margin = total_billed - total_payout
---   fees on:            margin = total_billed - total_payout - (total_payout * 0.05)
+-- Optional extra fee percentage per (consultant, client) pairing. This is
+-- a cost Handsight itself absorbs - an extra amount Handsight pays out
+-- (on top of consultant_tjm) that comes straight out of Handsight's
+-- margin, not something charged to the client or the consultant. The
+-- percentage is set per pairing (not a fixed number) via "Edit Details"
+-- on that consultant's page:
+--   no extra fee (0, default): margin = total_billed - total_payout
+--   extra fee set to X%:       margin = total_billed - total_payout - (total_payout * X / 100)
 --
 -- Same snapshot pattern as consultant_tjm/client_tjm above:
--- `consultant_clients.fees_applied` is the CURRENT/default setting for a
--- pairing; `month_submissions.fees_applied` is a FROZEN SNAPSHOT copied in
--- at submission-creation time, so toggling this later never rewrites a
--- past month's margin. See HANDOFF_TJM_SNAPSHOT.md for what the
--- Consultant Dashboard app needs to do to populate this.
--- DEFAULT 0 needs no backfill - it correctly means "no fee" for every
--- existing row, matching the checkbox-off/current behavior.
+-- `consultant_clients.extra_fee_percent` is the CURRENT/default setting
+-- for a pairing; `month_submissions.extra_fee_percent` is a FROZEN
+-- SNAPSHOT copied in at submission-creation time, so changing this later
+-- never rewrites a past month's margin. See HANDOFF_TJM_SNAPSHOT.md for
+-- what the Consultant Dashboard app needs to do to populate this.
+-- DEFAULT 0 needs no backfill - it correctly means "no extra fee" for
+-- every existing row, matching current behavior.
 -- ---------------------------------------------------------------------
 ALTER TABLE consultant_clients
-  ADD COLUMN fees_applied TINYINT(1) NOT NULL DEFAULT 0;
+  ADD COLUMN extra_fee_percent DECIMAL(5,2) NOT NULL DEFAULT 0;
 
 ALTER TABLE month_submissions
-  ADD COLUMN fees_applied TINYINT(1) NOT NULL DEFAULT 0;
+  ADD COLUMN extra_fee_percent DECIMAL(5,2) NOT NULL DEFAULT 0;
 
 -- ---------------------------------------------------------------------
 -- OPTIONAL, DO NOT RUN YET - `users.daily_rate` is being retired in

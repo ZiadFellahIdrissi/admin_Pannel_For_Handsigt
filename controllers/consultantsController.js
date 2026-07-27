@@ -189,7 +189,7 @@ async function handleUpdateClientRates(req, res) {
   const consultantTjm = req.body.consultantTjm ? Number(req.body.consultantTjm) : null;
   const clientTjm = req.body.clientTjm ? Number(req.body.clientTjm) : null;
   const roleTitle = (req.body.roleTitle || '').trim() || null;
-  const feesApplied = req.body.feesApplied === 'on';
+  const extraFeePercent = req.body.extraFeePercent ? Number(req.body.extraFeePercent) : 0;
 
   const errors = [];
   if (consultantTjm !== null && (!Number.isFinite(consultantTjm) || consultantTjm < 0)) {
@@ -198,13 +198,16 @@ async function handleUpdateClientRates(req, res) {
   if (clientTjm !== null && (!Number.isFinite(clientTjm) || clientTjm < 0)) {
     errors.push('Client rate must be a non-negative number.');
   }
+  if (!Number.isFinite(extraFeePercent) || extraFeePercent < 0 || extraFeePercent > 100) {
+    errors.push('Extra fee percent must be between 0 and 100.');
+  }
 
   if (errors.length) {
     errors.forEach((e) => req.flash('error', e));
     return res.redirect(`/consultants/${userId}`);
   }
 
-  await consultantClientModel.updateAttachment(userId, clientId, { consultantTjm, clientTjm, roleTitle, feesApplied });
+  await consultantClientModel.updateAttachment(userId, clientId, { consultantTjm, clientTjm, roleTitle, extraFeePercent });
   req.flash('success', 'Details updated. Rate changes only apply to new months going forward - already-submitted months keep the rate they were created with.');
   res.redirect(`/consultants/${userId}`);
 }
