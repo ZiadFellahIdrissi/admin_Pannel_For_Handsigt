@@ -36,9 +36,9 @@ const COLUMN_BY_FIELD = {
   status: 'status', rating: 'rating', notes: 'notes'
 };
 
-// Optional status filter + a simple name/email search - the same
-// URL-query-filter convention as clientModel.list(active).
-async function list({ status, q } = {}) {
+// Optional status/experience/position/city filters + a simple name/email
+// search - the same URL-query-filter convention as clientModel.list(active).
+async function list({ status, q, minExperience, position, city } = {}) {
   const conditions = [];
   const params = [];
 
@@ -50,6 +50,19 @@ async function list({ status, q } = {}) {
     conditions.push('(first_name LIKE ? OR last_name LIKE ? OR email LIKE ?)');
     const like = `%${q.trim()}%`;
     params.push(like, like, like);
+  }
+  if (minExperience !== undefined && minExperience !== null && minExperience !== '' && Number.isFinite(Number(minExperience))) {
+    conditions.push('experience_years >= ?');
+    params.push(Number(minExperience));
+  }
+  if (position && position.trim()) {
+    conditions.push('(possible_roles LIKE ? OR current_position LIKE ?)');
+    const like = `%${position.trim()}%`;
+    params.push(like, like);
+  }
+  if (city && city.trim()) {
+    conditions.push('city LIKE ?');
+    params.push(`%${city.trim()}%`);
   }
 
   const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';

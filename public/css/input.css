@@ -195,9 +195,14 @@
 
   /* Left sidebar navigation */
   .sidebar-panel {
-    @apply fixed inset-y-0 left-0 z-30 w-64 shrink-0 -translate-x-full transition-transform duration-200 overflow-y-auto lg:static lg:translate-x-0 lg:z-auto;
+    @apply fixed inset-y-0 left-0 z-30 w-64 shrink-0 -translate-x-full transition-transform duration-200 flex flex-col lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 lg:z-auto;
     background-color: var(--surface);
     border-right: 1px solid var(--border-light);
+  }
+  /* Scrolls independently of the header above it, so the logo/title row
+     never scrolls out of view even if the nav list outgrows one screen. */
+  .sidebar-panel > nav {
+    @apply flex-1 overflow-y-auto;
   }
   .sidebar-panel.sidebar-open {
     @apply translate-x-0;

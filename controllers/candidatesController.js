@@ -43,11 +43,17 @@ function extractFields(body) {
 async function list(req, res) {
   const status = req.query.status || '';
   const q = req.query.q || '';
-  const candidates = await candidateModel.list({ status, q });
+  const minExperience = req.query.minExperience || '';
+  const position = req.query.position || '';
+  const city = req.query.city || '';
+  const candidates = await candidateModel.list({ status, q, minExperience, position, city });
   res.render('candidates/list', {
     candidates,
     status,
     q,
+    minExperience,
+    position,
+    city,
     statuses: candidateModel.STATUSES,
     statusLabels: candidateModel.STATUS_LABELS,
     statusBadgeClass: candidateModel.STATUS_BADGE_CLASS

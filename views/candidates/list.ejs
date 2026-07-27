@@ -15,10 +15,22 @@
     </a>
   </div>
 
-  <form action="/candidates" method="GET" class="card p-4 mb-6 grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
-    <div class="sm:col-span-2">
+  <form action="/candidates" method="GET" class="card p-4 mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
+    <div class="sm:col-span-2 lg:col-span-2">
       <label class="field-label" for="q">Search</label>
       <input class="field-input" type="text" id="q" name="q" placeholder="Name or email..." value="<%= q %>">
+    </div>
+    <div>
+      <label class="field-label" for="position">Position / Role</label>
+      <input class="field-input" type="text" id="position" name="position" placeholder="Developer..." value="<%= position %>">
+    </div>
+    <div>
+      <label class="field-label" for="city">City</label>
+      <input class="field-input" type="text" id="city" name="city" placeholder="Casablanca..." value="<%= city %>">
+    </div>
+    <div>
+      <label class="field-label" for="minExperience">Min. experience (yrs)</label>
+      <input class="field-input" type="number" step="0.5" min="0" id="minExperience" name="minExperience" value="<%= minExperience %>">
     </div>
     <div>
       <label class="field-label" for="status">Status</label>
@@ -29,7 +41,7 @@
         <% }); %>
       </select>
     </div>
-    <button type="submit" class="btn-primary sm:col-span-3"><i class="fa-solid fa-filter"></i>Filter</button>
+    <button type="submit" class="btn-primary sm:col-span-2 lg:col-span-6"><i class="fa-solid fa-filter"></i>Filter</button>
   </form>
 
   <% if (candidates.length === 0) { %>
