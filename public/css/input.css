@@ -200,9 +200,15 @@
     border-right: 1px solid var(--border-light);
   }
   /* Scrolls independently of the header above it, so the logo/title row
-     never scrolls out of view even if the nav list outgrows one screen. */
+     never scrolls out of view even if the nav list outgrows one screen.
+     Scrollbar is hidden (still fully scrollable, just no visible track). */
   .sidebar-panel > nav {
     @apply flex-1 overflow-y-auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* legacy Edge/IE */
+  }
+  .sidebar-panel > nav::-webkit-scrollbar {
+    display: none; /* Chrome/Safari/new Edge */
   }
   .sidebar-panel.sidebar-open {
     @apply translate-x-0;

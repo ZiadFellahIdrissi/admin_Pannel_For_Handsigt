@@ -1,0 +1,113 @@
+<%- include('../partials/head', { title: 'Recruiting Analytics' }) %>
+<div class="flex min-h-screen">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('../partials/topbar', { title: 'Recruiting Analytics' }) %>
+    <%- include('../partials/flash') %>
+    <div class="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full viz-root">
+      <h1 class="text-lg sm:text-xl font-bold mb-4 sm:mb-6 flex items-center gap-3">
+        <div class="icon-circle-accent"><i class="fa-solid fa-chart-line"></i></div>
+        Recruiting Analytics
+      </h1>
+
+      <!-- KPI row -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+        <div class="stat-tile">
+          <div class="icon-circle-accent"><i class="fa-solid fa-address-card"></i></div>
+          <div>
+            <div class="stat-tile-value"><%= totalCandidates %></div>
+            <div class="stat-tile-label">Total Candidates</div>
+          </div>
+        </div>
+        <div class="stat-tile">
+          <div class="icon-circle-amber"><i class="fa-solid fa-user-plus"></i></div>
+          <div>
+            <div class="stat-tile-value"><%= addedThisMonth %></div>
+            <div class="stat-tile-label">Added This Month</div>
+          </div>
+        </div>
+        <div class="stat-tile">
+          <div class="icon-circle-emerald"><i class="fa-solid fa-handshake"></i></div>
+          <div>
+            <div class="stat-tile-value"><%= hiredThisMonth %></div>
+            <div class="stat-tile-label">Hired This Month</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Funnel: candidates by pipeline stage -->
+      <div class="card p-5 sm:p-6 mb-6">
+        <h2 class="section-title"><i class="fa-solid fa-filter"></i>Pipeline Funnel</h2>
+        <div class="space-y-2.5">
+          <% funnelBars.forEach(function(b) { %>
+            <div class="flex items-center gap-3" title="<%= b.label %>: <%= b.count %>">
+              <div class="w-24 sm:w-32 truncate text-xs sm:text-sm shrink-0"><%= b.label %></div>
+              <div class="flex-1 h-5 rounded-md bg-brand-light overflow-hidden">
+                <div class="h-5 rounded-md chart-bar" style="width: <%= b.percent.toFixed(1) %>%"></div>
+              </div>
+              <div class="w-10 text-right text-xs sm:text-sm font-semibold shrink-0"><%= b.count %></div>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+
+      <!-- Line chart: hires trend, last 12 months -->
+      <div class="card p-5 sm:p-6 mb-6">
+        <h2 class="section-title"><i class="fa-solid fa-arrow-trend-up"></i>Hires Trend (12 Months)</h2>
+        <% if (linePoints.length < 2) { %>
+          <div class="p-6 text-center">
+            <i class="fa-solid fa-chart-line text-2xl text-brand-gray2 mb-2"></i>
+            <p class="text-sm text-brand-gray2">Not enough history yet to show a trend.</p>
+          </div>
+        <% } else { %>
+          <svg viewBox="0 0 <%= chartWidth %> <%= chartHeight + 20 %>" class="w-full" role="img" aria-label="Hires per month over the last 12 months">
+            <% [0.25, 0.5, 0.75].forEach(function(frac) { %>
+              <line x1="0" x2="<%= chartWidth %>" y1="<%= (chartHeight - 20) * frac + 10 %>" y2="<%= (chartHeight - 20) * frac + 10 %>" class="chart-gridline"></line>
+            <% }); %>
+            <path d="<%= linePath %>" class="chart-line-path"></path>
+            <% linePoints.forEach(function(p, i) { %>
+              <circle cx="<%= p.x %>" cy="<%= p.y %>" r="3.5" class="chart-line-point">
+                <title><%= monthLabel(p.month) %>: <%= p.value %> hired</title>
+              </circle>
+              <% if (i === 0 || i === linePoints.length - 1 || i % 3 === 0) { %>
+                <text x="<%= p.x %>" y="<%= chartHeight + 15 %>" text-anchor="middle" class="chart-axis-label"><%= p.month.slice(5) %></text>
+              <% } %>
+            <% }); %>
+          </svg>
+        <% } %>
+      </div>
+
+      <!-- Pie chart: candidates by source -->
+      <div class="card p-5 sm:p-6">
+        <h2 class="section-title"><i class="fa-solid fa-chart-pie"></i>Candidates by Source</h2>
+        <% if (pieSlices.length === 0) { %>
+          <div class="p-6 text-center">
+            <i class="fa-regular fa-folder-open text-2xl text-brand-gray2 mb-2"></i>
+            <p class="text-sm text-brand-gray2">No candidates yet.</p>
+          </div>
+        <% } else { %>
+          <div class="flex flex-col sm:flex-row items-center gap-6">
+            <svg viewBox="0 0 120 120" class="w-40 h-40 shrink-0" role="img" aria-label="Candidates by source">
+              <% pieSlices.forEach(function(s) { %>
+                <path d="<%= s.path %>" fill="<%= s.color %>">
+                  <title><%= s.label %>: <%= s.value %> (<%= s.percent.toFixed(0) %>%)</title>
+                </path>
+              <% }); %>
+            </svg>
+            <div class="space-y-1.5 text-sm">
+              <% pieSlices.forEach(function(s) { %>
+                <div class="flex items-center gap-2">
+                  <span class="chart-legend-swatch" style="background-color: <%= s.color %>"></span>
+                  <span class="font-medium"><%= s.label %></span>
+                  <span class="text-brand-gray2">&middot; <%= s.value %> &middot; <%= s.percent.toFixed(0) %>%</span>
+                </div>
+              <% }); %>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

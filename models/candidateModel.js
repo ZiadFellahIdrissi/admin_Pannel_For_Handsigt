@@ -83,22 +83,105 @@ async function create(data) {
   const values = FIELDS.map((f) => data[f] ?? null);
   const placeholders = FIELDS.map(() => '?').join(', ');
 
+  // Set once, right away, if a candidate is created already marked
+  // 'hired' (e.g. via Excel import) - same rule as update() below.
+  const hiredAt = data.status === 'hired' ? new Date() : null;
+
   const [result] = await pool.query(
-    `INSERT INTO candidates (${columns.join(', ')}) VALUES (${placeholders})`,
-    values
+    `INSERT INTO candidates (${columns.join(', ')}, hired_at) VALUES (${placeholders}, ?)`,
+    [...values, hiredAt]
   );
   return result.insertId;
 }
 
 // Text fields only - never touches cv_* columns (see updateCv/removeCv).
+//
+// hired_at is set exactly once, the first time status flips to 'hired',
+// and never cleared automatically after (even if status later changes
+// again) - it's a "when did this happen" record, not a live mirror of
+// status. Its CASE has to come before `${assignments}` in the SET list:
+// MySQL evaluates SET assignments left-to-right, so referencing `status`
+// here (before assignments' own `status = ?` runs later in the same
+// statement) reads the PRE-update value, which is exactly the comparison
+// this needs ("was it not already hired, and is the incoming value
+// hired?").
 async function update(id, data) {
   const assignments = FIELDS.map((f) => `${COLUMN_BY_FIELD[f]} = ?`).join(', ');
   const values = FIELDS.map((f) => data[f] ?? null);
 
   await pool.query(
-    `UPDATE candidates SET ${assignments} WHERE id = ?`,
-    [...values, id]
+    `UPDATE candidates SET
+       hired_at = CASE WHEN status != 'hired' AND ? = 'hired' THEN NOW() ELSE hired_at END,
+       ${assignments}
+     WHERE id = ?`,
+    [data.status, ...values, id]
   );
+}
+
+async function findByIds(ids) {
+  if (!ids || ids.length === 0) return [];
+  const [rows] = await pool.query('SELECT * FROM candidates WHERE id IN (?)', [ids]);
+  return rows;
+}
+
+async function bulkDelete(ids) {
+  if (!ids || ids.length === 0) return;
+  await pool.query('DELETE FROM candidates WHERE id IN (?)', [ids]);
+}
+
+async function countTotal() {
+  const [rows] = await pool.query('SELECT COUNT(*) AS count FROM candidates');
+  return rows[0].count;
+}
+
+async function countAddedThisMonth() {
+  const [rows] = await pool.query(
+    "SELECT COUNT(*) AS count FROM candidates WHERE DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(NOW(), '%Y-%m')"
+  );
+  return rows[0].count;
+}
+
+async function countHiredThisMonth() {
+  const [rows] = await pool.query(
+    "SELECT COUNT(*) AS count FROM candidates WHERE DATE_FORMAT(hired_at, '%Y-%m') = DATE_FORMAT(NOW(), '%Y-%m')"
+  );
+  return rows[0].count;
+}
+
+// One row per pipeline stage, in STATUSES order - callers fill in 0 for
+// any status with no candidates (GROUP BY only returns stages actually
+// present).
+async function countByStatus() {
+  const [rows] = await pool.query('SELECT status, COUNT(*) AS count FROM candidates GROUP BY status');
+  const counts = Object.fromEntries(rows.map((r) => [r.status, Number(r.count)]));
+  return STATUSES.map((s) => ({ status: s, count: counts[s] || 0 }));
+}
+
+async function countBySource() {
+  const [rows] = await pool.query(
+    `SELECT COALESCE(NULLIF(TRIM(source), ''), 'Unspecified') AS source, COUNT(*) AS count
+       FROM candidates
+      GROUP BY COALESCE(NULLIF(TRIM(source), ''), 'Unspecified')
+      ORDER BY count DESC`
+  );
+  return rows;
+}
+
+// Last `monthsBack` months of hires, most recent first - the controller
+// reverses this to chronological order for the trend line, same as
+// monthSubmissionModel.approvedMonthlyTrend.
+async function hiresPerMonth(monthsBack = 12) {
+  const safeMonthsBack = Number.isInteger(monthsBack) && monthsBack > 0 ? monthsBack : 12;
+  const [rows] = await pool.query(
+    `SELECT DATE_FORMAT(hired_at, '%Y-%m') AS month, COUNT(*) AS count
+       FROM candidates
+      WHERE hired_at IS NOT NULL
+      GROUP BY month
+      ORDER BY month DESC
+      LIMIT ?`,
+    [safeMonthsBack]
+  );
+  return rows;
 }
 
 async function updateCv(id, { cvFilename, cvOriginalName }) {
@@ -119,4 +202,23 @@ async function remove(id) {
   await pool.query('DELETE FROM candidates WHERE id = ?', [id]);
 }
 
-module.exports = { STATUSES, STATUS_LABELS, STATUS_BADGE_CLASS, list, findById, create, update, updateCv, removeCv, remove };
+module.exports = {
+  STATUSES,
+  STATUS_LABELS,
+  STATUS_BADGE_CLASS,
+  list,
+  findById,
+  findByIds,
+  create,
+  update,
+  updateCv,
+  removeCv,
+  remove,
+  bulkDelete,
+  countTotal,
+  countAddedThisMonth,
+  countHiredThisMonth,
+  countByStatus,
+  countBySource,
+  hiresPerMonth
+};

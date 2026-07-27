@@ -50,34 +50,47 @@
       <p class="text-sm text-brand-gray2">No candidates found.</p>
     </div>
   <% } else { %>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-      <% candidates.forEach(function(c) { %>
-        <a href="/candidates/<%= c.id %>" class="card-interactive p-4 block">
-          <div class="flex items-start gap-3 mb-3">
-            <div class="icon-circle-slate font-bold shrink-0"><%= (c.first_name.charAt(0) + c.last_name.charAt(0)).toUpperCase() %></div>
-            <div class="min-w-0">
-              <div class="font-semibold truncate"><%= c.first_name %> <%= c.last_name %></div>
-              <div class="text-xs text-brand-gray2 truncate"><%= c.current_position || c.possible_roles || '—' %></div>
-            </div>
-            <span class="<%= statusBadgeClass[c.status] %> ml-auto shrink-0"><%= statusLabels[c.status] %></span>
+    <form action="/candidates/bulk-delete" method="POST" data-bulk-select-form="candidates-list" data-confirm="Delete the selected candidates? This can't be undone.">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-16">
+        <% candidates.forEach(function(c) { %>
+          <div class="card-interactive p-4 relative">
+            <input type="checkbox" name="candidateIds" value="<%= c.id %>" data-bulk-select-item class="absolute top-3 right-3 rounded z-10 w-4 h-4">
+            <a href="/candidates/<%= c.id %>" class="block pr-6">
+              <div class="flex items-start gap-3 mb-3">
+                <div class="icon-circle-slate font-bold shrink-0"><%= (c.first_name.charAt(0) + c.last_name.charAt(0)).toUpperCase() %></div>
+                <div class="min-w-0">
+                  <div class="font-semibold truncate"><%= c.first_name %> <%= c.last_name %></div>
+                  <div class="text-xs text-brand-gray2 truncate"><%= c.current_position || c.possible_roles || '—' %></div>
+                </div>
+                <span class="<%= statusBadgeClass[c.status] %> ml-auto shrink-0"><%= statusLabels[c.status] %></span>
+              </div>
+              <div class="text-xs text-brand-gray2 space-y-1">
+                <% if (c.experience_years !== null) { %>
+                  <div><i class="fa-solid fa-briefcase w-4 text-center"></i> <%= c.experience_years %> yrs experience</div>
+                <% } %>
+                <% if (c.phone) { %>
+                  <div><i class="fa-solid fa-phone w-4 text-center"></i> <%= c.phone %></div>
+                <% } %>
+                <% if (c.city) { %>
+                  <div><i class="fa-solid fa-location-dot w-4 text-center"></i> <%= c.city %></div>
+                <% } %>
+              </div>
+            </a>
           </div>
-          <div class="text-xs text-brand-gray2 space-y-1">
-            <% if (c.experience_years !== null) { %>
-              <div><i class="fa-solid fa-briefcase w-4 text-center"></i> <%= c.experience_years %> yrs experience</div>
-            <% } %>
-            <% if (c.phone) { %>
-              <div><i class="fa-solid fa-phone w-4 text-center"></i> <%= c.phone %></div>
-            <% } %>
-            <% if (c.city) { %>
-              <div><i class="fa-solid fa-location-dot w-4 text-center"></i> <%= c.city %></div>
-            <% } %>
-          </div>
-        </a>
-      <% }); %>
-    </div>
+        <% }); %>
+      </div>
+
+      <div data-bulk-select-bar="candidates-list" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 card px-4 py-3 shadow-xl flex items-center gap-3" style="display: none;">
+        <span class="text-sm font-medium"><span data-bulk-select-count>0</span> selected</span>
+        <button type="submit" class="btn-danger text-sm !px-3 !py-1.5"><i class="fa-solid fa-trash"></i>Delete Selected</button>
+      </div>
+    </form>
   <% } %>
     </div>
   </div>
 </div>
+<script src="/js/confirm-submit.js?v=<%= assetVersion %>" defer></script>
+<script src="/js/bulk-select.js?v=<%= assetVersion %>" defer></script>
 
 <%- include('../partials/foot') %>

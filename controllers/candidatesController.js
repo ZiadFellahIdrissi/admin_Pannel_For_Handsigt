@@ -227,6 +227,30 @@ async function handleDelete(req, res) {
   res.redirect('/candidates');
 }
 
+async function handleBulkDelete(req, res) {
+  // Checkbox multi-select: a single checked box arrives as a plain
+  // string, several as an array - normalize to an array either way (same
+  // convention as consultantsController.handleAttachClients).
+  const rawIds = req.body.candidateIds;
+  const ids = (Array.isArray(rawIds) ? rawIds : rawIds ? [rawIds] : [])
+    .map(Number)
+    .filter((id) => Number.isInteger(id) && id > 0);
+
+  if (ids.length === 0) {
+    req.flash('error', 'Choose at least one candidate to delete.');
+    return res.redirect('/candidates');
+  }
+
+  const candidates = await candidateModel.findByIds(ids);
+  candidates.forEach((c) => {
+    if (c.cv_filename) fs.unlink(path.join(CANDIDATE_CV_DIR, c.cv_filename), () => {});
+  });
+
+  await candidateModel.bulkDelete(ids);
+  req.flash('success', `Deleted ${candidates.length} candidate${candidates.length === 1 ? '' : 's'}.`);
+  res.redirect('/candidates');
+}
+
 module.exports = {
   list,
   showCreateForm,
@@ -236,5 +260,6 @@ module.exports = {
   handleUpdate,
   handleReuploadCv,
   serveCv,
-  handleDelete
+  handleDelete,
+  handleBulkDelete
 };

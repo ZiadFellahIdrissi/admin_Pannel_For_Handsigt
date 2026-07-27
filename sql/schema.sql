@@ -217,6 +217,17 @@ CREATE TABLE candidates (
 );
 
 -- ---------------------------------------------------------------------
+-- MIGRATION - run once in phpMyAdmin's SQL tab.
+--
+-- Set exactly once, the first time a candidate's status becomes 'hired'
+-- (see models/candidateModel.js) - never overwritten after, even if
+-- status later changes again. Powers the Recruiting Analytics page's
+-- "hires per month" trend, which created_at alone can't answer (that's
+-- when the PROFILE was added, not when they were actually hired).
+-- ---------------------------------------------------------------------
+ALTER TABLE candidates ADD COLUMN hired_at DATETIME DEFAULT NULL;
+
+-- ---------------------------------------------------------------------
 -- MySQL user privileges (set up in hPanel, not by this script):
 -- The Admin Panel's dedicated DB user needs SELECT/INSERT/UPDATE/DELETE
 -- on: admins, admin_sessions, users, clients, consultant_clients,

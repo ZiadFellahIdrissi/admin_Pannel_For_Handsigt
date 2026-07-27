@@ -1,5 +1,6 @@
 const monthSubmissionModel = require('../models/monthSubmissionModel');
 const { monthLabel } = require('../utils/format');
+const { pieSlicePath } = require('../utils/charts');
 
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 
@@ -12,18 +13,6 @@ function shiftMonth(month, delta) {
   const [year, m] = month.split('-').map(Number);
   const date = new Date(year, m - 1 + delta, 1);
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-}
-
-// Builds an SVG <path> "d" string for one pie slice, given the running
-// start angle (radians, 0 = 3 o'clock) and the slice's share of the circle.
-function pieSlicePath(cx, cy, r, startAngle, sliceAngle) {
-  const endAngle = startAngle + sliceAngle;
-  const x1 = cx + r * Math.cos(startAngle);
-  const y1 = cy + r * Math.sin(startAngle);
-  const x2 = cx + r * Math.cos(endAngle);
-  const y2 = cy + r * Math.sin(endAngle);
-  const largeArc = sliceAngle > Math.PI ? 1 : 0;
-  return `M ${cx} ${cy} L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${largeArc} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z`;
 }
 
 async function show(req, res) {

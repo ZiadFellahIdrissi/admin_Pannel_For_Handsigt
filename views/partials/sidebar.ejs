@@ -3,7 +3,10 @@
   var isSummary = currentPath.indexOf('/summary') === 0;
   var isClients = currentPath === '/clients' || currentPath.indexOf('/clients/') === 0;
   var isAddCandidate = currentPath === '/candidates/new';
-  var isCandidates = (currentPath === '/candidates' || currentPath.indexOf('/candidates/') === 0) && !isAddCandidate;
+  var isCandidatesAnalytics = currentPath === '/candidates/analytics';
+  var isCandidatesImportExport = currentPath === '/candidates/import-export';
+  var isCandidates = (currentPath === '/candidates' || currentPath.indexOf('/candidates/') === 0)
+    && !isAddCandidate && !isCandidatesAnalytics && !isCandidatesImportExport;
   var isApprovals = currentPath.indexOf('/approvals') === 0;
   var isHistory = currentPath.indexOf('/history') === 0;
   var isLoginAttempts = currentPath.indexOf('/login-attempts') === 0;
@@ -61,6 +64,12 @@
       </a>
       <a href="/candidates/new" class="<%= isAddCandidate ? 'sidebar-link-active' : 'sidebar-link' %>">
         <i class="fa-solid fa-user-plus w-4 text-center"></i>Add Candidate
+      </a>
+      <a href="/candidates/analytics" class="<%= isCandidatesAnalytics ? 'sidebar-link-active' : 'sidebar-link' %>">
+        <i class="fa-solid fa-chart-line w-4 text-center"></i>Analytics
+      </a>
+      <a href="/candidates/import-export" class="<%= isCandidatesImportExport ? 'sidebar-link-active' : 'sidebar-link' %>">
+        <i class="fa-solid fa-file-excel w-4 text-center"></i>Import / Export
       </a>
     </div>
 

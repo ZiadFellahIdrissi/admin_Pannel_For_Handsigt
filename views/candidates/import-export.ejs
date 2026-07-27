@@ -1,0 +1,79 @@
+<%- include('../partials/head', { title: 'Import / Export' }) %>
+<div class="flex min-h-screen">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('../partials/topbar', { title: 'Import / Export' }) %>
+    <%- include('../partials/flash') %>
+    <div class="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
+  <h1 class="text-lg sm:text-xl font-bold mb-4 sm:mb-6 flex items-center gap-3">
+    <div class="icon-circle-accent"><i class="fa-solid fa-file-excel"></i></div>
+    Import / Export
+  </h1>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
+    <div class="card p-5 sm:p-6">
+      <h2 class="section-title"><i class="fa-solid fa-file-circle-plus"></i>Add New Profiles</h2>
+      <p class="text-sm text-brand-gray2 mb-4">Download an empty spreadsheet, fill in as many rows as you like (leave the ID column blank), then upload it below to bulk-create them.</p>
+      <a href="/candidates/export/template" class="btn-secondary">
+        <i class="fa-solid fa-download"></i>Download Empty Template
+      </a>
+    </div>
+
+    <div class="card p-5 sm:p-6">
+      <h2 class="section-title"><i class="fa-solid fa-file-pen"></i>Update Existing Profiles</h2>
+      <p class="text-sm text-brand-gray2 mb-3">Search for candidates below, select the ones you want to bulk-edit, download them, make your changes, then upload the same file back below.</p>
+
+      <form action="/candidates/import-export" method="GET" class="grid grid-cols-2 gap-2 mb-3">
+        <input class="field-input" type="text" name="q" placeholder="Name or email..." value="<%= q %>">
+        <input class="field-input" type="text" name="position" placeholder="Position / role..." value="<%= position %>">
+        <input class="field-input" type="text" name="city" placeholder="City..." value="<%= city %>">
+        <select class="field-input" name="status">
+          <option value="">All statuses</option>
+          <% statuses.forEach(function(s) { %>
+            <option value="<%= s %>" <%= status === s ? 'selected' : '' %>><%= statusLabels[s] %></option>
+          <% }); %>
+        </select>
+        <button type="submit" class="btn-secondary col-span-2"><i class="fa-solid fa-magnifying-glass"></i>Search</button>
+      </form>
+
+      <% if (candidates.length === 0) { %>
+        <p class="text-sm text-brand-gray2">No candidates match this search.</p>
+      <% } else { %>
+        <form action="/candidates/export/selected" method="POST" data-bulk-select-form="candidates-export">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="max-h-56 overflow-y-auto space-y-1 mb-3 border border-brand-borderLight rounded-lg p-2">
+            <% candidates.forEach(function(c) { %>
+              <label class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm cursor-pointer hover:bg-brand-light">
+                <input type="checkbox" name="candidateIds" value="<%= c.id %>" data-bulk-select-item class="rounded">
+                <%= c.first_name %> <%= c.last_name %>
+                <span class="text-brand-gray2 text-xs ml-auto"><%= c.email || '—' %></span>
+              </label>
+            <% }); %>
+          </div>
+          <div data-bulk-select-bar="candidates-export" class="flex items-center gap-3" style="display: none;">
+            <span class="text-sm font-medium"><span data-bulk-select-count>0</span> selected</span>
+            <button type="submit" class="btn-primary text-sm !px-3 !py-1.5"><i class="fa-solid fa-download"></i>Download Selected</button>
+          </div>
+        </form>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card p-5 sm:p-6">
+    <h2 class="section-title"><i class="fa-solid fa-upload"></i>Upload File</h2>
+    <p class="text-sm text-brand-gray2 mb-3">Upload the same file back once you're done editing - rows with a blank ID are added as new candidates, rows with an ID update that existing candidate.</p>
+    <form action="/candidates/import" method="POST" enctype="multipart/form-data" class="flex flex-wrap items-end gap-3">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div>
+        <label class="field-label" for="excelFile">Excel file (.xlsx)</label>
+        <input class="field-input" type="file" id="excelFile" name="excelFile" accept=".xlsx" required>
+      </div>
+      <button type="submit" class="btn-primary"><i class="fa-solid fa-upload"></i>Upload &amp; Import</button>
+    </form>
+  </div>
+    </div>
+  </div>
+</div>
+<script src="/js/bulk-select.js?v=<%= assetVersion %>" defer></script>
+
+<%- include('../partials/foot') %>

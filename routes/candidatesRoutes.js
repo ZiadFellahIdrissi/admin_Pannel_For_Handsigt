@@ -1,10 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const candidatesController = require('../controllers/candidatesController');
+const candidatesAnalyticsController = require('../controllers/candidatesAnalyticsController');
+const candidatesBulkController = require('../controllers/candidatesBulkController');
 const { requireAuth } = require('../middleware/auth');
 const { verifyToken } = require('../middleware/csrf');
 const asyncHandler = require('../utils/asyncHandler');
 const cvUpload = require('../middleware/cvUpload');
+const excelUpload = require('../middleware/excelUpload');
 
 router.use(requireAuth);
 
@@ -25,6 +28,19 @@ function handleCv(redirectPath) {
   };
 }
 
+// Same wrapper pattern as handleCv, for the Excel import file.
+function handleExcel(redirectPath) {
+  return (req, res, next) => {
+    excelUpload.single('excelFile')(req, res, (err) => {
+      if (err) {
+        req.flash('error', err.message || 'Upload failed.');
+        return res.redirect(redirectPath(req));
+      }
+      next();
+    });
+  };
+}
+
 router.get('/candidates', asyncHandler(candidatesController.list));
 router.get('/candidates/new', candidatesController.showCreateForm);
 router.post(
@@ -33,6 +49,23 @@ router.post(
   verifyToken,
   asyncHandler(candidatesController.handleCreate)
 );
+
+// All fixed-name routes below must stay ABOVE the `:id`-parameterized
+// routes further down this file - Express matches `/candidates/:id`
+// against any single path segment, so e.g. `/candidates/analytics` would
+// otherwise be swallowed by that wildcard (as if id = "analytics").
+router.get('/candidates/analytics', asyncHandler(candidatesAnalyticsController.show));
+router.get('/candidates/import-export', asyncHandler(candidatesBulkController.showImportExportPage));
+router.get('/candidates/export/template', asyncHandler(candidatesBulkController.downloadTemplate));
+router.post('/candidates/export/selected', verifyToken, asyncHandler(candidatesBulkController.downloadSelected));
+router.post(
+  '/candidates/import',
+  handleExcel(() => '/candidates/import-export'),
+  verifyToken,
+  asyncHandler(candidatesBulkController.handleImport)
+);
+router.post('/candidates/bulk-delete', verifyToken, asyncHandler(candidatesController.handleBulkDelete));
+
 router.get('/candidates/:id', asyncHandler(candidatesController.showDetail));
 router.get('/candidates/:id/cv', asyncHandler(candidatesController.serveCv));
 router.get('/candidates/:id/edit', asyncHandler(candidatesController.showEditForm));
