@@ -95,14 +95,16 @@ async function showImportExportPage(req, res) {
   const q = req.query.q || '';
   const minExperience = req.query.minExperience || '';
   const position = req.query.position || '';
+  const skills = req.query.skills || '';
   const city = req.query.city || '';
-  const candidates = await candidateModel.list({ status, q, minExperience, position, city });
+  const candidates = await candidateModel.list({ status, q, minExperience, position, skills, city });
   res.render('candidates/import-export', {
     candidates,
     status,
     q,
     minExperience,
     position,
+    skills,
     city,
     statuses: candidateModel.STATUSES,
     statusLabels: candidateModel.STATUS_LABELS

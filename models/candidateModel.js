@@ -46,9 +46,10 @@ function fieldValue(f, data) {
   return data[f] ?? null;
 }
 
-// Optional status/experience/position/city filters + a simple name/email
-// search - the same URL-query-filter convention as clientModel.list(active).
-async function list({ status, q, minExperience, position, city } = {}) {
+// Optional status/experience/position/skills/city filters + a simple
+// name/email search - the same URL-query-filter convention as
+// clientModel.list(active).
+async function list({ status, q, minExperience, position, skills, city } = {}) {
   const conditions = [];
   const params = [];
 
@@ -72,6 +73,14 @@ async function list({ status, q, minExperience, position, city } = {}) {
   if (position && position.trim()) {
     conditions.push('possible_roles LIKE ?');
     params.push(`%${position.trim()}%`);
+  }
+  if (skills && skills.trim()) {
+    // skills is stored as one semicolon-separated string (see
+    // controllers/candidatesController.js's extractFields) - a plain
+    // substring match is enough to find a candidate who has it listed,
+    // same convention as the position/city filters.
+    conditions.push('skills LIKE ?');
+    params.push(`%${skills.trim()}%`);
   }
   if (city && city.trim()) {
     conditions.push('city LIKE ?');

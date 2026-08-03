@@ -51,7 +51,15 @@
               <div><span class="text-brand-gray2">Possible Roles</span><br><%= show(candidateRow.possible_roles) %></div>
               <div><span class="text-brand-gray2">Education</span><br><%= show(candidateRow.education) %></div>
               <div><span class="text-brand-gray2">Languages</span><br><%= show(candidateRow.languages) %></div>
-              <div class="col-span-2"><span class="text-brand-gray2">Skills</span><br><%= show(candidateRow.skills) %></div>
+              <div class="col-span-2">
+                <span class="text-brand-gray2">Skills</span><br>
+                <% var skillTags = (candidateRow.skills || '').split(';').map(function(s) { return s.trim(); }).filter(Boolean); %>
+                <% if (skillTags.length === 0) { %>—<% } else { %>
+                  <div class="flex flex-wrap gap-1 mt-1">
+                    <% skillTags.forEach(function(s) { %><span class="badge-pending !py-0.5 !px-2"><%= s %></span><% }); %>
+                  </div>
+                <% } %>
+              </div>
               <div>
                 <span class="text-brand-gray2">LinkedIn</span><br>
                 <% if (candidateRow.linkedin_url) { %><a href="<%= candidateRow.linkedin_url %>" target="_blank" rel="noopener" class="text-brand-accent hover:underline">Profile</a><% } else { %>—<% } %>

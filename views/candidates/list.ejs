@@ -15,7 +15,7 @@
     </a>
   </div>
 
-  <form action="/candidates" method="GET" class="card p-4 mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
+  <form action="/candidates" method="GET" class="card p-4 mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3 items-end">
     <div class="sm:col-span-2 lg:col-span-2">
       <label class="field-label" for="q">Search</label>
       <input class="field-input" type="text" id="q" name="q" placeholder="Name or email..." value="<%= q %>">
@@ -23,6 +23,10 @@
     <div>
       <label class="field-label" for="position">Role</label>
       <input class="field-input" type="text" id="position" name="position" placeholder="Developer..." value="<%= position %>">
+    </div>
+    <div>
+      <label class="field-label" for="skills">Skills</label>
+      <input class="field-input" type="text" id="skills" name="skills" placeholder="SQL..." value="<%= skills %>">
     </div>
     <div>
       <label class="field-label" for="city">City</label>
@@ -41,7 +45,7 @@
         <% }); %>
       </select>
     </div>
-    <button type="submit" class="btn-primary sm:col-span-2 lg:col-span-6"><i class="fa-solid fa-filter"></i>Filter</button>
+    <button type="submit" class="btn-primary sm:col-span-2 lg:col-span-7"><i class="fa-solid fa-filter"></i>Filter</button>
   </form>
 
   <% if (candidates.length === 0) { %>
@@ -70,11 +74,14 @@
                 <% if (exp !== null) { %>
                   <div><i class="fa-solid fa-briefcase w-4 text-center"></i> <%= exp %> yrs experience</div>
                 <% } %>
+                <% if (c.email) { %>
+                  <div class="truncate"><i class="fa-solid fa-envelope w-4 text-center"></i> <%= c.email %></div>
+                <% } %>
                 <% if (c.phone) { %>
                   <div><i class="fa-solid fa-phone w-4 text-center"></i> <%= c.phone %></div>
                 <% } %>
-                <% if (c.city) { %>
-                  <div><i class="fa-solid fa-location-dot w-4 text-center"></i> <%= c.city %></div>
+                <% if (c.city || c.country) { %>
+                  <div><i class="fa-solid fa-location-dot w-4 text-center"></i> <%= [c.city, c.country].filter(Boolean).join(', ') %></div>
                 <% } %>
               </div>
             </a>

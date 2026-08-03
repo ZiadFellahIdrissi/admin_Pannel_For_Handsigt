@@ -4,15 +4,31 @@ const candidateModel = require('../models/candidateModel');
 const { yearsSince } = require('../utils/format');
 const { CANDIDATE_CV_DIR } = require('../config/uploadPaths');
 
+const MAX_SKILLS = 50;
+
+// 'SQL; Power BI ; Excel' -> ['SQL', 'Power BI', 'Excel'] - shown/edited
+// as tags rather than a free paragraph, and semicolon-separated (not
+// comma) since a skill phrase can itself contain a comma.
+function parseSkills(value) {
+  return (value || '')
+    .split(';')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 // All fields besides firstName/lastName are optional free text/numbers -
 // this just trims strings to null-if-empty and validates the handful of
 // fields that aren't plain strings, same convention as
-// clientsController.extractExtendedFields.
+// clientsController.extractExtendedFields. skillsCount isn't a DB column
+// (candidateModel's FIELDS list doesn't include it) - it just rides
+// along on the returned object so handleCreate/handleUpdate can validate
+// the 50-max without re-parsing the raw input themselves.
 function extractFields(body) {
   const trim = (value) => {
     const v = (value || '').trim();
     return v || null;
   };
+  const skillsList = parseSkills(body.skills);
 
   return {
     email: trim(body.email),
@@ -24,7 +40,8 @@ function extractFields(body) {
     graduationDate: trim(body.graduationDate),
     possibleRoles: trim(body.possibleRoles),
     education: trim(body.education),
-    skills: trim(body.skills),
+    skills: skillsList.length ? skillsList.join('; ') : null,
+    skillsCount: skillsList.length,
     languages: trim(body.languages),
     linkedinUrl: trim(body.linkedinUrl),
     portfolioUrl: trim(body.portfolioUrl),
@@ -46,14 +63,16 @@ async function list(req, res) {
   const q = req.query.q || '';
   const minExperience = req.query.minExperience || '';
   const position = req.query.position || '';
+  const skills = req.query.skills || '';
   const city = req.query.city || '';
-  const candidates = await candidateModel.list({ status, q, minExperience, position, city });
+  const candidates = await candidateModel.list({ status, q, minExperience, position, skills, city });
   res.render('candidates/list', {
     candidates,
     status,
     q,
     minExperience,
     position,
+    skills,
     city,
     statuses: candidateModel.STATUSES,
     statusLabels: candidateModel.STATUS_LABELS,
@@ -87,6 +106,9 @@ async function handleCreate(req, res) {
   }
   if (fields.rating !== null && (!Number.isInteger(fields.rating) || fields.rating < 1 || fields.rating > 5)) {
     errors.push('Rating must be a whole number between 1 and 5.');
+  }
+  if (fields.skillsCount > MAX_SKILLS) {
+    errors.push(`Maximum ${MAX_SKILLS} skills allowed (found ${fields.skillsCount}).`);
   }
 
   if (errors.length) {
@@ -162,6 +184,9 @@ async function handleUpdate(req, res) {
   }
   if (fields.rating !== null && (!Number.isInteger(fields.rating) || fields.rating < 1 || fields.rating > 5)) {
     errors.push('Rating must be a whole number between 1 and 5.');
+  }
+  if (fields.skillsCount > MAX_SKILLS) {
+    errors.push(`Maximum ${MAX_SKILLS} skills allowed (found ${fields.skillsCount}).`);
   }
 
   if (errors.length) {
