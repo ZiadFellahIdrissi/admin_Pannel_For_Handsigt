@@ -7,7 +7,8 @@
   var isCandidatesImportExport = currentPath === '/candidates/import-export';
   var isCandidates = (currentPath === '/candidates' || currentPath.indexOf('/candidates/') === 0)
     && !isAddCandidate && !isCandidatesAnalytics && !isCandidatesImportExport;
-  var isCareerOffers = currentPath.indexOf('/career-offers') === 0;
+  var isPostOffer = currentPath === '/career-offers/new';
+  var isCareerOffers = currentPath.indexOf('/career-offers') === 0 && !isPostOffer;
   var isApprovals = currentPath.indexOf('/approvals') === 0;
   var isHistory = currentPath.indexOf('/history') === 0;
   var isLoginAttempts = currentPath.indexOf('/login-attempts') === 0;
@@ -78,6 +79,9 @@
     <div class="space-y-1">
       <a href="/career-offers" class="<%= isCareerOffers ? 'sidebar-link-active' : 'sidebar-link' %>">
         <i class="fa-solid fa-briefcase w-4 text-center"></i>Job Offers
+      </a>
+      <a href="/career-offers/new" class="<%= isPostOffer ? 'sidebar-link-active' : 'sidebar-link' %>">
+        <i class="fa-solid fa-plus w-4 text-center"></i>Post Offer
       </a>
     </div>
 

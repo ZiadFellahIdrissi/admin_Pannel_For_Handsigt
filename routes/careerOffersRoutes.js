@@ -41,6 +41,7 @@ router.post(
 // otherwise be swallowed by that wildcard.
 router.post('/career-offers/bulk-delete', verifyToken, asyncHandler(careerOffersController.handleBulkDelete));
 
+router.get('/career-offers/:id', asyncHandler(careerOffersController.showDetail));
 router.get('/career-offers/:id/edit', asyncHandler(careerOffersController.showEditForm));
 router.post(
   '/career-offers/:id',

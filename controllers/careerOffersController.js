@@ -85,6 +85,14 @@ async function handleCreate(req, res) {
   res.redirect('/career-offers');
 }
 
+async function showDetail(req, res) {
+  const offer = await careerOfferModel.findById(req.params.id);
+  if (!offer) {
+    return res.status(404).render('error', { message: 'Offer not found.' });
+  }
+  res.render('career-offers/detail', { offerRow: offer });
+}
+
 async function showEditForm(req, res) {
   const offer = await careerOfferModel.findById(req.params.id);
   if (!offer) {
@@ -183,6 +191,7 @@ module.exports = {
   list,
   showCreateForm,
   handleCreate,
+  showDetail,
   showEditForm,
   handleUpdate,
   handleToggleStatus,
