@@ -19,22 +19,32 @@ const STATUS_BADGE_CLASS = {
 };
 
 const FIELDS = [
-  'firstName', 'lastName', 'email', 'phone', 'whatsapp', 'birthDate',
-  'address', 'city', 'country', 'experienceYears', 'possibleRoles',
-  'currentPosition', 'currentCompany', 'education', 'skills', 'languages',
-  'linkedinUrl', 'portfolioUrl', 'expectedSalary', 'availability', 'source',
-  'status', 'rating', 'notes'
+  'firstName', 'lastName', 'email', 'phone', 'whatsapp', 'city', 'country',
+  'firstExperienceDate', 'graduationDate', 'possibleRoles', 'education',
+  'skills', 'languages', 'linkedinUrl', 'portfolioUrl',
+  'expectedSalary', 'expectedTjm', 'availability', 'source',
+  'openToCdd', 'openToCdi', 'openToFreelance', 'status', 'rating', 'notes'
 ];
+
+// Fixed set of 3 - stored as real booleans (NOT NULL DEFAULT 0), so they
+// need `? 1 : 0` rather than the generic `?? null` every other field gets.
+const BOOLEAN_FIELDS = ['openToCdd', 'openToCdi', 'openToFreelance'];
 
 const COLUMN_BY_FIELD = {
   firstName: 'first_name', lastName: 'last_name', email: 'email', phone: 'phone',
-  whatsapp: 'whatsapp', birthDate: 'birth_date', address: 'address', city: 'city',
-  country: 'country', experienceYears: 'experience_years', possibleRoles: 'possible_roles',
-  currentPosition: 'current_position', currentCompany: 'current_company', education: 'education',
+  whatsapp: 'whatsapp', city: 'city', country: 'country',
+  firstExperienceDate: 'first_experience_date', graduationDate: 'graduation_date',
+  possibleRoles: 'possible_roles', education: 'education',
   skills: 'skills', languages: 'languages', linkedinUrl: 'linkedin_url', portfolioUrl: 'portfolio_url',
-  expectedSalary: 'expected_salary', availability: 'availability', source: 'source',
+  expectedSalary: 'expected_salary', expectedTjm: 'expected_tjm', availability: 'availability', source: 'source',
+  openToCdd: 'open_to_cdd', openToCdi: 'open_to_cdi', openToFreelance: 'open_to_freelance',
   status: 'status', rating: 'rating', notes: 'notes'
 };
+
+function fieldValue(f, data) {
+  if (BOOLEAN_FIELDS.includes(f)) return data[f] ? 1 : 0;
+  return data[f] ?? null;
+}
 
 // Optional status/experience/position/city filters + a simple name/email
 // search - the same URL-query-filter convention as clientModel.list(active).
@@ -52,13 +62,16 @@ async function list({ status, q, minExperience, position, city } = {}) {
     params.push(like, like, like);
   }
   if (minExperience !== undefined && minExperience !== null && minExperience !== '' && Number.isFinite(Number(minExperience))) {
-    conditions.push('experience_years >= ?');
+    // "At least N years of experience" - computed from first_experience_date
+    // rather than a stored number (see utils/format.js's yearsSince()).
+    // NULL first_experience_date naturally fails this comparison, which is
+    // correct: an unknown start date can't confirm the bar is met.
+    conditions.push('first_experience_date IS NOT NULL AND first_experience_date <= DATE_SUB(CURDATE(), INTERVAL ? YEAR)');
     params.push(Number(minExperience));
   }
   if (position && position.trim()) {
-    conditions.push('(possible_roles LIKE ? OR current_position LIKE ?)');
-    const like = `%${position.trim()}%`;
-    params.push(like, like);
+    conditions.push('possible_roles LIKE ?');
+    params.push(`%${position.trim()}%`);
   }
   if (city && city.trim()) {
     conditions.push('city LIKE ?');
@@ -80,7 +93,7 @@ async function findById(id) {
 
 async function create(data) {
   const columns = FIELDS.map((f) => COLUMN_BY_FIELD[f]);
-  const values = FIELDS.map((f) => data[f] ?? null);
+  const values = FIELDS.map((f) => fieldValue(f, data));
   const placeholders = FIELDS.map(() => '?').join(', ');
 
   // Set once, right away, if a candidate is created already marked
@@ -107,7 +120,7 @@ async function create(data) {
 // hired?").
 async function update(id, data) {
   const assignments = FIELDS.map((f) => `${COLUMN_BY_FIELD[f]} = ?`).join(', ');
-  const values = FIELDS.map((f) => data[f] ?? null);
+  const values = FIELDS.map((f) => fieldValue(f, data));
 
   await pool.query(
     `UPDATE candidates SET

@@ -17,22 +17,23 @@ const EXPORT_COLUMNS = [
   { header: 'Email', key: 'email' },
   { header: 'Phone', key: 'phone' },
   { header: 'WhatsApp', key: 'whatsapp' },
-  { header: 'Birth Date', key: 'birthDate' },
-  { header: 'Address', key: 'address' },
   { header: 'City', key: 'city' },
   { header: 'Country', key: 'country' },
-  { header: 'Experience Years', key: 'experienceYears' },
+  { header: 'First Experience Date', key: 'firstExperienceDate' },
+  { header: 'Graduation Date', key: 'graduationDate' },
   { header: 'Possible Roles', key: 'possibleRoles' },
-  { header: 'Current Position', key: 'currentPosition' },
-  { header: 'Current Company', key: 'currentCompany' },
   { header: 'Education', key: 'education' },
   { header: 'Skills', key: 'skills' },
   { header: 'Languages', key: 'languages' },
   { header: 'LinkedIn URL', key: 'linkedinUrl' },
   { header: 'Portfolio URL', key: 'portfolioUrl' },
   { header: 'Expected Salary', key: 'expectedSalary' },
+  { header: 'Expected TJM', key: 'expectedTjm' },
   { header: 'Availability', key: 'availability' },
   { header: 'Source', key: 'source' },
+  { header: 'Open to CDD', key: 'openToCdd' },
+  { header: 'Open to CDI', key: 'openToCdi' },
+  { header: 'Open to Freelance', key: 'openToFreelance' },
   { header: 'Status', key: 'status' },
   { header: 'Rating', key: 'rating' },
   { header: 'Notes', key: 'notes' }
@@ -53,10 +54,11 @@ async function sendWorkbook(res, workbook, filename) {
   res.end();
 }
 
-// Snake_case DB row -> the workbook's camelCase column keys. birth_date
-// is kept as the plain 'YYYY-MM-DD' string already returned by mysql2
+// Snake_case DB row -> the workbook's camelCase column keys. Dates are
+// kept as the plain 'YYYY-MM-DD' strings already returned by mysql2
 // (dateStrings: true) rather than converted to a JS Date - avoids Excel
-// serial-date/timezone round-trip issues entirely.
+// serial-date/timezone round-trip issues entirely. Booleans are written
+// as 'Yes'/'No' - more natural to edit by hand in a spreadsheet than 1/0.
 function candidateToRow(c) {
   return {
     id: c.id,
@@ -65,22 +67,23 @@ function candidateToRow(c) {
     email: c.email,
     phone: c.phone,
     whatsapp: c.whatsapp,
-    birthDate: c.birth_date,
-    address: c.address,
     city: c.city,
     country: c.country,
-    experienceYears: c.experience_years !== null ? Number(c.experience_years) : null,
+    firstExperienceDate: c.first_experience_date,
+    graduationDate: c.graduation_date,
     possibleRoles: c.possible_roles,
-    currentPosition: c.current_position,
-    currentCompany: c.current_company,
     education: c.education,
     skills: c.skills,
     languages: c.languages,
     linkedinUrl: c.linkedin_url,
     portfolioUrl: c.portfolio_url,
     expectedSalary: c.expected_salary !== null ? Number(c.expected_salary) : null,
+    expectedTjm: c.expected_tjm !== null ? Number(c.expected_tjm) : null,
     availability: c.availability,
     source: c.source,
+    openToCdd: c.open_to_cdd ? 'Yes' : 'No',
+    openToCdi: c.open_to_cdi ? 'Yes' : 'No',
+    openToFreelance: c.open_to_freelance ? 'Yes' : 'No',
     status: c.status,
     rating: c.rating,
     notes: c.notes
@@ -168,6 +171,7 @@ async function handleImport(req, res) {
   }
 
   const numberOrNull = (v) => (v === '' ? null : Number(v));
+  const parseBool = (v) => ['yes', 'y', '1', 'true', 'x'].includes(v.toLowerCase());
 
   let created = 0;
   let updated = 0;
@@ -193,22 +197,23 @@ async function handleImport(req, res) {
       email: cellText(row, 'email') || null,
       phone: cellText(row, 'phone') || null,
       whatsapp: cellText(row, 'whatsapp') || null,
-      birthDate: cellText(row, 'birthDate') || null,
-      address: cellText(row, 'address') || null,
       city: cellText(row, 'city') || null,
       country: cellText(row, 'country') || null,
-      experienceYears: numberOrNull(cellText(row, 'experienceYears')),
+      firstExperienceDate: cellText(row, 'firstExperienceDate') || null,
+      graduationDate: cellText(row, 'graduationDate') || null,
       possibleRoles: cellText(row, 'possibleRoles') || null,
-      currentPosition: cellText(row, 'currentPosition') || null,
-      currentCompany: cellText(row, 'currentCompany') || null,
       education: cellText(row, 'education') || null,
       skills: cellText(row, 'skills') || null,
       languages: cellText(row, 'languages') || null,
       linkedinUrl: cellText(row, 'linkedinUrl') || null,
       portfolioUrl: cellText(row, 'portfolioUrl') || null,
       expectedSalary: numberOrNull(cellText(row, 'expectedSalary')),
+      expectedTjm: numberOrNull(cellText(row, 'expectedTjm')),
       availability: cellText(row, 'availability') || null,
       source: cellText(row, 'source') || null,
+      openToCdd: parseBool(cellText(row, 'openToCdd')),
+      openToCdi: parseBool(cellText(row, 'openToCdi')),
+      openToFreelance: parseBool(cellText(row, 'openToFreelance')),
       status: candidateModel.STATUSES.includes(statusRaw) ? statusRaw : 'new',
       rating: numberOrNull(cellText(row, 'rating')),
       notes: cellText(row, 'notes') || null

@@ -16,18 +16,20 @@ function monthLabel(month) {
   return `${name} ${year}`;
 }
 
-// Computed on render, not stored - a raw "age" number would silently go
-// stale, birth_date never does.
-function ageFromBirthDate(birthDate) {
-  if (!birthDate) return null;
-  const dob = new Date(birthDate);
+// Computed on render, not stored - a raw stored number would silently go
+// stale, a date never does. Generic (not just "age"): used for both
+// "years of experience" (from a candidate's first-experience date) and
+// "years since graduation" (from their graduation date).
+function yearsSince(date) {
+  if (!date) return null;
+  const then = new Date(date);
   const today = new Date();
-  let age = today.getFullYear() - dob.getFullYear();
-  const hasHadBirthdayThisYear =
-    today.getMonth() > dob.getMonth() ||
-    (today.getMonth() === dob.getMonth() && today.getDate() >= dob.getDate());
-  if (!hasHadBirthdayThisYear) age -= 1;
-  return age;
+  let years = today.getFullYear() - then.getFullYear();
+  const hasPassedAnniversaryThisYear =
+    today.getMonth() > then.getMonth() ||
+    (today.getMonth() === then.getMonth() && today.getDate() >= then.getDate());
+  if (!hasPassedAnniversaryThisYear) years -= 1;
+  return years;
 }
 
-module.exports = { formatCurrency, monthLabel, ageFromBirthDate };
+module.exports = { formatCurrency, monthLabel, yearsSince };

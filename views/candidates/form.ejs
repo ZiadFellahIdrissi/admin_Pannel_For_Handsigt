@@ -17,6 +17,9 @@
     if (candidateRow[snakeKey] !== undefined && candidateRow[snakeKey] !== null) return candidateRow[snakeKey];
     return '';
   }
+  function checked(camelKey, snakeKey) {
+    return (candidateRow && (candidateRow[camelKey] || candidateRow[snakeKey])) ? 'checked' : '';
+  }
   var currentStatus = candidateRow ? (candidateRow.status || 'new') : 'new';
 %>
   <h1 class="text-lg sm:text-xl font-bold mb-6 flex items-center gap-3">
@@ -57,14 +60,6 @@
           <input class="field-input" type="text" id="whatsapp" name="whatsapp" value="<%= val('whatsapp', 'whatsapp') %>">
         </div>
         <div>
-          <label class="field-label" for="birthDate">Date of birth</label>
-          <input class="field-input" type="date" id="birthDate" name="birthDate" value="<%= val('birthDate', 'birth_date') %>">
-        </div>
-        <div class="sm:col-span-2">
-          <label class="field-label" for="address">Address</label>
-          <input class="field-input" type="text" id="address" name="address" value="<%= val('address', 'address') %>">
-        </div>
-        <div>
           <label class="field-label" for="city">City</label>
           <input class="field-input" type="text" id="city" name="city" value="<%= val('city', 'city') %>">
         </div>
@@ -79,20 +74,16 @@
       <h2 class="section-title"><i class="fa-solid fa-briefcase"></i>Professional Background</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="field-label" for="experienceYears">Years of experience</label>
-          <input class="field-input" type="number" step="0.5" min="0" id="experienceYears" name="experienceYears" value="<%= val('experienceYears', 'experience_years') %>">
+          <label class="field-label" for="firstExperienceDate">First professional experience (date)</label>
+          <input class="field-input" type="date" id="firstExperienceDate" name="firstExperienceDate" value="<%= val('firstExperienceDate', 'first_experience_date') %>">
         </div>
         <div>
           <label class="field-label" for="possibleRoles">Possible roles</label>
           <input class="field-input" type="text" id="possibleRoles" name="possibleRoles" placeholder="Frontend Developer, DevOps..." value="<%= val('possibleRoles', 'possible_roles') %>">
         </div>
         <div>
-          <label class="field-label" for="currentPosition">Current position</label>
-          <input class="field-input" type="text" id="currentPosition" name="currentPosition" value="<%= val('currentPosition', 'current_position') %>">
-        </div>
-        <div>
-          <label class="field-label" for="currentCompany">Current company</label>
-          <input class="field-input" type="text" id="currentCompany" name="currentCompany" value="<%= val('currentCompany', 'current_company') %>">
+          <label class="field-label" for="graduationDate">Graduation date</label>
+          <input class="field-input" type="date" id="graduationDate" name="graduationDate" value="<%= val('graduationDate', 'graduation_date') %>">
         </div>
         <div>
           <label class="field-label" for="education">Education</label>
@@ -137,12 +128,30 @@
           <input class="field-input" type="number" step="0.01" min="0" id="expectedSalary" name="expectedSalary" value="<%= val('expectedSalary', 'expected_salary') %>">
         </div>
         <div>
+          <label class="field-label" for="expectedTjm">Expected TJM (MAD/day)</label>
+          <input class="field-input" type="number" step="0.01" min="0" id="expectedTjm" name="expectedTjm" value="<%= val('expectedTjm', 'expected_tjm') %>">
+        </div>
+        <div>
           <label class="field-label" for="availability">Availability</label>
           <input class="field-input" type="text" id="availability" name="availability" placeholder="Immediate, 1 month notice..." value="<%= val('availability', 'availability') %>">
         </div>
         <div>
           <label class="field-label" for="rating">Rating (1-5)</label>
           <input class="field-input" type="number" step="1" min="1" max="5" id="rating" name="rating" value="<%= val('rating', 'rating') %>">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="field-label">Open to</label>
+          <div class="flex flex-wrap gap-4">
+            <label class="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" name="openToCdd" class="rounded" <%= checked('openToCdd', 'open_to_cdd') %>> CDD
+            </label>
+            <label class="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" name="openToCdi" class="rounded" <%= checked('openToCdi', 'open_to_cdi') %>> CDI
+            </label>
+            <label class="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" name="openToFreelance" class="rounded" <%= checked('openToFreelance', 'open_to_freelance') %>> Freelance
+            </label>
+          </div>
         </div>
       </div>
     </div>

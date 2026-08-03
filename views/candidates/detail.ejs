@@ -33,11 +33,9 @@
           <div>
             <h2 class="section-title"><i class="fa-solid fa-id-card"></i>Personal Info</h2>
             <div class="grid grid-cols-2 gap-x-4 gap-y-2">
-              <div><span class="text-brand-gray2">Age</span><br><%= age !== null ? age : '—' %></div>
               <div><span class="text-brand-gray2">Email</span><br><%= show(candidateRow.email) %></div>
               <div><span class="text-brand-gray2">Phone</span><br><%= show(candidateRow.phone) %></div>
               <div><span class="text-brand-gray2">WhatsApp</span><br><%= show(candidateRow.whatsapp) %></div>
-              <div class="col-span-2"><span class="text-brand-gray2">Address</span><br><%= show(candidateRow.address) %></div>
               <div><span class="text-brand-gray2">City</span><br><%= show(candidateRow.city) %></div>
               <div><span class="text-brand-gray2">Country</span><br><%= show(candidateRow.country) %></div>
             </div>
@@ -46,10 +44,11 @@
           <div>
             <h2 class="section-title"><i class="fa-solid fa-briefcase"></i>Professional Background</h2>
             <div class="grid grid-cols-2 gap-x-4 gap-y-2">
-              <div><span class="text-brand-gray2">Experience</span><br><%= candidateRow.experience_years !== null ? candidateRow.experience_years + ' yrs' : '—' %></div>
+              <div><span class="text-brand-gray2">First Experience</span><br><%= show(candidateRow.first_experience_date) %></div>
+              <div><span class="text-brand-gray2">Years of Experience</span><br><%= yearsOfExperience !== null ? yearsOfExperience + ' yrs' : '—' %></div>
+              <div><span class="text-brand-gray2">Graduation Date</span><br><%= show(candidateRow.graduation_date) %></div>
+              <div><span class="text-brand-gray2">Years Since Graduation</span><br><%= yearsSinceGraduation !== null ? yearsSinceGraduation + ' yrs' : '—' %></div>
               <div><span class="text-brand-gray2">Possible Roles</span><br><%= show(candidateRow.possible_roles) %></div>
-              <div><span class="text-brand-gray2">Current Position</span><br><%= show(candidateRow.current_position) %></div>
-              <div><span class="text-brand-gray2">Current Company</span><br><%= show(candidateRow.current_company) %></div>
               <div><span class="text-brand-gray2">Education</span><br><%= show(candidateRow.education) %></div>
               <div><span class="text-brand-gray2">Languages</span><br><%= show(candidateRow.languages) %></div>
               <div class="col-span-2"><span class="text-brand-gray2">Skills</span><br><%= show(candidateRow.skills) %></div>
@@ -69,8 +68,19 @@
             <div class="grid grid-cols-2 gap-x-4 gap-y-2">
               <div><span class="text-brand-gray2">Source</span><br><%= show(candidateRow.source) %></div>
               <div><span class="text-brand-gray2">Expected Salary</span><br><%= candidateRow.expected_salary ? formatCurrency(candidateRow.expected_salary) : '—' %></div>
+              <div><span class="text-brand-gray2">Expected TJM</span><br><%= candidateRow.expected_tjm ? formatCurrency(candidateRow.expected_tjm) : '—' %></div>
               <div><span class="text-brand-gray2">Availability</span><br><%= show(candidateRow.availability) %></div>
               <div><span class="text-brand-gray2">Rating</span><br><%= candidateRow.rating ? candidateRow.rating + ' / 5' : '—' %></div>
+              <div class="col-span-2">
+                <span class="text-brand-gray2">Open To</span><br>
+                <% var openTo = []; %>
+                <% if (candidateRow.open_to_cdd) openTo.push('CDD'); %>
+                <% if (candidateRow.open_to_cdi) openTo.push('CDI'); %>
+                <% if (candidateRow.open_to_freelance) openTo.push('Freelance'); %>
+                <% if (openTo.length === 0) { %>—<% } else { %>
+                  <% openTo.forEach(function(o) { %><span class="badge-approved !py-0.5 !px-2 mr-1"><%= o %></span><% }); %>
+                <% } %>
+              </div>
             </div>
           </div>
 

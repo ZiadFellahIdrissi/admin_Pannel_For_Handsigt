@@ -8,7 +8,7 @@ const fs = require('fs');
 
 const sessionMiddleware = require('./config/session');
 const { attachToken } = require('./middleware/csrf');
-const { formatCurrency, monthLabel, ageFromBirthDate } = require('./utils/format');
+const { formatCurrency, monthLabel, yearsSince } = require('./utils/format');
 const asyncHandler = require('./utils/asyncHandler');
 const monthSubmissionModel = require('./models/monthSubmissionModel');
 const dashboardRoutes = require('./routes/dashboardRoutes');
@@ -40,7 +40,7 @@ try {
 
 app.locals.formatCurrency = formatCurrency;
 app.locals.monthLabel = monthLabel;
-app.locals.ageFromBirthDate = ageFromBirthDate;
+app.locals.yearsSince = yearsSince;
 
 app.use(helmet({
   contentSecurityPolicy: {

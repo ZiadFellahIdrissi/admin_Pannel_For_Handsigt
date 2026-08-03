@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const candidateModel = require('../models/candidateModel');
-const { ageFromBirthDate } = require('../utils/format');
+const { yearsSince } = require('../utils/format');
 const { CANDIDATE_CV_DIR } = require('../config/uploadPaths');
 
 // All fields besides firstName/lastName are optional free text/numbers -
@@ -18,22 +18,23 @@ function extractFields(body) {
     email: trim(body.email),
     phone: trim(body.phone),
     whatsapp: trim(body.whatsapp),
-    birthDate: trim(body.birthDate),
-    address: trim(body.address),
     city: trim(body.city),
     country: trim(body.country),
-    experienceYears: body.experienceYears ? Number(body.experienceYears) : null,
+    firstExperienceDate: trim(body.firstExperienceDate),
+    graduationDate: trim(body.graduationDate),
     possibleRoles: trim(body.possibleRoles),
-    currentPosition: trim(body.currentPosition),
-    currentCompany: trim(body.currentCompany),
     education: trim(body.education),
     skills: trim(body.skills),
     languages: trim(body.languages),
     linkedinUrl: trim(body.linkedinUrl),
     portfolioUrl: trim(body.portfolioUrl),
     expectedSalary: body.expectedSalary ? Number(body.expectedSalary) : null,
+    expectedTjm: body.expectedTjm ? Number(body.expectedTjm) : null,
     availability: trim(body.availability),
     source: trim(body.source),
+    openToCdd: body.openToCdd === 'on',
+    openToCdi: body.openToCdi === 'on',
+    openToFreelance: body.openToFreelance === 'on',
     status: candidateModel.STATUSES.includes(body.status) ? body.status : 'new',
     rating: body.rating ? Number(body.rating) : null,
     notes: trim(body.notes)
@@ -78,11 +79,11 @@ async function handleCreate(req, res) {
   const errors = [];
   if (!firstName) errors.push('First name is required.');
   if (!lastName) errors.push('Last name is required.');
-  if (fields.experienceYears !== null && (!Number.isFinite(fields.experienceYears) || fields.experienceYears < 0)) {
-    errors.push('Years of experience must be a non-negative number.');
-  }
   if (fields.expectedSalary !== null && (!Number.isFinite(fields.expectedSalary) || fields.expectedSalary < 0)) {
     errors.push('Expected salary must be a non-negative number.');
+  }
+  if (fields.expectedTjm !== null && (!Number.isFinite(fields.expectedTjm) || fields.expectedTjm < 0)) {
+    errors.push('Expected TJM must be a non-negative number.');
   }
   if (fields.rating !== null && (!Number.isInteger(fields.rating) || fields.rating < 1 || fields.rating > 5)) {
     errors.push('Rating must be a whole number between 1 and 5.');
@@ -119,7 +120,8 @@ async function showDetail(req, res) {
   }
   res.render('candidates/detail', {
     candidateRow: candidate,
-    age: ageFromBirthDate(candidate.birth_date),
+    yearsOfExperience: yearsSince(candidate.first_experience_date),
+    yearsSinceGraduation: yearsSince(candidate.graduation_date),
     statusLabels: candidateModel.STATUS_LABELS,
     statusBadgeClass: candidateModel.STATUS_BADGE_CLASS
   });
@@ -152,11 +154,11 @@ async function handleUpdate(req, res) {
   const errors = [];
   if (!firstName) errors.push('First name is required.');
   if (!lastName) errors.push('Last name is required.');
-  if (fields.experienceYears !== null && (!Number.isFinite(fields.experienceYears) || fields.experienceYears < 0)) {
-    errors.push('Years of experience must be a non-negative number.');
-  }
   if (fields.expectedSalary !== null && (!Number.isFinite(fields.expectedSalary) || fields.expectedSalary < 0)) {
     errors.push('Expected salary must be a non-negative number.');
+  }
+  if (fields.expectedTjm !== null && (!Number.isFinite(fields.expectedTjm) || fields.expectedTjm < 0)) {
+    errors.push('Expected TJM must be a non-negative number.');
   }
   if (fields.rating !== null && (!Number.isInteger(fields.rating) || fields.rating < 1 || fields.rating > 5)) {
     errors.push('Rating must be a whole number between 1 and 5.');
