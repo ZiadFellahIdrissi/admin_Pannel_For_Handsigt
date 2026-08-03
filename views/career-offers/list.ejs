@@ -1,0 +1,88 @@
+<%- include('../partials/head', { title: 'Career Offers' }) %>
+<div class="flex min-h-screen">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('../partials/topbar', { title: 'Career Offers' }) %>
+    <%- include('../partials/flash') %>
+    <div class="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
+  <div class="flex items-center justify-between flex-wrap gap-3 mb-4 sm:mb-6">
+    <h1 class="text-lg sm:text-xl font-bold flex items-center gap-3">
+      <div class="icon-circle-accent"><i class="fa-solid fa-briefcase"></i></div>
+      Career Offers
+    </h1>
+    <a href="/career-offers/new" class="btn-primary">
+      <i class="fa-solid fa-plus"></i>New Offer
+    </a>
+  </div>
+
+  <div class="flex items-center gap-2 mb-4 text-sm">
+    <a href="/career-offers?status=" class="btn-secondary <%= status === '' ? '!border-brand-accent !text-brand-accent' : '' %>">All</a>
+    <a href="/career-offers?status=draft" class="btn-secondary <%= status === 'draft' ? '!border-brand-accent !text-brand-accent' : '' %>">Draft</a>
+    <a href="/career-offers?status=published" class="btn-secondary <%= status === 'published' ? '!border-brand-accent !text-brand-accent' : '' %>">Published</a>
+  </div>
+
+  <% if (offers.length === 0) { %>
+    <div class="card p-8 text-center">
+      <i class="fa-regular fa-folder-open text-2xl text-brand-gray2 mb-2"></i>
+      <p class="text-sm text-brand-gray2">No offers found.</p>
+    </div>
+  <% } else { %>
+    <%
+      // The bulk-delete form deliberately does NOT wrap the row list -
+      // each row already has its own independent Toggle/Delete <form>s,
+      // and HTML doesn't allow nesting <form> elements. Instead, this
+      // form just sits here empty, and each row's checkbox below points
+      // at it by id via the native `form="..."` attribute, which
+      // associates an <input> with a <form> it isn't a DOM descendant
+      // of - so its value still gets included on submit regardless.
+    %>
+    <form id="career-offers-bulk-delete" action="/career-offers/bulk-delete" method="POST" data-confirm="Delete the selected offers? This can't be undone.">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    </form>
+
+    <div class="space-y-3 mb-16">
+      <% offers.forEach(function(o) { %>
+        <div class="card-interactive p-4 flex items-center gap-3 flex-wrap">
+          <input type="checkbox" name="offerIds" value="<%= o.id %>" form="career-offers-bulk-delete" data-bulk-select-item="career-offers-list" class="rounded shrink-0">
+          <% if (o.image_path) { %>
+            <img src="<%= o.image_path %>" alt="" class="w-10 h-10 rounded-lg object-cover shrink-0">
+          <% } %>
+          <div class="min-w-0 flex-1">
+            <div class="font-semibold truncate">
+              <%= o.title %>
+              <span class="<%= o.status === 'published' ? 'badge-approved' : 'badge-draft' %> ml-1"><%= o.status === 'published' ? 'Published' : 'Draft' %></span>
+            </div>
+            <div class="text-xs text-brand-gray2 mt-0.5 truncate">
+              /<%= o.slug %>
+              <% (o.tags || '').split(',').map(function(t) { return t.trim(); }).filter(Boolean).forEach(function(t) { %>
+                <span class="badge-pending !py-0.5 !px-2 ml-1"><%= t %></span>
+              <% }); %>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <form action="/career-offers/<%= o.id %>/toggle-status" method="POST">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn-secondary text-sm !px-3 !py-1.5"><%= o.status === 'published' ? 'Unpublish' : 'Publish' %></button>
+            </form>
+            <a href="/career-offers/<%= o.id %>/edit" class="btn-secondary text-sm !px-3 !py-1.5"><i class="fa-solid fa-pen"></i></a>
+            <form action="/career-offers/<%= o.id %>/delete" method="POST" data-confirm="Delete &quot;<%= o.title %>&quot;? This can't be undone.">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn-danger text-sm !px-3 !py-1.5"><i class="fa-solid fa-trash"></i></button>
+            </form>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+
+    <div data-bulk-select-bar="career-offers-list" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 card px-4 py-3 shadow-xl flex items-center gap-3" style="display: none;">
+      <span class="text-sm font-medium"><span data-bulk-select-count>0</span> selected</span>
+      <button type="submit" form="career-offers-bulk-delete" class="btn-danger text-sm !px-3 !py-1.5"><i class="fa-solid fa-trash"></i>Delete Selected</button>
+    </div>
+  <% } %>
+    </div>
+  </div>
+</div>
+<script src="/js/confirm-submit.js?v=<%= assetVersion %>" defer></script>
+<script src="/js/bulk-select.js?v=<%= assetVersion %>" defer></script>
+
+<%- include('../partials/foot') %>

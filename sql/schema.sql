@@ -28,3 +28,30 @@ ALTER TABLE candidates
   ADD COLUMN open_to_cdd TINYINT(1) NOT NULL DEFAULT 0,
   ADD COLUMN open_to_cdi TINYINT(1) NOT NULL DEFAULT 0,
   ADD COLUMN open_to_freelance TINYINT(1) NOT NULL DEFAULT 0;
+
+-- ---------------------------------------------------------------------
+-- REFERENCE ONLY - this table already exists live (created outside this
+-- app, alongside the public landing page). `IF NOT EXISTS` makes this
+-- safe/idempotent to run - it's here purely so this file stays the one
+-- place documenting every table the Admin Panel touches.
+--
+-- career_offers backs the "Career" section: job postings shown on the
+-- public landing page (handsight-solutions.com, a different site from
+-- this Admin Panel). image_path stores a full public URL (see
+-- config/uploadPaths.js's CAREER_IMAGE_PUBLIC_BASE_URL) rather than a
+-- bare filename, so both this app and the landing page can use it as-is.
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS career_offers (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  slug VARCHAR(191) NOT NULL UNIQUE,
+  title VARCHAR(255) NOT NULL,
+  tags VARCHAR(255) DEFAULT NULL,
+  intro TEXT,
+  skills JSON,
+  apply_email VARCHAR(255) NOT NULL DEFAULT 'candidature@handsight-solutions.com',
+  image_path VARCHAR(500) DEFAULT NULL,
+  status ENUM('draft', 'published') NOT NULL DEFAULT 'draft',
+  display_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

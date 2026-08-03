@@ -1,0 +1,105 @@
+<%- include('../partials/head', { title: mode === 'create' ? 'New Offer' : 'Edit Offer' }) %>
+<div class="flex min-h-screen">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('../partials/topbar', { title: mode === 'create' ? 'New Offer' : 'Edit Offer' }) %>
+    <%- include('../partials/flash') %>
+    <div class="max-w-3xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
+<%
+  // offerRow is either null (new form), a raw DB row (snake_case
+  // columns, skills already an array via mysql2's JSON auto-parse), or
+  // a reconstructed object from a failed validation POST (camelCase
+  // keys, matching extractFields in the controller, skills also already
+  // an array there) - this checks both shapes, same val() convention as
+  // views/clients/form.ejs and views/candidates/form.ejs.
+  function val(camelKey, snakeKey) {
+    if (!offerRow) return '';
+    if (offerRow[camelKey] !== undefined && offerRow[camelKey] !== null) return offerRow[camelKey];
+    if (offerRow[snakeKey] !== undefined && offerRow[snakeKey] !== null) return offerRow[snakeKey];
+    return '';
+  }
+  var skillsText = (offerRow && Array.isArray(offerRow.skills)) ? offerRow.skills.join('\n') : '';
+  var currentStatus = offerRow ? (offerRow.status || 'draft') : 'draft';
+%>
+  <h1 class="text-lg sm:text-xl font-bold mb-6 flex items-center gap-3">
+    <div class="icon-circle-accent"><i class="fa-solid <%= mode === 'create' ? 'fa-plus' : 'fa-pen' %>"></i></div>
+    <%= mode === 'create' ? 'New Offer' : 'Edit Offer' %>
+  </h1>
+
+  <% if (errors && errors.length) { %>
+    <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 px-4 py-2.5 text-sm space-y-1">
+      <% errors.forEach(function(e) { %><div class="flex items-center gap-2"><i class="fa-solid fa-circle-exclamation"></i><%= e %></div><% }); %>
+    </div>
+  <% } %>
+
+  <form action="<%= mode === 'create' ? '/career-offers' : '/career-offers/' + offerRow.id %>" method="POST" enctype="multipart/form-data" class="space-y-4">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="card p-5 sm:p-6">
+      <h2 class="section-title"><i class="fa-solid fa-briefcase"></i>Offer</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="sm:col-span-2">
+          <label class="field-label" for="title">Title</label>
+          <input class="field-input" type="text" id="title" name="title" placeholder="Experienced Data Analyst (M/F)" value="<%= val('title', 'title') %>" required autofocus>
+        </div>
+        <div>
+          <label class="field-label" for="slug">Slug</label>
+          <input class="field-input" type="text" id="slug" name="slug" placeholder="auto-generated from title if left blank" value="<%= val('slug', 'slug') %>">
+        </div>
+        <div>
+          <label class="field-label" for="tags">Tags</label>
+          <input class="field-input" type="text" id="tags" name="tags" placeholder="100% Remote, Freelance..." value="<%= val('tags', 'tags') %>">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="field-label" for="intro">Intro</label>
+          <textarea class="field-input" id="intro" name="intro" rows="3" placeholder="Join Handsight Solutions and take part in..."><%= val('intro', 'intro') %></textarea>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="field-label" for="skills">Skills required (one per line)</label>
+          <textarea class="field-input" id="skills" name="skills" rows="6" placeholder="Excellent command of Microsoft Fabric (required)&#10;Strong proficiency in Power BI&#10;..."><%= skillsText %></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-5 sm:p-6">
+      <h2 class="section-title"><i class="fa-solid fa-image"></i>Image</h2>
+      <% if (offerRow && offerRow.image_path) { %>
+        <img src="<%= offerRow.image_path %>" alt="" class="w-24 h-24 rounded-lg object-cover mb-3">
+      <% } %>
+      <div>
+        <label class="field-label" for="image">Upload image (JPEG, PNG, or WebP - optional<%= mode === 'edit' ? ', replaces the current one' : '' %>)</label>
+        <input class="field-input" type="file" id="image" name="image" accept="image/jpeg,image/png,image/webp">
+      </div>
+    </div>
+
+    <div class="card p-5 sm:p-6">
+      <h2 class="section-title"><i class="fa-solid fa-gear"></i>Publishing</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="field-label" for="applyEmail">Apply email</label>
+          <input class="field-input" type="email" id="applyEmail" name="applyEmail" value="<%= val('applyEmail', 'apply_email') || 'candidature@handsight-solutions.com' %>">
+        </div>
+        <div>
+          <label class="field-label" for="status">Status</label>
+          <select class="field-input" id="status" name="status">
+            <% statuses.forEach(function(s) { %>
+              <option value="<%= s %>" <%= currentStatus === s ? 'selected' : '' %>><%= s.charAt(0).toUpperCase() + s.slice(1) %></option>
+            <% }); %>
+          </select>
+        </div>
+        <div>
+          <label class="field-label" for="displayOrder">Display order</label>
+          <input class="field-input" type="number" step="1" id="displayOrder" name="displayOrder" value="<%= val('displayOrder', 'display_order') || 0 %>">
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn-primary w-full sm:w-auto">
+      <i class="fa-solid fa-check"></i><%= mode === 'create' ? 'Create Offer' : 'Save Changes' %>
+    </button>
+  </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

@@ -39,12 +39,12 @@
       <% if (candidates.length === 0) { %>
         <p class="text-sm text-brand-gray2">No candidates match this search.</p>
       <% } else { %>
-        <form action="/candidates/export/selected" method="POST" data-bulk-select-form="candidates-export">
+        <form action="/candidates/export/selected" method="POST">
           <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <div class="max-h-56 overflow-y-auto space-y-1 mb-3 border border-brand-borderLight rounded-lg p-2">
             <% candidates.forEach(function(c) { %>
               <label class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm cursor-pointer hover:bg-brand-light">
-                <input type="checkbox" name="candidateIds" value="<%= c.id %>" data-bulk-select-item class="rounded">
+                <input type="checkbox" name="candidateIds" value="<%= c.id %>" data-bulk-select-item="candidates-export" class="rounded">
                 <%= c.first_name %> <%= c.last_name %>
                 <span class="text-brand-gray2 text-xs ml-auto"><%= c.email || '—' %></span>
               </label>

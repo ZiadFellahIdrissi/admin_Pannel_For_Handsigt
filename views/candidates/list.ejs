@@ -50,12 +50,12 @@
       <p class="text-sm text-brand-gray2">No candidates found.</p>
     </div>
   <% } else { %>
-    <form action="/candidates/bulk-delete" method="POST" data-bulk-select-form="candidates-list" data-confirm="Delete the selected candidates? This can't be undone.">
+    <form action="/candidates/bulk-delete" method="POST" data-confirm="Delete the selected candidates? This can't be undone.">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-16">
         <% candidates.forEach(function(c) { %>
           <div class="card-interactive p-4 relative">
-            <input type="checkbox" name="candidateIds" value="<%= c.id %>" data-bulk-select-item class="absolute top-3 right-3 rounded z-10 w-4 h-4">
+            <input type="checkbox" name="candidateIds" value="<%= c.id %>" data-bulk-select-item="candidates-list" class="absolute top-3 right-3 rounded z-10 w-4 h-4">
             <a href="/candidates/<%= c.id %>" class="block pr-6">
               <div class="flex items-start gap-3 mb-3">
                 <div class="icon-circle-slate font-bold shrink-0"><%= (c.first_name.charAt(0) + c.last_name.charAt(0)).toUpperCase() %></div>
