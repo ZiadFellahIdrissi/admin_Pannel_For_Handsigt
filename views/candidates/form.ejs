@@ -33,7 +33,7 @@
     </div>
   <% } %>
 
-  <form action="<%= mode === 'create' ? '/candidates' : '/candidates/' + candidateRow.id %>" method="POST" enctype="multipart/form-data" class="space-y-4">
+  <form action="<%= mode === 'create' ? '/candidates' : '/candidates/' + candidateRow.id %>" method="POST" <%- mode === 'create' ? 'enctype="multipart/form-data"' : '' %> class="space-y-4">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
     <div class="card p-5 sm:p-6">
