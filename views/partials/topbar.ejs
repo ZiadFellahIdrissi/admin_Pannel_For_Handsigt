@@ -94,13 +94,17 @@
     </div>
   </div>
   <% if (breadcrumbs.length > 0) { %>
-    <nav aria-label="Breadcrumb" class="px-3 sm:px-4 pb-2 -mt-1 flex items-center gap-1.5 flex-wrap text-xs">
+    <nav aria-label="Breadcrumb" class="breadcrumb-bar">
       <% breadcrumbs.forEach(function(c, i) { %>
-        <% if (i > 0) { %><i class="fa-solid fa-chevron-right text-[8px] text-white/40"></i><% } %>
+        <% if (i > 0) { %><span class="breadcrumb-sep"></span><% } %>
         <% if (c.url) { %>
-          <a href="<%= c.url %>" class="text-white/70 hover:text-white hover:underline"><%= c.label %></a>
+          <a href="<%= c.url %>" class="breadcrumb-chip">
+            <% if (i === 0) { %><i class="fa-solid fa-house text-[10px]"></i><% } %><%= c.label %>
+          </a>
         <% } else { %>
-          <span class="text-white font-medium" aria-current="page"><%= c.label %></span>
+          <span class="breadcrumb-chip breadcrumb-current" aria-current="page">
+            <i class="fa-solid fa-location-dot text-[10px]"></i><%= c.label %>
+          </span>
         <% } %>
       <% }); %>
     </nav>
