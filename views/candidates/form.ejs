@@ -60,6 +60,15 @@
           <input class="field-input" type="text" id="whatsapp" name="whatsapp" value="<%= val('whatsapp', 'whatsapp') %>">
         </div>
         <div>
+          <label class="field-label" for="gender">Gender</label>
+          <select class="field-input" id="gender" name="gender">
+            <option value="">—</option>
+            <% genders.forEach(function(g) { %>
+              <option value="<%= g %>" <%= val('gender', 'gender') === g ? 'selected' : '' %>><%= g.charAt(0).toUpperCase() + g.slice(1) %></option>
+            <% }); %>
+          </select>
+        </div>
+        <div>
           <label class="field-label" for="city">City</label>
           <input class="field-input" type="text" id="city" name="city" value="<%= val('city', 'city') %>">
         </div>
@@ -86,8 +95,17 @@
           <input class="field-input" type="date" id="graduationDate" name="graduationDate" value="<%= val('graduationDate', 'graduation_date') %>">
         </div>
         <div>
-          <label class="field-label" for="education">Education</label>
-          <input class="field-input" type="text" id="education" name="education" placeholder="Master's in Computer Science..." value="<%= val('education', 'education') %>">
+          <label class="field-label" for="educationLevel">Education level</label>
+          <select class="field-input" id="educationLevel" name="educationLevel">
+            <option value="">—</option>
+            <% educationLevels.forEach(function(lvl) { %>
+              <option value="<%= lvl %>" <%= val('educationLevel', 'education_level') === lvl ? 'selected' : '' %>><%= lvl %></option>
+            <% }); %>
+          </select>
+        </div>
+        <div>
+          <label class="field-label" for="specialty">Specialty</label>
+          <input class="field-input" type="text" id="specialty" name="specialty" placeholder="Computer Science..." value="<%= val('specialty', 'specialty') %>">
         </div>
         <div>
           <label class="field-label" for="languages">Languages</label>

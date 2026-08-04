@@ -1,5 +1,6 @@
 const ExcelJS = require('exceljs');
 const candidateModel = require('../models/candidateModel');
+const { toTitleCase } = require('../utils/format');
 
 const XLSX_MIMETYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
@@ -17,12 +18,14 @@ const EXPORT_COLUMNS = [
   { header: 'Email', key: 'email' },
   { header: 'Phone', key: 'phone' },
   { header: 'WhatsApp', key: 'whatsapp' },
+  { header: 'Gender', key: 'gender' },
   { header: 'City', key: 'city' },
   { header: 'Country', key: 'country' },
   { header: 'First Experience Date', key: 'firstExperienceDate' },
   { header: 'Graduation Date', key: 'graduationDate' },
   { header: 'Possible Roles', key: 'possibleRoles' },
-  { header: 'Education', key: 'education' },
+  { header: 'Education Level', key: 'educationLevel' },
+  { header: 'Specialty', key: 'specialty' },
   { header: 'Skills', key: 'skills' },
   { header: 'Languages', key: 'languages' },
   { header: 'LinkedIn URL', key: 'linkedinUrl' },
@@ -67,12 +70,14 @@ function candidateToRow(c) {
     email: c.email,
     phone: c.phone,
     whatsapp: c.whatsapp,
+    gender: c.gender,
     city: c.city,
     country: c.country,
     firstExperienceDate: c.first_experience_date,
     graduationDate: c.graduation_date,
     possibleRoles: c.possible_roles,
-    education: c.education,
+    educationLevel: c.education_level,
+    specialty: c.specialty,
     skills: c.skills,
     languages: c.languages,
     linkedinUrl: c.linkedin_url,
@@ -184,27 +189,32 @@ async function handleImport(req, res) {
     if (!row.hasValues) continue;
 
     const idRaw = cellText(row, 'id');
-    const firstName = cellText(row, 'firstName');
-    const lastName = cellText(row, 'lastName');
+    const firstName = toTitleCase(cellText(row, 'firstName'));
+    const lastName = toTitleCase(cellText(row, 'lastName'));
 
     if (!firstName || !lastName) {
       errors.push(`Row ${rowNumber}: first and last name are required.`);
       continue;
     }
 
+    const emailRaw = cellText(row, 'email');
+    const genderRaw = cellText(row, 'gender').toLowerCase();
+    const educationLevelRaw = cellText(row, 'educationLevel');
     const statusRaw = cellText(row, 'status');
     const fields = {
       firstName,
       lastName,
-      email: cellText(row, 'email') || null,
+      email: emailRaw ? emailRaw.toLowerCase() : null,
       phone: cellText(row, 'phone') || null,
       whatsapp: cellText(row, 'whatsapp') || null,
+      gender: candidateModel.GENDERS.includes(genderRaw) ? genderRaw : null,
       city: cellText(row, 'city') || null,
       country: cellText(row, 'country') || null,
       firstExperienceDate: cellText(row, 'firstExperienceDate') || null,
       graduationDate: cellText(row, 'graduationDate') || null,
       possibleRoles: cellText(row, 'possibleRoles') || null,
-      education: cellText(row, 'education') || null,
+      educationLevel: candidateModel.EDUCATION_LEVELS.includes(educationLevelRaw) ? educationLevelRaw : null,
+      specialty: cellText(row, 'specialty') || null,
       skills: cellText(row, 'skills') || null,
       languages: cellText(row, 'languages') || null,
       linkedinUrl: cellText(row, 'linkedinUrl') || null,

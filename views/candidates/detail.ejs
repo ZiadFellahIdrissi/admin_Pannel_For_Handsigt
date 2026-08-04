@@ -36,6 +36,7 @@
               <div><span class="text-brand-gray2">Email</span><br><%= show(candidateRow.email) %></div>
               <div><span class="text-brand-gray2">Phone</span><br><%= show(candidateRow.phone) %></div>
               <div><span class="text-brand-gray2">WhatsApp</span><br><%= show(candidateRow.whatsapp) %></div>
+              <div><span class="text-brand-gray2">Gender</span><br><%= candidateRow.gender ? candidateRow.gender.charAt(0).toUpperCase() + candidateRow.gender.slice(1) : '—' %></div>
               <div><span class="text-brand-gray2">City</span><br><%= show(candidateRow.city) %></div>
               <div><span class="text-brand-gray2">Country</span><br><%= show(candidateRow.country) %></div>
             </div>
@@ -49,7 +50,8 @@
               <div><span class="text-brand-gray2">Graduation Date</span><br><%= show(candidateRow.graduation_date) %></div>
               <div><span class="text-brand-gray2">Years Since Graduation</span><br><%= yearsSinceGraduation !== null ? yearsSinceGraduation + ' yrs' : '—' %></div>
               <div><span class="text-brand-gray2">Possible Roles</span><br><%= show(candidateRow.possible_roles) %></div>
-              <div><span class="text-brand-gray2">Education</span><br><%= show(candidateRow.education) %></div>
+              <div><span class="text-brand-gray2">Education Level</span><br><%= show(candidateRow.education_level) %></div>
+              <div><span class="text-brand-gray2">Specialty</span><br><%= show(candidateRow.specialty) %></div>
               <div><span class="text-brand-gray2">Languages</span><br><%= show(candidateRow.languages) %></div>
               <div class="col-span-2">
                 <span class="text-brand-gray2">Skills</span><br>

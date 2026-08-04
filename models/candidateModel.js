@@ -18,9 +18,19 @@ const STATUS_BADGE_CLASS = {
   offer: 'badge-pending', hired: 'badge-approved', rejected: 'badge-rejected', on_hold: 'badge-draft'
 };
 
+// Fixed list, not a MySQL ENUM - same "plain VARCHAR + app-level
+// validation" convention as STATUSES below. 'Autre' is a deliberate
+// catch-all so nothing is truly unrepresentable.
+const EDUCATION_LEVELS = [
+  'Baccalauréat', 'BTS/DUT', 'Licence', 'Licence Professionnelle',
+  "Diplôme d'Ingénieur", 'Master', 'MBA', 'Doctorat', 'Autre'
+];
+
+const GENDERS = ['male', 'female'];
+
 const FIELDS = [
-  'firstName', 'lastName', 'email', 'phone', 'whatsapp', 'city', 'country',
-  'firstExperienceDate', 'graduationDate', 'possibleRoles', 'education',
+  'firstName', 'lastName', 'email', 'phone', 'whatsapp', 'gender', 'city', 'country',
+  'firstExperienceDate', 'graduationDate', 'possibleRoles', 'educationLevel', 'specialty',
   'skills', 'languages', 'linkedinUrl', 'portfolioUrl',
   'expectedSalary', 'expectedTjm', 'availability', 'source',
   'openToCdd', 'openToCdi', 'openToFreelance', 'status', 'rating', 'notes'
@@ -32,9 +42,9 @@ const BOOLEAN_FIELDS = ['openToCdd', 'openToCdi', 'openToFreelance'];
 
 const COLUMN_BY_FIELD = {
   firstName: 'first_name', lastName: 'last_name', email: 'email', phone: 'phone',
-  whatsapp: 'whatsapp', city: 'city', country: 'country',
+  whatsapp: 'whatsapp', gender: 'gender', city: 'city', country: 'country',
   firstExperienceDate: 'first_experience_date', graduationDate: 'graduation_date',
-  possibleRoles: 'possible_roles', education: 'education',
+  possibleRoles: 'possible_roles', educationLevel: 'education_level', specialty: 'specialty',
   skills: 'skills', languages: 'languages', linkedinUrl: 'linkedin_url', portfolioUrl: 'portfolio_url',
   expectedSalary: 'expected_salary', expectedTjm: 'expected_tjm', availability: 'availability', source: 'source',
   openToCdd: 'open_to_cdd', openToCdi: 'open_to_cdi', openToFreelance: 'open_to_freelance',
@@ -66,9 +76,11 @@ async function list({ status, q, minExperience, position, skills, city } = {}) {
     // "At least N years of experience" - computed from first_experience_date
     // rather than a stored number (see utils/format.js's yearsSince()).
     // NULL first_experience_date naturally fails this comparison, which is
-    // correct: an unknown start date can't confirm the bar is met.
-    conditions.push('first_experience_date IS NOT NULL AND first_experience_date <= DATE_SUB(CURDATE(), INTERVAL ? YEAR)');
-    params.push(Number(minExperience));
+    // correct: an unknown start date can't confirm the bar is met. Uses
+    // MONTH, not YEAR: MySQL truncates a fractional YEAR interval to an
+    // integer, which would silently turn a 0.5-year minimum into 0.
+    conditions.push('first_experience_date IS NOT NULL AND first_experience_date <= DATE_SUB(CURDATE(), INTERVAL ? MONTH)');
+    params.push(Math.round(Number(minExperience) * 12));
   }
   if (position && position.trim()) {
     conditions.push('possible_roles LIKE ?');
@@ -228,6 +240,8 @@ module.exports = {
   STATUSES,
   STATUS_LABELS,
   STATUS_BADGE_CLASS,
+  EDUCATION_LEVELS,
+  GENDERS,
   list,
   findById,
   findByIds,

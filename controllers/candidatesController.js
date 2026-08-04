@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const candidateModel = require('../models/candidateModel');
-const { yearsSince } = require('../utils/format');
+const { yearsSince, toTitleCase } = require('../utils/format');
 const { CANDIDATE_CV_DIR } = require('../config/uploadPaths');
 
 const MAX_SKILLS = 50;
@@ -30,16 +30,20 @@ function extractFields(body) {
   };
   const skillsList = parseSkills(body.skills);
 
+  const email = trim(body.email);
+
   return {
-    email: trim(body.email),
+    email: email ? email.toLowerCase() : null,
     phone: trim(body.phone),
     whatsapp: trim(body.whatsapp),
+    gender: candidateModel.GENDERS.includes(body.gender) ? body.gender : null,
     city: trim(body.city),
     country: trim(body.country),
     firstExperienceDate: trim(body.firstExperienceDate),
     graduationDate: trim(body.graduationDate),
     possibleRoles: trim(body.possibleRoles),
-    education: trim(body.education),
+    educationLevel: candidateModel.EDUCATION_LEVELS.includes(body.educationLevel) ? body.educationLevel : null,
+    specialty: trim(body.specialty),
     skills: skillsList.length ? skillsList.join('; ') : null,
     skillsCount: skillsList.length,
     languages: trim(body.languages),
@@ -86,13 +90,15 @@ function showCreateForm(req, res) {
     candidateRow: null,
     errors: [],
     statuses: candidateModel.STATUSES,
-    statusLabels: candidateModel.STATUS_LABELS
+    statusLabels: candidateModel.STATUS_LABELS,
+    educationLevels: candidateModel.EDUCATION_LEVELS,
+    genders: candidateModel.GENDERS
   });
 }
 
 async function handleCreate(req, res) {
-  const firstName = (req.body.firstName || '').trim();
-  const lastName = (req.body.lastName || '').trim();
+  const firstName = toTitleCase((req.body.firstName || '').trim());
+  const lastName = toTitleCase((req.body.lastName || '').trim());
   const fields = extractFields(req.body);
 
   const errors = [];
@@ -121,7 +127,9 @@ async function handleCreate(req, res) {
       candidateRow: { firstName, lastName, ...fields },
       errors,
       statuses: candidateModel.STATUSES,
-      statusLabels: candidateModel.STATUS_LABELS
+      statusLabels: candidateModel.STATUS_LABELS,
+      educationLevels: candidateModel.EDUCATION_LEVELS,
+      genders: candidateModel.GENDERS
     });
   }
 
@@ -159,7 +167,9 @@ async function showEditForm(req, res) {
     candidateRow: candidate,
     errors: [],
     statuses: candidateModel.STATUSES,
-    statusLabels: candidateModel.STATUS_LABELS
+    statusLabels: candidateModel.STATUS_LABELS,
+    educationLevels: candidateModel.EDUCATION_LEVELS,
+    genders: candidateModel.GENDERS
   });
 }
 
@@ -169,8 +179,8 @@ async function handleUpdate(req, res) {
     return res.status(404).render('error', { message: 'Candidate not found.' });
   }
 
-  const firstName = (req.body.firstName || '').trim();
-  const lastName = (req.body.lastName || '').trim();
+  const firstName = toTitleCase((req.body.firstName || '').trim());
+  const lastName = toTitleCase((req.body.lastName || '').trim());
   const fields = extractFields(req.body);
 
   const errors = [];
@@ -195,7 +205,9 @@ async function handleUpdate(req, res) {
       candidateRow: { ...candidate, first_name: firstName, last_name: lastName, ...fields },
       errors,
       statuses: candidateModel.STATUSES,
-      statusLabels: candidateModel.STATUS_LABELS
+      statusLabels: candidateModel.STATUS_LABELS,
+      educationLevels: candidateModel.EDUCATION_LEVELS,
+      genders: candidateModel.GENDERS
     });
   }
 

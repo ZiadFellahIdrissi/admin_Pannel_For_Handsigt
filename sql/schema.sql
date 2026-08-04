@@ -30,6 +30,25 @@ ALTER TABLE candidates
   ADD COLUMN open_to_freelance TINYINT(1) NOT NULL DEFAULT 0;
 
 -- ---------------------------------------------------------------------
+-- MIGRATION - run once in phpMyAdmin's SQL tab (ALTER privileges needed).
+--
+-- - Renames education -> specialty (data preserved) and adds
+--   education_level - the free-text field used to hold something like
+--   "Master's in Computer Science" mixing degree level and field of
+--   study together; now the level is picked from a fixed list first
+--   (see candidateModel.EDUCATION_LEVELS) and specialty holds just the
+--   field of study ("Computer Science"). Plain VARCHAR + app-level
+--   validation, not a MySQL ENUM - same convention as `status` already
+--   uses in this table.
+-- - Adds gender (also plain VARCHAR + app-level validated, values
+--   'male'/'female' - see candidateModel.GENDERS).
+-- ---------------------------------------------------------------------
+ALTER TABLE candidates
+  CHANGE COLUMN education specialty VARCHAR(255) DEFAULT NULL,
+  ADD COLUMN education_level VARCHAR(50) DEFAULT NULL,
+  ADD COLUMN gender VARCHAR(10) DEFAULT NULL;
+
+-- ---------------------------------------------------------------------
 -- REFERENCE ONLY - this table already exists live (created outside this
 -- app, alongside the public landing page). `IF NOT EXISTS` makes this
 -- safe/idempotent to run - it's here purely so this file stays the one
