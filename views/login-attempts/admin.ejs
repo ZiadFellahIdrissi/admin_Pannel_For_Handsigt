@@ -1,0 +1,53 @@
+<%- include('../partials/head', { title: 'Admin Panel Login Attempts' }) %>
+<div class="flex min-h-screen">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('../partials/topbar', { title: 'Admin Panel Login Attempts' }) %>
+    <%- include('../partials/flash') %>
+    <div class="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
+  <div class="flex items-center justify-between flex-wrap gap-3 mb-4 sm:mb-6">
+    <h1 class="text-lg sm:text-xl font-bold flex items-center gap-3">
+      <div class="icon-circle-accent"><i class="fa-solid fa-user-shield"></i></div>
+      Admin Panel Login Attempts
+    </h1>
+    <a href="/login-attempts/admin<%= onlyFailures ? '' : '?onlyFailures=1' %>" class="btn-secondary">
+      <i class="fa-solid fa-filter"></i><%= onlyFailures ? 'Show all' : 'Show only failures' %>
+    </a>
+  </div>
+
+  <p class="text-xs text-brand-gray2 mb-4">Attempts to log into this Admin Panel itself (not the Consultant Dashboard). Recorded on every attempt, success or failure. Showing the most recent 100.</p>
+
+  <% if (attempts.length === 0) { %>
+    <div class="card p-8 text-center">
+      <i class="fa-regular fa-folder-open text-2xl text-brand-gray2 mb-2"></i>
+      <p class="text-sm text-brand-gray2">No login attempts found.</p>
+    </div>
+  <% } else { %>
+    <div class="card overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-xs font-semibold uppercase tracking-wide text-brand-gray2 border-b border-brand-borderLight">
+            <th class="px-4 py-3">Username</th>
+            <th class="px-4 py-3">IP Address</th>
+            <th class="px-4 py-3">Result</th>
+            <th class="px-4 py-3">When</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% attempts.forEach(function(a) { %>
+            <tr class="border-b border-brand-borderLight last:border-0">
+              <td class="px-4 py-2.5 font-medium"><%= a.username %></td>
+              <td class="px-4 py-2.5 text-brand-gray2"><%= a.ip_address %></td>
+              <td class="px-4 py-2.5"><span class="<%= a.success ? 'badge-approved' : 'badge-rejected' %>"><%= a.success ? 'Success' : 'Failed' %></span></td>
+              <td class="px-4 py-2.5 text-brand-gray2"><%= a.attempted_at %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

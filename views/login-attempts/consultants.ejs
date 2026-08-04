@@ -1,21 +1,21 @@
-<%- include('../partials/head', { title: 'Login Attempts' }) %>
+<%- include('../partials/head', { title: 'Consultant Login Attempts' }) %>
 <div class="flex min-h-screen">
   <%- include('../partials/sidebar') %>
   <div class="flex-1 flex flex-col min-w-0">
-    <%- include('../partials/topbar', { title: 'Login Attempts' }) %>
+    <%- include('../partials/topbar', { title: 'Consultant Login Attempts' }) %>
     <%- include('../partials/flash') %>
     <div class="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
   <div class="flex items-center justify-between flex-wrap gap-3 mb-4 sm:mb-6">
     <h1 class="text-lg sm:text-xl font-bold flex items-center gap-3">
       <div class="icon-circle-accent"><i class="fa-solid fa-shield-halved"></i></div>
-      Login Attempts
+      Consultant Login Attempts
     </h1>
-    <a href="/login-attempts<%= onlyFailures ? '' : '?onlyFailures=1' %>" class="btn-secondary">
+    <a href="/login-attempts/consultants<%= onlyFailures ? '' : '?onlyFailures=1' %>" class="btn-secondary">
       <i class="fa-solid fa-filter"></i><%= onlyFailures ? 'Show all' : 'Show only failures' %>
     </a>
   </div>
 
-  <p class="text-xs text-brand-gray2 mb-4">Read-only - recorded by the Consultant Dashboard's own login flow. Showing the most recent 100 attempts.</p>
+  <p class="text-xs text-brand-gray2 mb-4">Read-only - recorded by the Consultant Dashboard's own login flow (consultants logging into that app, not this one). Showing the most recent 100 attempts.</p>
 
   <% if (attempts.length === 0) { %>
     <div class="card p-8 text-center">

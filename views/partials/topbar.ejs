@@ -26,8 +26,8 @@
       push('Candidates', '/candidates');
     } else if (path === '/career-offers' || path.indexOf('/career-offers/') === 0) {
       push('Career Offers', '/career-offers');
-    } else if (path === '/login-attempts') {
-      push('Login Attempts', '/login-attempts');
+    } else if (path.indexOf('/login-attempts/') === 0) {
+      push('Login Attempts', null);
     }
 
     // Current page - never a link. If it would just repeat the label

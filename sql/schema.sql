@@ -59,6 +59,24 @@ ALTER TABLE candidates
   ADD COLUMN certifications TEXT DEFAULT NULL;
 
 -- ---------------------------------------------------------------------
+-- MIGRATION - run once in phpMyAdmin's SQL tab.
+--
+-- Login attempts for THIS app (the Admin Panel) - separate from the
+-- read-only `login_attempts` table below, which belongs to the
+-- Consultant Dashboard's own login flow. This one is fully owned by the
+-- Admin Panel: written by controllers/authController.js on every login
+-- attempt (success or failure), read by
+-- controllers/loginAttemptsController.js's "Admin Logins" page.
+-- ---------------------------------------------------------------------
+CREATE TABLE admin_login_attempts (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(100) NOT NULL,
+  ip_address VARCHAR(45) DEFAULT NULL,
+  success TINYINT(1) NOT NULL DEFAULT 0,
+  attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ---------------------------------------------------------------------
 -- REFERENCE ONLY - this table already exists live (created outside this
 -- app, alongside the public landing page). `IF NOT EXISTS` makes this
 -- safe/idempotent to run - it's here purely so this file stays the one

@@ -5,6 +5,10 @@ const { requireAuth } = require('../middleware/auth');
 const asyncHandler = require('../utils/asyncHandler');
 
 // Read-only: no POST routes on this router at all.
-router.get('/login-attempts', requireAuth, asyncHandler(loginAttemptsController.list));
+router.get('/login-attempts/consultants', requireAuth, asyncHandler(loginAttemptsController.listConsultants));
+router.get('/login-attempts/admin', requireAuth, asyncHandler(loginAttemptsController.listAdmin));
+
+// Old single-page URL - kept as a redirect so any existing bookmark still works.
+router.get('/login-attempts', requireAuth, (req, res) => res.redirect('/login-attempts/consultants'));
 
 module.exports = router;
