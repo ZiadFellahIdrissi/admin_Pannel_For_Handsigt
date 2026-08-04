@@ -1,0 +1,88 @@
+<%- include('../partials/head', { title: 'Login Attempts Analysis' }) %>
+<div class="flex min-h-screen">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('../partials/topbar', { title: 'Login Attempts Analysis' }) %>
+    <%- include('../partials/flash') %>
+    <div class="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
+  <h1 class="text-lg sm:text-xl font-bold mb-4 sm:mb-6 flex items-center gap-3">
+    <div class="icon-circle-accent"><i class="fa-solid fa-chart-simple"></i></div>
+    Login Attempts Analysis
+  </h1>
+
+  <%
+    function rate(stats) { return stats.total > 0 ? Math.round((stats.succeeded / stats.total) * 100) : null; }
+  %>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+    <div class="card p-5 sm:p-6">
+      <h2 class="section-title"><i class="fa-solid fa-users"></i>Consultant Dashboard</h2>
+      <div class="grid grid-cols-3 gap-2 mb-4">
+        <div class="stat-tile !flex-col !items-start !gap-0.5">
+          <div class="stat-tile-value"><%= consultantStats.total %></div>
+          <div class="stat-tile-label">Total</div>
+        </div>
+        <div class="stat-tile !flex-col !items-start !gap-0.5">
+          <div class="stat-tile-value text-emerald-600 dark:text-emerald-400"><%= consultantStats.succeeded %></div>
+          <div class="stat-tile-label">Succeeded</div>
+        </div>
+        <div class="stat-tile !flex-col !items-start !gap-0.5">
+          <div class="stat-tile-value text-red-600 dark:text-red-400"><%= consultantStats.failed %></div>
+          <div class="stat-tile-label">Failed</div>
+        </div>
+      </div>
+      <p class="text-xs text-brand-gray2 mb-4">Success rate: <%= rate(consultantStats) !== null ? rate(consultantStats) + '%' : '—' %></p>
+
+      <h3 class="text-xs font-bold uppercase tracking-wide text-brand-gray2 mb-2">Top Failing IPs</h3>
+      <% if (consultantTopIps.length === 0) { %>
+        <p class="text-sm text-brand-gray2">No failed attempts recorded.</p>
+      <% } else { %>
+        <div class="space-y-1.5">
+          <% consultantTopIps.forEach(function(row) { %>
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-brand-text"><%= row.ip_address %></span>
+              <span class="badge-rejected !py-0.5 !px-2"><%= row.failures %> failed</span>
+            </div>
+          <% }); %>
+        </div>
+      <% } %>
+    </div>
+
+    <div class="card p-5 sm:p-6">
+      <h2 class="section-title"><i class="fa-solid fa-user-shield"></i>Admin Panel</h2>
+      <div class="grid grid-cols-3 gap-2 mb-4">
+        <div class="stat-tile !flex-col !items-start !gap-0.5">
+          <div class="stat-tile-value"><%= adminStats.total %></div>
+          <div class="stat-tile-label">Total</div>
+        </div>
+        <div class="stat-tile !flex-col !items-start !gap-0.5">
+          <div class="stat-tile-value text-emerald-600 dark:text-emerald-400"><%= adminStats.succeeded %></div>
+          <div class="stat-tile-label">Succeeded</div>
+        </div>
+        <div class="stat-tile !flex-col !items-start !gap-0.5">
+          <div class="stat-tile-value text-red-600 dark:text-red-400"><%= adminStats.failed %></div>
+          <div class="stat-tile-label">Failed</div>
+        </div>
+      </div>
+      <p class="text-xs text-brand-gray2 mb-4">Success rate: <%= rate(adminStats) !== null ? rate(adminStats) + '%' : '—' %></p>
+
+      <h3 class="text-xs font-bold uppercase tracking-wide text-brand-gray2 mb-2">Top Failing IPs</h3>
+      <% if (adminTopIps.length === 0) { %>
+        <p class="text-sm text-brand-gray2">No failed attempts recorded.</p>
+      <% } else { %>
+        <div class="space-y-1.5">
+          <% adminTopIps.forEach(function(row) { %>
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-brand-text"><%= row.ip_address %></span>
+              <span class="badge-rejected !py-0.5 !px-2"><%= row.failures %> failed</span>
+            </div>
+          <% }); %>
+        </div>
+      <% } %>
+    </div>
+  </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

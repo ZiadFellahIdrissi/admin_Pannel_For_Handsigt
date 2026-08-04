@@ -13,6 +13,7 @@
   var isHistory = currentPath.indexOf('/history') === 0;
   var isConsultantLogins = currentPath.indexOf('/login-attempts/consultants') === 0;
   var isAdminLogins = currentPath.indexOf('/login-attempts/admin') === 0;
+  var isLoginAnalysis = currentPath.indexOf('/login-attempts/analysis') === 0;
   var isDashboard = currentPath === '/';
 %>
 <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
@@ -104,22 +105,17 @@
       <span class="badge-draft !py-0.5 !px-2 ml-auto">Soon</span>
     </div>
 
-    <div class="sidebar-section-title">Security</div>
+    <div class="sidebar-section-title">Login Attempts</div>
     <div class="space-y-1">
-      <details <%= (isConsultantLogins || isAdminLogins) ? 'open' : '' %>>
-        <summary class="sidebar-sublabel-toggle list-none">
-          <i class="fa-solid fa-shield-halved w-4 text-center"></i>Login Attempts
-          <i class="fa-solid fa-chevron-down sidebar-sublabel-chevron"></i>
-        </summary>
-        <div class="space-y-1 mt-1 pl-4">
-          <a href="/login-attempts/consultants" class="<%= isConsultantLogins ? 'sidebar-link-active' : 'sidebar-link' %>">
-            <i class="fa-solid fa-users w-4 text-center"></i>Consultant Logins
-          </a>
-          <a href="/login-attempts/admin" class="<%= isAdminLogins ? 'sidebar-link-active' : 'sidebar-link' %>">
-            <i class="fa-solid fa-user-shield w-4 text-center"></i>Admin Logins
-          </a>
-        </div>
-      </details>
+      <a href="/login-attempts/consultants" class="<%= isConsultantLogins ? 'sidebar-link-active' : 'sidebar-link' %>">
+        <i class="fa-solid fa-users w-4 text-center"></i>Consultant Logins
+      </a>
+      <a href="/login-attempts/admin" class="<%= isAdminLogins ? 'sidebar-link-active' : 'sidebar-link' %>">
+        <i class="fa-solid fa-user-shield w-4 text-center"></i>Admin Logins
+      </a>
+      <a href="/login-attempts/analysis" class="<%= isLoginAnalysis ? 'sidebar-link-active' : 'sidebar-link' %>">
+        <i class="fa-solid fa-chart-simple w-4 text-center"></i>Analysis
+      </a>
     </div>
   </nav>
 </aside>

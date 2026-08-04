@@ -28,4 +28,29 @@ async function listRecent({ limit = 100, onlyFailures = false } = {}) {
   return rows;
 }
 
-module.exports = { record, listRecent };
+// All-time totals for the small Analysis page - same shape as
+// loginAttemptModel.js's getStats(), just against this app's own table.
+async function getStats() {
+  const [rows] = await pool.query(
+    'SELECT COUNT(*) AS total, COALESCE(SUM(success), 0) AS succeeded FROM admin_login_attempts'
+  );
+  const total = Number(rows[0].total);
+  const succeeded = Number(rows[0].succeeded);
+  return { total, succeeded, failed: total - succeeded };
+}
+
+async function topFailingIps(limit = 5) {
+  const safeLimit = Number.isInteger(limit) && limit > 0 ? limit : 5;
+  const [rows] = await pool.query(
+    `SELECT ip_address, COUNT(*) AS failures
+       FROM admin_login_attempts
+      WHERE success = 0 AND ip_address IS NOT NULL
+      GROUP BY ip_address
+      ORDER BY failures DESC
+      LIMIT ?`,
+    [safeLimit]
+  );
+  return rows;
+}
+
+module.exports = { record, listRecent, getStats, topFailingIps };
