@@ -1,11 +1,61 @@
+<%
+  // Breadcrumb trail, derived from currentPath (set globally for every
+  // request in server.js) plus this page's own `title` local (already
+  // passed to this partial everywhere it's included) - so every page
+  // gets one for free with no controller changes needed. Ancestor
+  // crumbs are clickable; the current page never is.
+  function buildBreadcrumbs(path, pageTitle) {
+    if (!path || path === '/' || !pageTitle) return [];
+
+    var crumbs = [{ label: 'Dashboard', url: '/' }];
+    function push(label, url) { crumbs.push({ label: label, url: url || null }); }
+
+    if (path === '/consultants-management') {
+      // already at the hub - nothing more to push before the title
+    } else if (path === '/consultants' || path.indexOf('/consultants/') === 0) {
+      push('Consultants Management', '/consultants-management');
+      push('Consultants', '/consultants');
+    } else if (path === '/summary') {
+      push('Consultants Management', '/consultants-management');
+    } else if (path === '/approvals' || path === '/history') {
+      push('Consultants Management', '/consultants-management');
+      push('CRA (Timesheet)', null);
+    } else if (path === '/clients' || path.indexOf('/clients/') === 0) {
+      push('Clients', '/clients');
+    } else if (path === '/candidates' || path.indexOf('/candidates/') === 0) {
+      push('Candidates', '/candidates');
+    } else if (path === '/career-offers' || path.indexOf('/career-offers/') === 0) {
+      push('Career Offers', '/career-offers');
+    } else if (path === '/login-attempts') {
+      push('Login Attempts', '/login-attempts');
+    }
+
+    // Current page - never a link. If it would just repeat the label
+    // already pushed above (e.g. the "Clients" list page under the
+    // "Clients" crumb), don't duplicate it - just make that crumb the
+    // (non-clickable) current one instead.
+    var last = crumbs[crumbs.length - 1];
+    if (last.label === pageTitle) {
+      last.url = null;
+    } else {
+      push(pageTitle, null);
+    }
+
+    return crumbs;
+  }
+%>
 <% if (currentUser) { %>
+<%
+  var pageTitle = typeof title !== 'undefined' ? title : '';
+  var breadcrumbs = buildBreadcrumbs(typeof currentPath !== 'undefined' ? currentPath : '', pageTitle);
+%>
 <header class="bg-brand text-white shadow-lg shadow-black/20 sticky top-0 z-10">
   <div class="h-16 px-3 sm:px-4 flex items-center justify-between gap-3">
     <div class="flex items-center gap-3 min-w-0">
       <button type="button" id="sidebar-toggle-btn" class="theme-toggle lg:hidden" aria-label="Toggle menu">
         <i class="fa-solid fa-bars"></i>
       </button>
-      <h1 class="text-sm font-semibold truncate"><%= typeof title !== 'undefined' ? title : '' %></h1>
+      <h1 class="text-sm font-semibold truncate"><%= pageTitle %></h1>
     </div>
     <div class="flex items-center gap-1.5 sm:gap-2.5 text-sm shrink-0">
       <details class="relative">
@@ -43,6 +93,18 @@
       </form>
     </div>
   </div>
+  <% if (breadcrumbs.length > 0) { %>
+    <nav aria-label="Breadcrumb" class="px-3 sm:px-4 pb-2 -mt-1 flex items-center gap-1.5 flex-wrap text-xs">
+      <% breadcrumbs.forEach(function(c, i) { %>
+        <% if (i > 0) { %><i class="fa-solid fa-chevron-right text-[8px] text-white/40"></i><% } %>
+        <% if (c.url) { %>
+          <a href="<%= c.url %>" class="text-white/70 hover:text-white hover:underline"><%= c.label %></a>
+        <% } else { %>
+          <span class="text-white font-medium" aria-current="page"><%= c.label %></span>
+        <% } %>
+      <% }); %>
+    </nav>
+  <% } %>
 </header>
 <script src="/js/theme-toggle.js?v=<%= assetVersion %>" defer></script>
 <script src="/js/sidebar-toggle.js?v=<%= assetVersion %>" defer></script>
