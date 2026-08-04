@@ -49,6 +49,16 @@ ALTER TABLE candidates
   ADD COLUMN gender VARCHAR(10) DEFAULT NULL;
 
 -- ---------------------------------------------------------------------
+-- MIGRATION - run once in phpMyAdmin's SQL tab (ALTER privileges needed).
+--
+-- Certifications (e.g. "Microsoft Certified: Power BI Data Analyst
+-- Associate") - one or several, semicolon-separated, same shown-as-tags
+-- convention as `skills` (see controllers/candidatesController.js).
+-- ---------------------------------------------------------------------
+ALTER TABLE candidates
+  ADD COLUMN certifications TEXT DEFAULT NULL;
+
+-- ---------------------------------------------------------------------
 -- REFERENCE ONLY - this table already exists live (created outside this
 -- app, alongside the public landing page). `IF NOT EXISTS` makes this
 -- safe/idempotent to run - it's here purely so this file stays the one

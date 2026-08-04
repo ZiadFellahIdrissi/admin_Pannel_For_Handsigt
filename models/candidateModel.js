@@ -31,7 +31,7 @@ const GENDERS = ['male', 'female'];
 const FIELDS = [
   'firstName', 'lastName', 'email', 'phone', 'whatsapp', 'gender', 'city', 'country',
   'firstExperienceDate', 'graduationDate', 'possibleRoles', 'educationLevel', 'specialty',
-  'skills', 'languages', 'linkedinUrl', 'portfolioUrl',
+  'skills', 'certifications', 'languages', 'linkedinUrl', 'portfolioUrl',
   'expectedSalary', 'expectedTjm', 'availability', 'source',
   'openToCdd', 'openToCdi', 'openToFreelance', 'status', 'rating', 'notes'
 ];
@@ -45,7 +45,7 @@ const COLUMN_BY_FIELD = {
   whatsapp: 'whatsapp', gender: 'gender', city: 'city', country: 'country',
   firstExperienceDate: 'first_experience_date', graduationDate: 'graduation_date',
   possibleRoles: 'possible_roles', educationLevel: 'education_level', specialty: 'specialty',
-  skills: 'skills', languages: 'languages', linkedinUrl: 'linkedin_url', portfolioUrl: 'portfolio_url',
+  skills: 'skills', certifications: 'certifications', languages: 'languages', linkedinUrl: 'linkedin_url', portfolioUrl: 'portfolio_url',
   expectedSalary: 'expected_salary', expectedTjm: 'expected_tjm', availability: 'availability', source: 'source',
   openToCdd: 'open_to_cdd', openToCdi: 'open_to_cdi', openToFreelance: 'open_to_freelance',
   status: 'status', rating: 'rating', notes: 'notes'

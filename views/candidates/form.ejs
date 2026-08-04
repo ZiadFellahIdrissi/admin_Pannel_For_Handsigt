@@ -115,6 +115,10 @@
           <label class="field-label" for="skills">Skills (up to 50, separated with ;)</label>
           <input class="field-input" type="text" id="skills" name="skills" placeholder="SQL; Power BI; Excel; Data Analysis" value="<%= val('skills', 'skills') %>">
         </div>
+        <div class="sm:col-span-2">
+          <label class="field-label" for="certifications">Certifications (separated with ;)</label>
+          <input class="field-input" type="text" id="certifications" name="certifications" placeholder="Microsoft Certified: Power BI Data Analyst Associate" value="<%= val('certifications', 'certifications') %>">
+        </div>
         <div>
           <label class="field-label" for="linkedinUrl">LinkedIn URL</label>
           <input class="field-input" type="text" id="linkedinUrl" name="linkedinUrl" placeholder="https://linkedin.com/in/..." value="<%= val('linkedinUrl', 'linkedin_url') %>">

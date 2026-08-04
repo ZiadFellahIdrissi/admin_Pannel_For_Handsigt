@@ -8,8 +8,10 @@ const MAX_SKILLS = 50;
 
 // 'SQL; Power BI ; Excel' -> ['SQL', 'Power BI', 'Excel'] - shown/edited
 // as tags rather than a free paragraph, and semicolon-separated (not
-// comma) since a skill phrase can itself contain a comma.
-function parseSkills(value) {
+// comma) since an entry can itself contain a comma (e.g. a certification
+// name like "Microsoft Certified: Power BI Data Analyst Associate").
+// Shared by both `skills` and `certifications`.
+function parseTagList(value) {
   return (value || '')
     .split(';')
     .map((s) => s.trim())
@@ -28,7 +30,8 @@ function extractFields(body) {
     const v = (value || '').trim();
     return v || null;
   };
-  const skillsList = parseSkills(body.skills);
+  const skillsList = parseTagList(body.skills);
+  const certificationsList = parseTagList(body.certifications);
 
   const email = trim(body.email);
 
@@ -46,6 +49,7 @@ function extractFields(body) {
     specialty: trim(body.specialty),
     skills: skillsList.length ? skillsList.join('; ') : null,
     skillsCount: skillsList.length,
+    certifications: certificationsList.length ? certificationsList.join('; ') : null,
     languages: trim(body.languages),
     linkedinUrl: trim(body.linkedinUrl),
     portfolioUrl: trim(body.portfolioUrl),

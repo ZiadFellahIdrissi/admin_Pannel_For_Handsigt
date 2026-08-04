@@ -6,6 +6,7 @@
     <%- include('../partials/flash') %>
     <div class="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
 <% function show(v) { return (v === null || v === undefined || v === '') ? '—' : v; } %>
+<% function splitTags(v) { return (v || '').split(';').map(function(s) { return s.trim(); }).filter(Boolean); } %>
   <div class="flex items-center justify-between flex-wrap gap-3 mb-6">
     <h1 class="text-lg sm:text-xl font-bold flex items-center gap-3">
       <div class="icon-circle-slate font-bold"><%= (candidateRow.first_name.charAt(0) + candidateRow.last_name.charAt(0)).toUpperCase() %></div>
@@ -55,10 +56,19 @@
               <div><span class="text-brand-gray2">Languages</span><br><%= show(candidateRow.languages) %></div>
               <div class="col-span-2">
                 <span class="text-brand-gray2">Skills</span><br>
-                <% var skillTags = (candidateRow.skills || '').split(';').map(function(s) { return s.trim(); }).filter(Boolean); %>
+                <% var skillTags = splitTags(candidateRow.skills); %>
                 <% if (skillTags.length === 0) { %>—<% } else { %>
                   <div class="flex flex-wrap gap-1 mt-1">
                     <% skillTags.forEach(function(s) { %><span class="badge-pending !py-0.5 !px-2"><%= s %></span><% }); %>
+                  </div>
+                <% } %>
+              </div>
+              <div class="col-span-2">
+                <span class="text-brand-gray2">Certifications</span><br>
+                <% var certTags = splitTags(candidateRow.certifications); %>
+                <% if (certTags.length === 0) { %>—<% } else { %>
+                  <div class="flex flex-wrap gap-1 mt-1">
+                    <% certTags.forEach(function(c) { %><span class="badge-pending !py-0.5 !px-2"><%= c %></span><% }); %>
                   </div>
                 <% } %>
               </div>
