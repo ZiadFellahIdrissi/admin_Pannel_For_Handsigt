@@ -1,0 +1,126 @@
+<%- include('../partials/head', { title: 'Administrative Information' }) %>
+<div class="flex min-h-screen">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('../partials/topbar', { title: 'Administrative Information' }) %>
+    <%- include('../partials/flash') %>
+    <div class="max-w-3xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
+<%
+  // companyInfo is the singleton company_info row (snake_case columns) -
+  // no dual-shape val() helper needed here (unlike other forms), since
+  // there's no failed-validation reconstruction path: every field is
+  // optional free text, nothing here is rejected.
+  function val(key) {
+    var v = companyInfo ? companyInfo[key] : null;
+    return (v === null || v === undefined) ? '' : v;
+  }
+%>
+  <h1 class="text-lg sm:text-xl font-bold mb-6 flex items-center gap-3">
+    <div class="icon-circle-accent"><i class="fa-solid fa-building-columns"></i></div>
+    Administrative Information
+  </h1>
+
+  <form action="/settings/administrative-information" method="POST" enctype="multipart/form-data" class="space-y-4">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="card p-5 sm:p-6">
+      <h2 class="section-title"><i class="fa-solid fa-stamp"></i>Legal / Administrative</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="sm:col-span-2">
+          <label class="field-label" for="legalName">Raison Sociale (Legal Name)</label>
+          <input class="field-input" type="text" id="legalName" name="legalName" value="<%= val('legal_name') %>">
+        </div>
+        <div>
+          <label class="field-label" for="legalForm">Legal Form</label>
+          <input class="field-input" type="text" id="legalForm" name="legalForm" placeholder="SARL, SA, SARL AU..." value="<%= val('legal_form') %>">
+        </div>
+        <div>
+          <label class="field-label" for="ice">ICE</label>
+          <input class="field-input" type="text" id="ice" name="ice" value="<%= val('ice') %>">
+        </div>
+        <div>
+          <label class="field-label" for="rc">RC (Registre de Commerce)</label>
+          <input class="field-input" type="text" id="rc" name="rc" value="<%= val('rc') %>">
+        </div>
+        <div>
+          <label class="field-label" for="patente">Patente</label>
+          <input class="field-input" type="text" id="patente" name="patente" value="<%= val('patente') %>">
+        </div>
+        <div>
+          <label class="field-label" for="taxIdentifier">IF (Identifiant Fiscal)</label>
+          <input class="field-input" type="text" id="taxIdentifier" name="taxIdentifier" value="<%= val('tax_identifier') %>">
+        </div>
+        <div>
+          <label class="field-label" for="cnssNumber">CNSS Number</label>
+          <input class="field-input" type="text" id="cnssNumber" name="cnssNumber" value="<%= val('cnss_number') %>">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="field-label" for="address">Address</label>
+          <input class="field-input" type="text" id="address" name="address" value="<%= val('address') %>">
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-5 sm:p-6">
+      <h2 class="section-title"><i class="fa-solid fa-address-book"></i>Contact</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label class="field-label" for="email">Email</label>
+          <input class="field-input" type="email" id="email" name="email" value="<%= val('email') %>">
+        </div>
+        <div>
+          <label class="field-label" for="phone">Phone</label>
+          <input class="field-input" type="text" id="phone" name="phone" value="<%= val('phone') %>">
+        </div>
+        <div>
+          <label class="field-label" for="website">Website</label>
+          <input class="field-input" type="text" id="website" name="website" placeholder="https://..." value="<%= val('website') %>">
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-5 sm:p-6">
+      <h2 class="section-title"><i class="fa-solid fa-building-columns"></i>Compte Bancaire (Bank Account)</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="field-label" for="bankName">Banque (Bank Name)</label>
+          <input class="field-input" type="text" id="bankName" name="bankName" value="<%= val('bank_name') %>">
+        </div>
+        <div>
+          <label class="field-label" for="bankAgency">Agence (Branch)</label>
+          <input class="field-input" type="text" id="bankAgency" name="bankAgency" value="<%= val('bank_agency') %>">
+        </div>
+        <div>
+          <label class="field-label" for="bankRib">RIB</label>
+          <input class="field-input" type="text" id="bankRib" name="bankRib" maxlength="24" value="<%= val('bank_rib') %>">
+        </div>
+        <div>
+          <label class="field-label" for="bankIban">IBAN</label>
+          <input class="field-input" type="text" id="bankIban" name="bankIban" maxlength="34" value="<%= val('bank_iban') %>">
+        </div>
+        <div>
+          <label class="field-label" for="bankSwift">BIC / SWIFT</label>
+          <input class="field-input" type="text" id="bankSwift" name="bankSwift" maxlength="11" value="<%= val('bank_swift') %>">
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-5 sm:p-6">
+      <h2 class="section-title"><i class="fa-solid fa-file-invoice"></i>Invoice Logo</h2>
+      <% if (val('invoice_logo_path')) { %>
+        <img src="<%= val('invoice_logo_path') %>" alt="Invoice logo" class="h-16 mb-3 rounded-lg border border-brand-borderLight p-2 bg-white">
+      <% } %>
+      <div>
+        <label class="field-label" for="logo">Upload logo (JPEG, PNG, WebP, or SVG - replaces the current one)</label>
+        <input class="field-input" type="file" id="logo" name="logo" accept="image/jpeg,image/png,image/webp,image/svg+xml">
+      </div>
+    </div>
+
+    <button type="submit" class="btn-primary w-full sm:w-auto">
+      <i class="fa-solid fa-check"></i>Save Changes
+    </button>
+  </form>
+    </div>
+  </div>
+</div>
+<%- include('../partials/foot') %>

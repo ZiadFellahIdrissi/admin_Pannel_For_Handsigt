@@ -77,6 +77,42 @@ CREATE TABLE admin_login_attempts (
 );
 
 -- ---------------------------------------------------------------------
+-- MIGRATION - run once in phpMyAdmin's SQL tab.
+--
+-- Settings: a new top-level area (gear icon in the topbar, next to
+-- Logout) meant to grow over time with more categories. First category:
+-- "Administrative Information" - Handsight Solutions' own company/legal/
+-- bank details (as opposed to `clients`, which holds the SAME shape of
+-- fields but for Handsight's clients, not Handsight itself).
+--
+-- Singleton row (id always 1, seeded below) - there's only ever one
+-- Handsight Solutions record, so this is a single settings row to fetch
+-- and update in place, never a list.
+-- ---------------------------------------------------------------------
+CREATE TABLE company_info (
+  id INT PRIMARY KEY,
+  ice VARCHAR(50) DEFAULT NULL,
+  rc VARCHAR(50) DEFAULT NULL,
+  patente VARCHAR(50) DEFAULT NULL,
+  tax_identifier VARCHAR(50) DEFAULT NULL,
+  cnss_number VARCHAR(50) DEFAULT NULL,
+  legal_form VARCHAR(150) DEFAULT NULL,
+  legal_name VARCHAR(255) DEFAULT NULL,
+  address VARCHAR(255) DEFAULT NULL,
+  email VARCHAR(150) DEFAULT NULL,
+  website VARCHAR(255) DEFAULT NULL,
+  phone VARCHAR(30) DEFAULT NULL,
+  bank_name VARCHAR(150) DEFAULT NULL,
+  bank_agency VARCHAR(150) DEFAULT NULL,
+  bank_rib VARCHAR(24) DEFAULT NULL,
+  bank_iban VARCHAR(34) DEFAULT NULL,
+  bank_swift VARCHAR(11) DEFAULT NULL,
+  invoice_logo_path VARCHAR(255) DEFAULT NULL,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+INSERT INTO company_info (id) VALUES (1);
+
+-- ---------------------------------------------------------------------
 -- REFERENCE ONLY - this table already exists live (created outside this
 -- app, alongside the public landing page). `IF NOT EXISTS` makes this
 -- safe/idempotent to run - it's here purely so this file stays the one

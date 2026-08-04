@@ -28,6 +28,10 @@
       push('Career Offers', '/career-offers');
     } else if (path.indexOf('/login-attempts/') === 0) {
       push('Login Attempts', null);
+    } else if (path === '/settings') {
+      // already at the hub - nothing more to push before the title
+    } else if (path.indexOf('/settings/') === 0) {
+      push('Settings', '/settings');
     }
 
     // Current page - never a link. If it would just repeat the label
@@ -85,6 +89,9 @@
       <button type="button" id="theme-toggle-btn" class="theme-toggle" aria-label="Toggle theme">
         <i id="theme-toggle-icon" class="fa-solid fa-moon"></i>
       </button>
+      <a href="/settings" class="theme-toggle" aria-label="Settings">
+        <i class="fa-solid fa-gear"></i>
+      </a>
       <form action="/logout" method="POST" class="inline">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <button type="submit" class="text-brand-gray hover:text-white transition-colors">

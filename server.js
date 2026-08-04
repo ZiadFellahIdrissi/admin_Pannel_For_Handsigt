@@ -22,6 +22,7 @@ const careerOffersRoutes = require('./routes/careerOffersRoutes');
 const approvalsRoutes = require('./routes/approvalsRoutes');
 const historyRoutes = require('./routes/historyRoutes');
 const loginAttemptsRoutes = require('./routes/loginAttemptsRoutes');
+const settingsRoutes = require('./routes/settingsRoutes');
 
 const app = express();
 
@@ -111,6 +112,7 @@ app.use('/', careerOffersRoutes);
 app.use('/', approvalsRoutes);
 app.use('/', historyRoutes);
 app.use('/', loginAttemptsRoutes);
+app.use('/', settingsRoutes);
 
 app.use((req, res) => {
   res.status(404).render('error', { message: 'Page not found.' });
