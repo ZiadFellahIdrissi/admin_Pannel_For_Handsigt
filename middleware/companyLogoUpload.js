@@ -1,18 +1,6 @@
 const multer = require('multer');
 const crypto = require('crypto');
-const path = require('path');
-const fs = require('fs');
-
-// Purely local storage, unlike CVs/career-offer images (which live on
-// the shared cross-site Hostinger Uploads folder - see
-// config/uploadPaths.js). The invoice logo is only ever used by this
-// Admin Panel itself, so it just lives under this app's own public/
-// folder and is served by the existing express.static(public)
-// middleware in server.js - no new serving route needed, and no
-// sensitivity concerns (it's a logo, not PII) that would call for
-// gating it behind auth the way CVs are.
-const COMPANY_LOGO_DIR = path.join(__dirname, '..', 'public', 'uploads', 'company');
-fs.mkdirSync(COMPANY_LOGO_DIR, { recursive: true });
+const { COMPANY_LOGO_DIR } = require('../config/uploadPaths');
 
 const EXTENSION_BY_MIMETYPE = {
   'image/jpeg': '.jpg',

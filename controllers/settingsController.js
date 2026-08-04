@@ -1,8 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const companyInfoModel = require('../models/companyInfoModel');
-
-const COMPANY_LOGO_DIR = path.join(__dirname, '..', 'public', 'uploads', 'company');
+const { COMPANY_LOGO_DIR, COMPANY_LOGO_PUBLIC_BASE_URL } = require('../config/uploadPaths');
 
 // Just a static hub page linking into whatever settings categories
 // exist - "Administrative Information" today, more added here later as
@@ -51,9 +50,12 @@ async function handleUpdateAdministrativeInfo(req, res) {
   if (req.file) {
     const current = await companyInfoModel.get();
     if (current && current.invoice_logo_path) {
-      fs.unlink(path.join(COMPANY_LOGO_DIR, path.basename(current.invoice_logo_path)), () => {});
+      // invoice_logo_path is a full public URL (same convention as
+      // career_offers.image_path) - the on-disk file is just its last
+      // path segment, inside COMPANY_LOGO_DIR.
+      fs.unlink(path.join(COMPANY_LOGO_DIR, current.invoice_logo_path.split('/').pop()), () => {});
     }
-    await companyInfoModel.updateLogo(`/uploads/company/${req.file.filename}`);
+    await companyInfoModel.updateLogo(`${COMPANY_LOGO_PUBLIC_BASE_URL}/${req.file.filename}`);
   }
 
   req.flash('success', 'Administrative information updated.');

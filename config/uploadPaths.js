@@ -22,7 +22,23 @@ const CAREER_IMAGE_DIR = path.join(UPLOAD_ROOT, 'carrers');
 // - see .env.example for the "confirm once live" caveat.
 const CAREER_IMAGE_PUBLIC_BASE_URL = process.env.CAREER_IMAGE_PUBLIC_BASE_URL || 'https://handsight-solutions.com/uploads/carrers';
 
+// Company/invoice logo (settings) - shared, not local-only (unlike the
+// first draft of this): nested under admin-panel/ since it's this app's
+// own setting, but still in the shared Uploads root so it's reachable by
+// URL the same way career-offer images are, in case anything outside
+// this Admin Panel ever needs it too.
+const COMPANY_LOGO_DIR = path.join(UPLOAD_ROOT, 'admin-panel', 'company');
+const COMPANY_LOGO_PUBLIC_BASE_URL = process.env.COMPANY_LOGO_PUBLIC_BASE_URL || 'https://handsight-solutions.com/uploads/admin-panel/company';
+
 fs.mkdirSync(CANDIDATE_CV_DIR, { recursive: true });
 fs.mkdirSync(CAREER_IMAGE_DIR, { recursive: true });
+fs.mkdirSync(COMPANY_LOGO_DIR, { recursive: true });
 
-module.exports = { UPLOAD_ROOT, CANDIDATE_CV_DIR, CAREER_IMAGE_DIR, CAREER_IMAGE_PUBLIC_BASE_URL };
+module.exports = {
+  UPLOAD_ROOT,
+  CANDIDATE_CV_DIR,
+  CAREER_IMAGE_DIR,
+  CAREER_IMAGE_PUBLIC_BASE_URL,
+  COMPANY_LOGO_DIR,
+  COMPANY_LOGO_PUBLIC_BASE_URL
+};
