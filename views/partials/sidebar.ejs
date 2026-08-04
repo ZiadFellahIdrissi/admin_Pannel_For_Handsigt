@@ -11,6 +11,8 @@
   var isCareerOffers = currentPath.indexOf('/career-offers') === 0 && !isPostOffer;
   var isApprovals = currentPath.indexOf('/approvals') === 0;
   var isHistory = currentPath.indexOf('/history') === 0;
+  var isInvoiceClients = currentPath.indexOf('/invoices/clients') === 0;
+  var isInvoiceSuppliers = currentPath.indexOf('/invoices/suppliers') === 0;
   var isConsultantLogins = currentPath.indexOf('/login-attempts/consultants') === 0;
   var isAdminLogins = currentPath.indexOf('/login-attempts/admin') === 0;
   var isLoginAnalysis = currentPath.indexOf('/login-attempts/analysis') === 0;
@@ -88,9 +90,13 @@
     </div>
 
     <div class="sidebar-section-title">Billing</div>
-    <div class="sidebar-link-disabled">
-      <i class="fa-solid fa-file-invoice-dollar w-4 text-center"></i>Invoicing
-      <span class="badge-draft !py-0.5 !px-2 ml-auto">Soon</span>
+    <div class="space-y-1">
+      <a href="/invoices/clients" class="<%= isInvoiceClients ? 'sidebar-link-active' : 'sidebar-link' %>">
+        <i class="fa-solid fa-file-invoice-dollar w-4 text-center"></i>Facture Clients
+      </a>
+      <a href="/invoices/suppliers" class="<%= isInvoiceSuppliers ? 'sidebar-link-active' : 'sidebar-link' %>">
+        <i class="fa-solid fa-file-invoice w-4 text-center"></i>Facture Fournisseur
+      </a>
     </div>
 
     <div class="sidebar-section-title">Treasury</div>

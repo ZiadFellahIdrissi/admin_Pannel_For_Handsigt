@@ -113,6 +113,38 @@ CREATE TABLE company_info (
 INSERT INTO company_info (id) VALUES (1);
 
 -- ---------------------------------------------------------------------
+-- MIGRATION - run once in phpMyAdmin's SQL tab.
+--
+-- Billing: "Facture Client" and "Facture Fournisseur" invoices, both
+-- generated together (one "Générer Facturation" click on an approved
+-- submission in History produces both) - `type` distinguishes them
+-- rather than two separate tables, since they're the same event with
+-- two calculation rules, not two independent entities. Amounts are
+-- computed once at generation time from that submission's already-
+-- frozen client_tjm/consultant_tjm/extra_fee_percent and stored here
+-- permanently - reopening an invoice later never recomputes, even if
+-- rates change afterward. No FOREIGN KEY constraints, matching this
+-- file's existing convention for candidates/career_offers.
+-- ---------------------------------------------------------------------
+CREATE TABLE invoices (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  invoice_number VARCHAR(30) NOT NULL UNIQUE,
+  type ENUM('client', 'supplier') NOT NULL,
+  submission_id INT NOT NULL,
+  client_id INT NOT NULL,
+  consultant_id INT NOT NULL,
+  month VARCHAR(7) NOT NULL,
+  total_days DECIMAL(6,2) NOT NULL,
+  rate DECIMAL(10,2) NOT NULL,
+  total_ht DECIMAL(12,2) NOT NULL,
+  total_tva DECIMAL(12,2) NOT NULL,
+  total_ttc DECIMAL(12,2) NOT NULL,
+  label VARCHAR(255) NOT NULL,
+  pdf_path VARCHAR(255) DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ---------------------------------------------------------------------
 -- REFERENCE ONLY - this table already exists live (created outside this
 -- app, alongside the public landing page). `IF NOT EXISTS` makes this
 -- safe/idempotent to run - it's here purely so this file stays the one

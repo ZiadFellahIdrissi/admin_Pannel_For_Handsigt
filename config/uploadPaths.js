@@ -30,9 +30,14 @@ const CAREER_IMAGE_PUBLIC_BASE_URL = process.env.CAREER_IMAGE_PUBLIC_BASE_URL ||
 const COMPANY_LOGO_DIR = path.join(UPLOAD_ROOT, 'admin-panel', 'company');
 const COMPANY_LOGO_PUBLIC_BASE_URL = process.env.COMPANY_LOGO_PUBLIC_BASE_URL || 'https://handsight-solutions.com/uploads/admin-panel/company';
 
+// Generated invoice PDFs - private like CVs (financial documents, never
+// a public URL), nested under admin-panel/ for the same reason CVs are.
+const INVOICE_DIR = path.join(UPLOAD_ROOT, 'admin-panel', 'invoices');
+
 fs.mkdirSync(CANDIDATE_CV_DIR, { recursive: true });
 fs.mkdirSync(CAREER_IMAGE_DIR, { recursive: true });
 fs.mkdirSync(COMPANY_LOGO_DIR, { recursive: true });
+fs.mkdirSync(INVOICE_DIR, { recursive: true });
 
 module.exports = {
   UPLOAD_ROOT,
@@ -40,5 +45,6 @@ module.exports = {
   CAREER_IMAGE_DIR,
   CAREER_IMAGE_PUBLIC_BASE_URL,
   COMPANY_LOGO_DIR,
-  COMPANY_LOGO_PUBLIC_BASE_URL
+  COMPANY_LOGO_PUBLIC_BASE_URL,
+  INVOICE_DIR
 };

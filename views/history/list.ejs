@@ -57,6 +57,17 @@
           </div>
           <div class="flex items-center gap-2 shrink-0">
             <span class="badge-<%= s.status %>"><%= s.status.charAt(0).toUpperCase() + s.status.slice(1) %></span>
+            <% if (s.status === 'approved') { %>
+              <% if (s.client_invoice_id && s.supplier_invoice_id) { %>
+                <a href="/invoices/clients/<%= s.client_invoice_id %>" class="btn-secondary text-xs !px-3 !py-1.5"><i class="fa-solid fa-file-invoice-dollar"></i>Facture Client</a>
+                <a href="/invoices/suppliers/<%= s.supplier_invoice_id %>" class="btn-secondary text-xs !px-3 !py-1.5"><i class="fa-solid fa-file-invoice"></i>Facture Fournisseur</a>
+              <% } else { %>
+                <form action="/invoices/generate/<%= s.id %>" method="POST">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="btn-primary text-xs !px-3 !py-1.5"><i class="fa-solid fa-file-invoice-dollar"></i>Générer Facturation</button>
+                </form>
+              <% } %>
+            <% } %>
             <% if (s.status !== 'draft') { %>
               <form action="/approvals/<%= s.id %>/reopen" method="POST">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">

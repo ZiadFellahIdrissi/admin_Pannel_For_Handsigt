@@ -47,6 +47,18 @@ async function listUnattachedForConsultant(userId) {
   return rows;
 }
 
+// Single pairing's own row - unlike listForConsultant/listConsultantsForClient
+// (which return every pairing for one side), this is used by invoice
+// generation to read the current role_title for one specific (consultant,
+// client) pair.
+async function find(userId, clientId) {
+  const [rows] = await pool.query(
+    'SELECT * FROM consultant_clients WHERE user_id = ? AND client_id = ? LIMIT 1',
+    [userId, clientId]
+  );
+  return rows[0] || null;
+}
+
 async function exists(userId, clientId) {
   const [rows] = await pool.query(
     'SELECT id FROM consultant_clients WHERE user_id = ? AND client_id = ? LIMIT 1',
@@ -104,4 +116,4 @@ async function attachMany(userId, clientIds) {
   return { attachedCount, skippedCount };
 }
 
-module.exports = { listForConsultant, listConsultantsForClient, listUnattachedForConsultant, exists, attach, attachMany, updateAttachment, detach };
+module.exports = { listForConsultant, listConsultantsForClient, listUnattachedForConsultant, find, exists, attach, attachMany, updateAttachment, detach };

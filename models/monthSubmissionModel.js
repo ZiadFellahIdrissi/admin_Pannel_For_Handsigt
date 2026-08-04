@@ -54,17 +54,38 @@ async function listHistory({ month, clientId, status } = {}) {
             COALESCE(SUM(de.value * COALESCE(ms.consultant_tjm, 0)), 0) AS total_payout,
             COALESCE(SUM(de.value * COALESCE(ms.client_tjm, 0)), 0) AS total_billed,
             COALESCE(SUM(de.value * COALESCE(ms.consultant_tjm, 0) * COALESCE(ms.extra_fee_percent, 0) / 100), 0) AS total_fees,
-            ms.submitted_at, ms.reviewed_at
+            ms.submitted_at, ms.reviewed_at,
+            ci.id AS client_invoice_id, si.id AS supplier_invoice_id
        FROM month_submissions ms
        JOIN users u ON u.id = ms.user_id
        JOIN clients c ON c.id = ms.client_id
        LEFT JOIN daily_entries de ON de.submission_id = ms.id
+       LEFT JOIN invoices ci ON ci.submission_id = ms.id AND ci.type = 'client'
+       LEFT JOIN invoices si ON si.submission_id = ms.id AND si.type = 'supplier'
        ${whereClause}
       GROUP BY ms.id
       ORDER BY ms.month DESC, ms.id DESC`,
     params
   );
   return rows;
+}
+
+// Like findById, but also sums total_days from daily_entries - needed
+// for invoice generation's QTE line, which plain findById (used
+// elsewhere for things that don't need a day count) doesn't compute.
+async function findByIdWithTotals(id) {
+  const [rows] = await pool.query(
+    `SELECT ms.*, CONCAT(u.first_name, ' ', u.last_name) AS consultant_name, c.name AS client_name,
+            COALESCE(SUM(de.value), 0) AS total_days
+       FROM month_submissions ms
+       JOIN users u ON u.id = ms.user_id
+       JOIN clients c ON c.id = ms.client_id
+       LEFT JOIN daily_entries de ON de.submission_id = ms.id
+      WHERE ms.id = ?
+      GROUP BY ms.id`,
+    [id]
+  );
+  return rows[0] || null;
 }
 
 async function listForConsultant(userId) {
@@ -224,6 +245,7 @@ module.exports = {
   approvedMonthlyTrend,
   approvedByClientForMonth,
   findById,
+  findByIdWithTotals,
   approve,
   reject,
   reopenToDraft

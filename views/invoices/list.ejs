@@ -1,0 +1,45 @@
+<%
+  var isClientType = type === 'client';
+  var pageTitle = isClientType ? 'Facture Clients' : 'Facture Fournisseur';
+  var basePath = isClientType ? '/invoices/clients' : '/invoices/suppliers';
+%>
+<%- include('../partials/head', { title: pageTitle }) %>
+<div class="flex min-h-screen">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('../partials/topbar', { title: pageTitle }) %>
+    <%- include('../partials/flash') %>
+    <div class="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
+  <h1 class="text-lg sm:text-xl font-bold mb-4 sm:mb-6 flex items-center gap-3">
+    <div class="icon-circle-accent"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+    <%= pageTitle %>
+  </h1>
+
+  <% if (invoices.length === 0) { %>
+    <div class="card p-8 text-center">
+      <i class="fa-regular fa-folder-open text-2xl text-brand-gray2 mb-2"></i>
+      <p class="text-sm text-brand-gray2">No invoices yet. Generate one from an approved submission in History.</p>
+    </div>
+  <% } else { %>
+    <div class="space-y-3">
+      <% invoices.forEach(function(inv) { %>
+        <a href="<%= basePath %>/<%= inv.id %>" class="card-interactive p-4 flex items-center justify-between gap-3 flex-wrap">
+          <div class="min-w-0">
+            <div class="font-semibold truncate"><%= inv.invoice_number %></div>
+            <div class="text-xs text-brand-gray2 mt-0.5">
+              <%= inv.consultant_name %> &middot; <%= inv.client_name %> &middot; <%= monthLabel(inv.month) %>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="font-semibold"><%= formatCurrency(inv.total_ttc) %></div>
+            <div class="text-xs text-brand-gray2">TTC &middot; <%= inv.total_days %> j</div>
+          </div>
+        </a>
+      <% }); %>
+    </div>
+  <% } %>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>
