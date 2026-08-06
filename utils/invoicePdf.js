@@ -3,23 +3,103 @@ const path = require('path');
 const PDFDocument = require('pdfkit');
 const { COMPANY_LOGO_DIR } = require('../config/uploadPaths');
 
-// Handsight's own brand tokens (see public/css/input.css :root) - reused
-// here so the PDF actually looks like it belongs to the same product as
-// the panel around it, instead of a generic black-and-white document.
-const COLOR_ACCENT = '#1a6eff';
-const COLOR_ACCENT_DARK = '#0d1628';
+// Handsight's own brand tokens (see public/css/input.css :root), plus a
+// couple of PDF-only neutrals - reused so the invoice actually looks like
+// it belongs to the same product, modeled on the company's existing
+// Canva invoice template (logo card, dark navy header, totals block).
+const COLOR_NAVY = '#0d1628';
+const COLOR_BLUE = '#1a6eff';
+const COLOR_BLUE_BG = '#eaf1ff';
 const COLOR_TEXT = '#1f2937';
 const COLOR_MUTED = '#6b7280';
-const COLOR_BORDER = '#dbe3ee';
-const COLOR_BG_SOFT = '#f4f7fc';
-const COLOR_BG_CHIP = '#eaf1ff';
+const COLOR_BORDER = '#dde2ea';
+const COLOR_BAND_BG = '#f1f3f6';
+const COLOR_CARD_LABEL = '#9db3d6';
+const COLOR_PARTY_BG = '#e7ecf5';
 const COLOR_WHITE = '#ffffff';
 
-const PAGE_MARGIN = 50;
-const PAGE_RIGHT = 545; // A4 width (595.28) minus the right margin
+const PAGE_W = 595.28;
+const PAGE_H = 841.89;
+const MARGIN = 50;
+const RIGHT = 545;
+
+// Node's toLocaleString('fr-FR') groups thousands with a narrow no-break
+// space (U+202F). pdfkit's standard fonts only support WinAnsiEncoding,
+// which has no glyph for that character, so it silently falls back to
+// whatever WinAnsi happens to map to that byte - a stray "/" in this
+// font. Formatting by hand with a plain ASCII space sidesteps that
+// entirely. Also matches the company's own template, which uses "DH".
+function formatAmount(n) {
+  const fixed = (Number(n) || 0).toFixed(2);
+  const [intPart, decPart] = fixed.split('.');
+  const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return `${grouped},${decPart}`;
+}
 
 function money(n) {
-  return `${Number(n).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD`;
+  return `${formatAmount(n)} DH`;
+}
+
+// --- French "amount in words" (Moroccan invoice convention) ------------
+
+const ONES = ['', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix',
+  'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf'];
+const TENS = ['', '', 'vingt', 'trente', 'quarante', 'cinquante', 'soixante'];
+
+function tensToWords(n) {
+  if (n < 20) return ONES[n];
+  if (n < 70) {
+    const tens = Math.floor(n / 10);
+    const unit = n % 10;
+    if (unit === 0) return TENS[tens];
+    if (unit === 1) return `${TENS[tens]} et un`;
+    return `${TENS[tens]}-${ONES[unit]}`;
+  }
+  if (n < 80) {
+    return n === 71 ? 'soixante et onze' : `soixante-${ONES[n - 60]}`;
+  }
+  if (n === 80) return 'quatre-vingts';
+  return `quatre-vingt-${ONES[n - 80]}`;
+}
+
+function hundredsToWords(n) {
+  const h = Math.floor(n / 100);
+  const rest = n % 100;
+  let words = '';
+  if (h > 0) {
+    words = h === 1 ? 'cent' : `${ONES[h]} cent`;
+    if (h > 1 && rest === 0) words += 's';
+  }
+  if (rest > 0) words += (words ? ' ' : '') + tensToWords(rest);
+  return words;
+}
+
+function numberToFrenchWords(n) {
+  const value = Math.floor(n);
+  if (value === 0) return 'zéro';
+
+  const millions = Math.floor(value / 1000000);
+  const thousands = Math.floor((value % 1000000) / 1000);
+  const rest = value % 1000;
+  const parts = [];
+
+  if (millions > 0) parts.push(millions === 1 ? 'un million' : `${hundredsToWords(millions)} millions`);
+  if (thousands > 0) parts.push(thousands === 1 ? 'mille' : `${hundredsToWords(thousands)} mille`);
+  if (rest > 0) parts.push(hundredsToWords(rest));
+
+  return parts.join(' ');
+}
+
+function amountInWords(totalTtc) {
+  const wholePart = Math.floor(totalTtc);
+  const cents = Math.round((totalTtc - wholePart) * 100);
+  let words = numberToFrenchWords(wholePart);
+  words = words.charAt(0).toUpperCase() + words.slice(1);
+  words += ' dirhams';
+  if (cents > 0) {
+    words += ` et ${numberToFrenchWords(cents)} centime${cents > 1 ? 's' : ''}`;
+  }
+  return `${words} (${money(totalTtc)}).`;
 }
 
 // company_info.invoice_logo_path is a full public URL (see
@@ -44,25 +124,12 @@ function panel(doc, x, y, w, h, fillColor, options) {
   doc.fillColor(COLOR_TEXT);
 }
 
-// One "party" card - a heading in accent color, the name in bold, then
-// whatever address/ICE/RC/contact lines are available underneath.
-function partyBlock(doc, x, y, width, heading, party) {
-  doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLOR_ACCENT)
-    .text(heading.toUpperCase(), x, y, { width, characterSpacing: 0.4 });
-
-  doc.font('Helvetica-Bold').fontSize(10.5).fillColor(COLOR_TEXT)
-    .text(party.name || '—', x, doc.y + 6, { width });
-
-  doc.font('Helvetica').fontSize(8.5).fillColor(COLOR_MUTED);
-  [
-    party.address,
-    party.ice ? `ICE : ${party.ice}` : null,
-    party.rc ? `RC : ${party.rc}` : null,
-    party.email,
-    party.phone
-  ].filter(Boolean).forEach((line) => {
-    doc.text(line, x, doc.y + 2, { width });
-  });
+function sectionHeading(doc, x, y, width, text) {
+  doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLOR_NAVY)
+    .text(text, x, y, { width, characterSpacing: 0.3 });
+  const ruleY = doc.y + 4;
+  doc.moveTo(x, ruleY).lineTo(x + 34, ruleY).lineWidth(2).strokeColor(COLOR_BLUE).stroke();
+  return ruleY + 10;
 }
 
 // data: { type: 'client'|'supplier', invoiceNumber, dateLabel, monthLabel,
@@ -72,7 +139,7 @@ function partyBlock(doc, x, y, width, heading, party) {
 //         label, totalDays, rate, totalHt, totalTva, totalTtc }
 function generateInvoicePdf(data, destinationPath) {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: 'A4', margin: PAGE_MARGIN });
+    const doc = new PDFDocument({ size: 'A4', margin: MARGIN });
     const stream = fs.createWriteStream(destinationPath);
     doc.pipe(stream);
     stream.on('finish', resolve);
@@ -82,151 +149,191 @@ function generateInvoicePdf(data, destinationPath) {
     const { company } = data;
     const logoPath = resolveLogoPath(company.invoice_logo_path);
 
-    // --- Header: logo + Handsight's own letterhead block --------------
-    const headerTop = 50;
+    // --- Top band: logo + letterhead on the left, dark info card on the right
+    const TOP_BAND_H = 235;
+    doc.rect(0, 0, PAGE_W, TOP_BAND_H).fill(COLOR_BAND_BG);
+    doc.fillColor(COLOR_TEXT);
+
+    const LOGO_Y = 42;
     if (logoPath) {
       try {
-        doc.image(logoPath, PAGE_MARGIN, headerTop, { height: 42 });
+        doc.image(logoPath, MARGIN, LOGO_Y, { height: 46 });
       } catch {
         // Corrupt/unreadable image file - skip it, don't fail the whole PDF.
       }
     } else {
-      doc.font('Helvetica-Bold').fontSize(15).fillColor(COLOR_ACCENT_DARK)
-        .text(company.legal_name || 'Handsight Solutions', PAGE_MARGIN, headerTop);
+      doc.font('Helvetica-Bold').fontSize(15).fillColor(COLOR_NAVY)
+        .text(company.legal_name || 'Handsight Solutions', MARGIN, LOGO_Y);
     }
 
-    doc.font('Helvetica-Bold').fontSize(10).fillColor(COLOR_ACCENT_DARK)
-      .text(company.legal_name || 'Handsight Solutions', 300, headerTop, { width: 245, align: 'right' });
-    doc.font('Helvetica').fontSize(8).fillColor(COLOR_MUTED);
+    const companyY = LOGO_Y + 46 + 14;
+    doc.font('Helvetica-Bold').fontSize(11).fillColor(COLOR_NAVY)
+      .text(company.legal_name || 'Handsight Solutions', MARGIN, companyY, { width: 260 });
+    doc.font('Helvetica').fontSize(8.5).fillColor(COLOR_MUTED);
     [
       company.address,
-      [company.ice ? `ICE ${company.ice}` : null, company.rc ? `RC ${company.rc}` : null].filter(Boolean).join('   ') || null,
+      company.phone ? `TEL : ${company.phone}` : null,
       company.email,
-      company.phone
+      company.website
     ].filter(Boolean).forEach((line) => {
-      doc.text(line, 300, doc.y + 2, { width: 245, align: 'right' });
+      doc.text(line, MARGIN, doc.y + 3, { width: 260 });
     });
 
-    const headerBottom = Math.max(headerTop + 46, doc.y + 10);
-    doc.moveTo(PAGE_MARGIN, headerBottom).lineTo(PAGE_RIGHT, headerBottom)
-      .lineWidth(1.5).strokeColor(COLOR_ACCENT).stroke();
+    // Dark navy info card, top-right - invoice number/date plus a nested
+    // light party card ("Facturé à" for client invoices, "Fournisseur"
+    // for supplier ones, flipping which side of the deal is named here).
+    const CARD_X = 335;
+    const CARD_W = RIGHT - CARD_X;
+    const CARD_Y = 42;
+    const CARD_H = 190;
+    panel(doc, CARD_X, CARD_Y, CARD_W, CARD_H, COLOR_NAVY, { radius: 10 });
 
-    // --- Title + metadata, with a total-due chip on the right ---------
-    const titleY = headerBottom + 22;
-    doc.font('Helvetica-Bold').fontSize(24).fillColor(COLOR_ACCENT_DARK).text('FACTURE', PAGE_MARGIN, titleY);
+    const innerX = CARD_X + 16;
+    const innerW = CARD_W - 32;
+    doc.font('Helvetica-Bold').fontSize(20).fillColor(COLOR_WHITE).text('FACTURE', innerX, CARD_Y + 16);
 
-    const metaY = titleY + 36;
-    doc.font('Helvetica').fontSize(8.5).fillColor(COLOR_MUTED).text('N° DE FACTURE', PAGE_MARGIN, metaY, { characterSpacing: 0.3 });
-    doc.font('Helvetica-Bold').fontSize(10.5).fillColor(COLOR_TEXT).text(data.invoiceNumber, PAGE_MARGIN, metaY + 11);
-    doc.font('Helvetica').fontSize(8.5).fillColor(COLOR_MUTED).text(`Date d'émission : ${data.dateLabel}`, PAGE_MARGIN, metaY + 30);
-    doc.text(`Période concernée : ${data.monthLabel}`, PAGE_MARGIN, metaY + 43);
+    const row1Y = CARD_Y + 54;
+    doc.font('Helvetica-Bold').fontSize(7.5).fillColor(COLOR_CARD_LABEL)
+      .text('N° FACTURE', innerX, row1Y, { width: 80, characterSpacing: 0.3 });
+    doc.font('Helvetica-Bold').fontSize(9.5).fillColor(COLOR_WHITE)
+      .text(data.invoiceNumber, innerX, row1Y, { width: innerW, align: 'right' });
 
-    const chipW = 190;
-    const chipH = 58;
-    const chipX = PAGE_RIGHT - chipW;
-    const chipY = titleY - 4;
-    panel(doc, chipX, chipY, chipW, chipH, COLOR_BG_CHIP);
-    doc.font('Helvetica-Bold').fontSize(8).fillColor(COLOR_ACCENT_DARK)
-      .text('MONTANT TOTAL TTC', chipX, chipY + 13, { width: chipW, align: 'center', characterSpacing: 0.4 });
-    doc.font('Helvetica-Bold').fontSize(19).fillColor(COLOR_ACCENT)
-      .text(money(data.totalTtc), chipX, chipY + 28, { width: chipW, align: 'center' });
+    const row2Y = row1Y + 20;
+    doc.font('Helvetica-Bold').fontSize(7.5).fillColor(COLOR_CARD_LABEL)
+      .text('DATE', innerX, row2Y, { width: 80, characterSpacing: 0.3 });
+    doc.font('Helvetica-Bold').fontSize(9.5).fillColor(COLOR_WHITE)
+      .text(data.dateLabel, innerX, row2Y, { width: innerW, align: 'right' });
 
-    // --- Party cards - "Émetteur" / "Facturé à" flip by invoice type --
-    const partyY = metaY + 68;
-    const partyH = 110;
-    const colW = (PAGE_RIGHT - PAGE_MARGIN - 20) / 2;
-    const issuer = data.type === 'client'
-      ? { name: company.legal_name, address: company.address, ice: company.ice, rc: company.rc, email: company.email, phone: company.phone }
-      : { name: data.party.name };
-    const recipient = data.type === 'client'
-      ? data.party
-      : { name: company.legal_name, address: company.address, ice: company.ice, rc: company.rc, email: company.email, phone: company.phone };
+    const row3Y = row2Y + 20;
+    doc.font('Helvetica-Bold').fontSize(7.5).fillColor(COLOR_CARD_LABEL)
+      .text('PÉRIODE', innerX, row3Y, { width: 80, characterSpacing: 0.3 });
+    doc.font('Helvetica-Bold').fontSize(9.5).fillColor(COLOR_WHITE)
+      .text(data.monthLabel, innerX, row3Y, { width: innerW, align: 'right' });
 
-    panel(doc, PAGE_MARGIN, partyY, colW, partyH, COLOR_BG_SOFT);
-    panel(doc, PAGE_MARGIN + colW + 20, partyY, colW, partyH, COLOR_BG_SOFT);
-    partyBlock(doc, PAGE_MARGIN + 14, partyY + 14, colW - 28, 'Émetteur', issuer);
-    partyBlock(doc, PAGE_MARGIN + colW + 20 + 14, partyY + 14, colW - 28, 'Facturé à', recipient);
+    const partyBoxY = row3Y + 30;
+    const partyBoxH = (CARD_Y + CARD_H) - partyBoxY - 14;
+    panel(doc, innerX - 4, partyBoxY, innerW + 8, partyBoxH, COLOR_PARTY_BG, { radius: 6 });
+    const partyHeading = data.type === 'client' ? 'FACTURÉ À' : 'FOURNISSEUR';
+    doc.font('Helvetica-Bold').fontSize(7.5).fillColor(COLOR_NAVY)
+      .text(partyHeading, innerX, partyBoxY + 9, { width: innerW - 8, characterSpacing: 0.3 });
+    doc.font('Helvetica-Bold').fontSize(9).fillColor(COLOR_TEXT)
+      .text(data.party.name || '—', innerX, doc.y + 3, { width: innerW - 8 });
+    if (data.party.address) {
+      doc.font('Helvetica').fontSize(7.5).fillColor(COLOR_MUTED)
+        .text(data.party.address, innerX, doc.y + 2, { width: innerW - 8 });
+    }
 
-    // --- Line item table ------------------------------------------------
-    // Numeric columns are right-aligned (each defined by its own x/width
-    // pair) so amounts of any size line up cleanly against the page edge
-    // instead of risking an overflow-wrap on a wide total.
-    const tableY = partyY + partyH + 26;
+    // --- Line item table -------------------------------------------------
+    const tableY = TOP_BAND_H + 20;
     const col = {
-      desc: { x: PAGE_MARGIN + 14, width: 240 },
-      qte: { x: 320, width: 55 },
-      pu: { x: 385, width: 75 },
-      montant: { x: 470, width: 75 }
+      desc: { x: MARGIN + 14, width: 196 },
+      qte: { x: 266, width: 80, align: 'center' },
+      pu: { x: 352, width: 90, align: 'right' },
+      montant: { x: 450, width: 95, align: 'right' }
     };
-    const tableHeaderH = 26;
-    panel(doc, PAGE_MARGIN, tableY, PAGE_RIGHT - PAGE_MARGIN, tableHeaderH, COLOR_ACCENT_DARK, { radius: 5 });
-    doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLOR_WHITE);
-    doc.text('DESCRIPTION', col.desc.x, tableY + 9, { width: col.desc.width });
-    doc.text('QTÉ (J)', col.qte.x, tableY + 9, { width: col.qte.width, align: 'right' });
-    doc.text('PU HT', col.pu.x, tableY + 9, { width: col.pu.width, align: 'right' });
-    doc.text('MONTANT HT', col.montant.x, tableY + 9, { width: col.montant.width, align: 'right' });
+    const headerH = 34;
+    panel(doc, MARGIN, tableY, RIGHT - MARGIN, headerH, COLOR_NAVY, { radius: 6 });
+    doc.font('Helvetica-Bold').fontSize(8).fillColor(COLOR_WHITE);
+    doc.text('DÉSIGNATION', col.desc.x, tableY + 12, { width: col.desc.width });
+    doc.text('QTÉ\n(JOURS)', col.qte.x, tableY + 6, { width: col.qte.width, align: 'center' });
+    doc.text('PRIX UNIT.\n(HT)', col.pu.x, tableY + 6, { width: col.pu.width, align: 'right' });
+    doc.text('MONTANT\n(HT)', col.montant.x, tableY + 6, { width: col.montant.width, align: 'right' });
 
-    const rowY = tableY + tableHeaderH;
-    const rowH = 36;
-    doc.rect(PAGE_MARGIN, rowY, PAGE_RIGHT - PAGE_MARGIN, rowH).lineWidth(1).strokeColor(COLOR_BORDER).stroke();
+    const rowY = tableY + headerH;
+    const rowH = 42;
+    doc.rect(MARGIN, rowY, RIGHT - MARGIN, rowH).lineWidth(1).strokeColor(COLOR_BORDER).stroke();
     doc.font('Helvetica').fontSize(9).fillColor(COLOR_TEXT);
-    doc.text(data.label, col.desc.x, rowY + 12, { width: col.desc.width });
-    doc.text(String(data.totalDays), col.qte.x, rowY + 12, { width: col.qte.width, align: 'right' });
-    doc.text(money(data.rate), col.pu.x, rowY + 12, { width: col.pu.width, align: 'right' });
-    doc.font('Helvetica-Bold').text(money(data.totalHt), col.montant.x, rowY + 12, { width: col.montant.width, align: 'right' });
+    doc.text(data.label, col.desc.x, rowY + 13, { width: col.desc.width });
+    doc.text(String(data.totalDays), col.qte.x, rowY + 13, { width: col.qte.width, align: 'center' });
+    doc.text(money(data.rate), col.pu.x, rowY + 13, { width: col.pu.width, align: 'right' });
+    doc.font('Helvetica-Bold').text(money(data.totalHt), col.montant.x, rowY + 13, { width: col.montant.width, align: 'right' });
 
-    // --- Totals card -----------------------------------------------------
-    const totalsW = 220;
-    const totalsX = PAGE_RIGHT - totalsW;
-    const totalsY = rowY + rowH + 20;
-    const totalsH = 96;
-    panel(doc, totalsX, totalsY, totalsW, totalsH, COLOR_BG_SOFT, { border: COLOR_BORDER });
+    // --- Amount in words (left) + totals mini-table (right) --------------
+    const sectionY = rowY + rowH + 24;
 
-    doc.font('Helvetica').fontSize(9).fillColor(COLOR_MUTED).text('Total HT', totalsX + 16, totalsY + 16);
-    doc.font('Helvetica').fontSize(9).fillColor(COLOR_TEXT).text(money(data.totalHt), totalsX, totalsY + 16, { width: totalsW - 16, align: 'right' });
+    const leftX = MARGIN;
+    const leftW = 260;
+    const wordsBoxY = sectionHeading(doc, leftX, sectionY, leftW, 'ARRÊTÉE LA PRÉSENTE FACTURE À LA SOMME DE :');
+    const wordsBoxH = 52;
+    panel(doc, leftX, wordsBoxY, leftW, wordsBoxH, COLOR_BAND_BG, { border: COLOR_BORDER });
+    doc.font('Helvetica').fontSize(9).fillColor(COLOR_TEXT)
+      .text(amountInWords(data.totalTtc), leftX + 12, wordsBoxY + 12, { width: leftW - 24 });
 
-    doc.font('Helvetica').fontSize(9).fillColor(COLOR_MUTED).text('TVA (20%)', totalsX + 16, totalsY + 36);
-    doc.font('Helvetica').fontSize(9).fillColor(COLOR_TEXT).text(money(data.totalTva), totalsX, totalsY + 36, { width: totalsW - 16, align: 'right' });
+    const rightX = CARD_X;
+    const rightW = CARD_W;
+    const totalsRowH = 30;
+    const totalsGap = 5;
+    const labelW = Math.round(rightW * 0.55);
+    const valueW = rightW - labelW - 3;
+    const totalsRows = [
+      { label: 'TOTAL HT', value: money(data.totalHt), highlight: false },
+      { label: 'TVA (20%)', value: money(data.totalTva), highlight: false },
+      { label: 'TOTAL TTC', value: money(data.totalTtc), highlight: true }
+    ];
+    totalsRows.forEach((row, i) => {
+      const y = sectionY + i * (totalsRowH + totalsGap);
+      const labelBg = row.highlight ? COLOR_NAVY : COLOR_BAND_BG;
+      const valueBg = row.highlight ? COLOR_BLUE_BG : COLOR_BAND_BG;
+      const labelColor = row.highlight ? COLOR_WHITE : COLOR_NAVY;
+      const valueColor = row.highlight ? COLOR_BLUE : COLOR_TEXT;
 
-    doc.moveTo(totalsX + 16, totalsY + 60).lineTo(totalsX + totalsW - 16, totalsY + 60)
-      .lineWidth(1).strokeColor(COLOR_BORDER).stroke();
+      panel(doc, rightX, y, labelW, totalsRowH, labelBg);
+      panel(doc, rightX + labelW + 3, y, valueW, totalsRowH, valueBg);
 
-    doc.font('Helvetica-Bold').fontSize(11).fillColor(COLOR_ACCENT_DARK).text('Total TTC', totalsX + 16, totalsY + 71);
-    doc.font('Helvetica-Bold').fontSize(13).fillColor(COLOR_ACCENT).text(money(data.totalTtc), totalsX, totalsY + 69, { width: totalsW - 16, align: 'right' });
+      doc.font('Helvetica-Bold').fontSize(row.highlight ? 9.5 : 9).fillColor(labelColor)
+        .text(row.label, rightX + 12, y + 10, { width: labelW - 20 });
+      doc.font('Helvetica-Bold').fontSize(row.highlight ? 11 : 9).fillColor(valueColor)
+        .text(row.value, rightX + labelW + 3, y + (row.highlight ? 9 : 10), { width: valueW - 12, align: 'right' });
+    });
 
-    // --- Footer: bank details + legal mention ----------------------------
-    const footerY = totalsY + totalsH + 26;
-    doc.moveTo(PAGE_MARGIN, footerY).lineTo(PAGE_RIGHT, footerY).lineWidth(0.75).strokeColor(COLOR_BORDER).stroke();
+    // --- Bank details ------------------------------------------------------
+    const columnsBottom = Math.max(
+      wordsBoxY + wordsBoxH,
+      sectionY + totalsRows.length * (totalsRowH + totalsGap) - totalsGap
+    );
+    const paymentY = columnsBottom + 26;
+    const bankHeadingBoxY = sectionHeading(doc, MARGIN, paymentY, 300, 'MODE DE PAIEMENT');
+    doc.font('Helvetica').fontSize(8.5).fillColor(COLOR_MUTED)
+      .text('Virement bancaire au compte suivant', MARGIN, paymentY + 12);
 
-    doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLOR_ACCENT_DARK)
-      .text('COORDONNÉES BANCAIRES', PAGE_MARGIN, footerY + 14, { characterSpacing: 0.3 });
-
-    const bankLines = [
-      company.bank_name ? `Banque : ${company.bank_name}` : null,
-      company.bank_agency ? `Agence : ${company.bank_agency}` : null,
-      company.bank_rib ? `RIB : ${company.bank_rib}` : null,
-      company.bank_iban ? `IBAN : ${company.bank_iban}` : null,
-      company.bank_swift ? `BIC/SWIFT : ${company.bank_swift}` : null
+    const bankRows = [
+      company.bank_name ? { label: 'Banque', value: company.bank_name } : null,
+      company.bank_agency ? { label: 'Agence', value: company.bank_agency } : null,
+      company.bank_rib ? { label: 'RIB', value: company.bank_rib } : null,
+      company.bank_iban ? { label: 'IBAN', value: company.bank_iban } : null,
+      company.bank_swift ? { label: 'BIC / SWIFT', value: company.bank_swift } : null
     ].filter(Boolean);
 
-    const bankY = footerY + 28;
-    doc.font('Helvetica').fontSize(8.5).fillColor(COLOR_MUTED);
-    bankLines.forEach((line, i) => {
-      const colX = PAGE_MARGIN + (i % 2) * 250;
-      const colY = bankY + Math.floor(i / 2) * 14;
-      doc.text(line, colX, colY, { width: 230 });
+    const bankBoxY = bankHeadingBoxY + 4;
+    const bankRowH = 20;
+    const bankBoxH = bankRows.length * bankRowH + 16;
+    panel(doc, MARGIN, bankBoxY, RIGHT - MARGIN, bankBoxH, COLOR_BAND_BG, { border: COLOR_BORDER });
+    bankRows.forEach((row, i) => {
+      const ry = bankBoxY + 10 + i * bankRowH;
+      doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLOR_NAVY).text(row.label, MARGIN + 16, ry, { width: 110 });
+      doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLOR_TEXT).text(row.value, MARGIN + 140, ry, { width: 360 });
+      if (i < bankRows.length - 1) {
+        doc.moveTo(MARGIN + 16, ry + 16).lineTo(RIGHT - 16, ry + 16).lineWidth(0.5).strokeColor(COLOR_BORDER).stroke();
+      }
     });
 
-    const legalY = bankY + Math.ceil(bankLines.length / 2) * 14 + 18;
-    doc.font('Helvetica').fontSize(7.5).fillColor(COLOR_MUTED).text(
-      [
-        company.legal_name,
-        company.ice ? `ICE ${company.ice}` : null,
-        company.rc ? `RC ${company.rc}` : null,
-        company.tax_identifier ? `IF ${company.tax_identifier}` : null
-      ].filter(Boolean).join('   ·   '),
-      PAGE_MARGIN, legalY, { width: PAGE_RIGHT - PAGE_MARGIN, align: 'center' }
-    );
+    // --- Footer band, anchored to the bottom of the page --------------------
+    const FOOTER_H = 68;
+    const footerY = PAGE_H - FOOTER_H;
+    doc.rect(0, footerY, PAGE_W, FOOTER_H).fill(COLOR_BAND_BG);
+
+    const addressLine = [company.legal_name, company.address].filter(Boolean).join(' : ');
+    doc.font('Helvetica').fontSize(7.5).fillColor(COLOR_MUTED)
+      .text(addressLine, MARGIN, footerY + 18, { width: RIGHT - MARGIN, align: 'center' });
+
+    const legalLine = [
+      company.ice ? `ICE : ${company.ice}` : null,
+      company.rc ? `R.C : ${company.rc}` : null,
+      company.patente ? `TP : ${company.patente}` : null,
+      company.tax_identifier ? `I.F : ${company.tax_identifier}` : null
+    ].filter(Boolean).join('   -   ');
+    doc.font('Helvetica-Bold').fontSize(7.5).fillColor(COLOR_NAVY)
+      .text(legalLine, MARGIN, footerY + 34, { width: RIGHT - MARGIN, align: 'center' });
 
     doc.end();
   });
