@@ -17,8 +17,16 @@ function consultantInitials(firstName, lastName) {
   return `${(firstName || '').slice(0, 2)}${(lastName || '').slice(0, 2)}`.toUpperCase();
 }
 
+// req.body.invoiceType is 'both' | 'client' | 'supplier' - which type(s)
+// the admin picked in the History page's Generate popup. Whichever of the
+// two already exists for this submission is always skipped (never
+// regenerated), so an accidental 'both' submit on an already-partially-
+// invoiced row just fills in what's missing instead of erroring.
 async function handleGenerate(req, res) {
   const submissionId = Number(req.params.submissionId);
+  const requestedType = ['both', 'client', 'supplier'].includes(req.body.invoiceType)
+    ? req.body.invoiceType
+    : 'both';
   const submission = await monthSubmissionModel.findByIdWithTotals(submissionId);
 
   if (!submission) {
@@ -28,8 +36,13 @@ async function handleGenerate(req, res) {
     req.flash('error', 'Only approved submissions can be invoiced.');
     return res.redirect('/history');
   }
-  if (await invoiceModel.existsForSubmission(submissionId)) {
-    req.flash('error', 'Invoices have already been generated for this submission.');
+
+  const existing = await invoiceModel.findIdsForSubmission(submissionId);
+  const wantClient = (requestedType === 'both' || requestedType === 'client') && !existing.clientInvoiceId;
+  const wantSupplier = (requestedType === 'both' || requestedType === 'supplier') && !existing.supplierInvoiceId;
+
+  if (!wantClient && !wantSupplier) {
+    req.flash('error', 'That invoice has already been generated for this submission.');
     return res.redirect('/history');
   }
 
@@ -61,84 +74,93 @@ async function handleGenerate(req, res) {
   const supplierTva = supplierHt * 0.2;
   const supplierTtc = supplierHt + supplierTva;
 
-  const clientInvoiceNumber = await invoiceModel.nextInvoiceNumber('client');
-  const supplierInvoiceNumber = await invoiceModel.nextInvoiceNumber('supplier');
+  const generatedNumbers = [];
 
-  const clientPdfFilename = `${crypto.randomUUID()}.pdf`;
-  const supplierPdfFilename = `${crypto.randomUUID()}.pdf`;
+  if (wantClient) {
+    const clientInvoiceNumber = await invoiceModel.nextInvoiceNumber('client');
+    const clientPdfFilename = `${crypto.randomUUID()}.pdf`;
+    const clientParty = {
+      name: client.name,
+      address: client.billing_address || client.registered_address,
+      ice: client.ice,
+      rc: client.rc,
+      email: client.company_email || client.contact_email,
+      phone: client.company_phone || client.contact_phone
+    };
 
-  const clientParty = {
-    name: client.name,
-    address: client.billing_address || client.registered_address,
-    ice: client.ice,
-    rc: client.rc,
-    email: client.company_email || client.contact_email,
-    phone: client.company_phone || client.contact_phone
-  };
+    await generateInvoicePdf({
+      type: 'client',
+      invoiceNumber: clientInvoiceNumber,
+      dateLabel,
+      monthLabel: monthLbl,
+      company,
+      party: clientParty,
+      label,
+      totalDays,
+      rate: clientRate,
+      totalHt: clientHt,
+      totalTva: clientTva,
+      totalTtc: clientTtc
+    }, path.join(INVOICE_DIR, clientPdfFilename));
 
-  await generateInvoicePdf({
-    type: 'client',
-    invoiceNumber: clientInvoiceNumber,
-    dateLabel,
-    monthLabel: monthLbl,
-    company,
-    party: clientParty,
-    label,
-    totalDays,
-    rate: clientRate,
-    totalHt: clientHt,
-    totalTva: clientTva,
-    totalTtc: clientTtc
-  }, path.join(INVOICE_DIR, clientPdfFilename));
+    await invoiceModel.create({
+      invoiceNumber: clientInvoiceNumber,
+      type: 'client',
+      submissionId,
+      clientId: submission.client_id,
+      consultantId: submission.user_id,
+      month: submission.month,
+      totalDays,
+      rate: clientRate,
+      totalHt: clientHt,
+      totalTva: clientTva,
+      totalTtc: clientTtc,
+      label,
+      pdfPath: clientPdfFilename
+    });
 
-  await generateInvoicePdf({
-    type: 'supplier',
-    invoiceNumber: supplierInvoiceNumber,
-    dateLabel,
-    monthLabel: monthLbl,
-    company,
-    party: { name: `${consultant.first_name} ${consultant.last_name}` },
-    label,
-    totalDays,
-    rate: supplierRate,
-    totalHt: supplierHt,
-    totalTva: supplierTva,
-    totalTtc: supplierTtc
-  }, path.join(INVOICE_DIR, supplierPdfFilename));
+    generatedNumbers.push(`${clientInvoiceNumber} (Client)`);
+  }
 
-  await invoiceModel.create({
-    invoiceNumber: clientInvoiceNumber,
-    type: 'client',
-    submissionId,
-    clientId: submission.client_id,
-    consultantId: submission.user_id,
-    month: submission.month,
-    totalDays,
-    rate: clientRate,
-    totalHt: clientHt,
-    totalTva: clientTva,
-    totalTtc: clientTtc,
-    label,
-    pdfPath: clientPdfFilename
-  });
+  if (wantSupplier) {
+    const supplierInvoiceNumber = await invoiceModel.nextInvoiceNumber('supplier');
+    const supplierPdfFilename = `${crypto.randomUUID()}.pdf`;
 
-  await invoiceModel.create({
-    invoiceNumber: supplierInvoiceNumber,
-    type: 'supplier',
-    submissionId,
-    clientId: submission.client_id,
-    consultantId: submission.user_id,
-    month: submission.month,
-    totalDays,
-    rate: supplierRate,
-    totalHt: supplierHt,
-    totalTva: supplierTva,
-    totalTtc: supplierTtc,
-    label,
-    pdfPath: supplierPdfFilename
-  });
+    await generateInvoicePdf({
+      type: 'supplier',
+      invoiceNumber: supplierInvoiceNumber,
+      dateLabel,
+      monthLabel: monthLbl,
+      company,
+      party: { name: `${consultant.first_name} ${consultant.last_name}` },
+      label,
+      totalDays,
+      rate: supplierRate,
+      totalHt: supplierHt,
+      totalTva: supplierTva,
+      totalTtc: supplierTtc
+    }, path.join(INVOICE_DIR, supplierPdfFilename));
 
-  req.flash('success', `Invoices generated: ${clientInvoiceNumber} (client) / ${supplierInvoiceNumber} (fournisseur).`);
+    await invoiceModel.create({
+      invoiceNumber: supplierInvoiceNumber,
+      type: 'supplier',
+      submissionId,
+      clientId: submission.client_id,
+      consultantId: submission.user_id,
+      month: submission.month,
+      totalDays,
+      rate: supplierRate,
+      totalHt: supplierHt,
+      totalTva: supplierTva,
+      totalTtc: supplierTtc,
+      label,
+      pdfPath: supplierPdfFilename
+    });
+
+    generatedNumbers.push(`${supplierInvoiceNumber} (Supplier)`);
+  }
+
+  req.flash('success', `Invoice(s) generated: ${generatedNumbers.join(' / ')}.`);
   res.redirect('/history');
 }
 

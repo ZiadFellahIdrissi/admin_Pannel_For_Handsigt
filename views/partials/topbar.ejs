@@ -30,10 +30,10 @@
       push('Login Attempts', null);
     } else if (path === '/invoices/clients' || path.indexOf('/invoices/clients/') === 0) {
       push('Billing', null);
-      push('Facture Clients', '/invoices/clients');
+      push('Client Invoices', '/invoices/clients');
     } else if (path === '/invoices/suppliers' || path.indexOf('/invoices/suppliers/') === 0) {
       push('Billing', null);
-      push('Facture Fournisseur', '/invoices/suppliers');
+      push('Supplier Invoices', '/invoices/suppliers');
     } else if (path === '/settings') {
       // already at the hub - nothing more to push before the title
     } else if (path.indexOf('/settings/') === 0) {

@@ -44,6 +44,7 @@
   <% } else { %>
     <div class="space-y-3">
       <% submissions.forEach(function(s) { %>
+        <% var hasClientInvoice = !!s.client_invoice_id; var hasSupplierInvoice = !!s.supplier_invoice_id; %>
         <div class="card-interactive p-4 flex items-center justify-between gap-3 flex-wrap">
           <div class="min-w-0">
             <div class="font-semibold truncate"><%= s.consultant_name %> &middot; <%= monthLabel(s.month) %> &middot; <%= s.client_name %></div>
@@ -58,14 +59,16 @@
           <div class="flex items-center gap-2 shrink-0">
             <span class="badge-<%= s.status %>"><%= s.status.charAt(0).toUpperCase() + s.status.slice(1) %></span>
             <% if (s.status === 'approved') { %>
-              <% if (s.client_invoice_id && s.supplier_invoice_id) { %>
-                <a href="/invoices/clients/<%= s.client_invoice_id %>" class="btn-secondary text-xs !px-3 !py-1.5"><i class="fa-solid fa-file-invoice-dollar"></i>Facture Client</a>
-                <a href="/invoices/suppliers/<%= s.supplier_invoice_id %>" class="btn-secondary text-xs !px-3 !py-1.5"><i class="fa-solid fa-file-invoice"></i>Facture Fournisseur</a>
-              <% } else { %>
-                <form action="/invoices/generate/<%= s.id %>" method="POST">
-                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                  <button type="submit" class="btn-primary text-xs !px-3 !py-1.5"><i class="fa-solid fa-file-invoice-dollar"></i>Générer Facturation</button>
-                </form>
+              <% if (hasClientInvoice) { %>
+                <a href="/invoices/clients/<%= s.client_invoice_id %>" class="btn-secondary text-xs !px-3 !py-1.5"><i class="fa-solid fa-file-invoice-dollar"></i>Client Invoice</a>
+              <% } %>
+              <% if (hasSupplierInvoice) { %>
+                <a href="/invoices/suppliers/<%= s.supplier_invoice_id %>" class="btn-secondary text-xs !px-3 !py-1.5"><i class="fa-solid fa-file-invoice"></i>Supplier Invoice</a>
+              <% } %>
+              <% if (!hasClientInvoice || !hasSupplierInvoice) { %>
+                <button type="button" class="btn-primary text-xs !px-3 !py-1.5" data-dialog-open="generate-invoice-<%= s.id %>">
+                  <i class="fa-solid fa-file-invoice-dollar"></i>Generate Invoice
+                </button>
               <% } %>
             <% } %>
             <% if (s.status !== 'draft') { %>
@@ -77,11 +80,51 @@
             <% } %>
           </div>
         </div>
+
+        <% if (s.status === 'approved' && (!hasClientInvoice || !hasSupplierInvoice)) { %>
+          <dialog id="generate-invoice-<%= s.id %>" class="dialog-panel">
+            <div class="p-5 sm:p-6">
+              <div class="flex items-center justify-between gap-3 mb-4">
+                <h3 class="font-bold">Generate Invoice</h3>
+                <button type="button" class="theme-toggle" data-dialog-close aria-label="Close">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+              <form action="/invoices/generate/<%= s.id %>" method="POST" class="space-y-4">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <% if (!hasClientInvoice && !hasSupplierInvoice) { %>
+                  <div class="space-y-2 text-sm">
+                    <label class="flex items-center gap-2">
+                      <input type="radio" name="invoiceType" value="both" checked>
+                      Both (Client + Supplier)
+                    </label>
+                    <label class="flex items-center gap-2">
+                      <input type="radio" name="invoiceType" value="client">
+                      Client invoice only
+                    </label>
+                    <label class="flex items-center gap-2">
+                      <input type="radio" name="invoiceType" value="supplier">
+                      Supplier invoice only
+                    </label>
+                  </div>
+                <% } else if (!hasClientInvoice) { %>
+                  <input type="hidden" name="invoiceType" value="client">
+                  <p class="text-sm text-brand-gray2">Generate the Client invoice for this submission?</p>
+                <% } else { %>
+                  <input type="hidden" name="invoiceType" value="supplier">
+                  <p class="text-sm text-brand-gray2">Generate the Supplier invoice for this submission?</p>
+                <% } %>
+                <button type="submit" class="btn-primary w-full">Generate</button>
+              </form>
+            </div>
+          </dialog>
+        <% } %>
       <% }); %>
     </div>
   <% } %>
     </div>
   </div>
 </div>
+<script src="/js/dialog-toggle.js?v=<%= assetVersion %>" defer></script>
 
 <%- include('../partials/foot') %>

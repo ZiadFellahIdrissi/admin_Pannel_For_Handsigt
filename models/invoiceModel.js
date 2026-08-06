@@ -21,17 +21,10 @@ async function nextInvoiceNumber(type) {
   return `${prefix}${String(lastSeq + 1).padStart(3, '0')}`;
 }
 
-async function existsForSubmission(submissionId) {
-  const [rows] = await pool.query(
-    'SELECT id FROM invoices WHERE submission_id = ? LIMIT 1',
-    [submissionId]
-  );
-  return rows.length > 0;
-}
-
 // Both client and supplier invoice IDs for a submission, if generated -
-// used by History to link directly to them instead of showing the
-// "Générer Facturation" button again.
+// used by History to link directly to them instead of the button, and by
+// invoice generation itself to know which of the two (if either) still
+// need generating.
 async function findIdsForSubmission(submissionId) {
   const [rows] = await pool.query(
     'SELECT id, type FROM invoices WHERE submission_id = ?',
@@ -88,7 +81,6 @@ async function listByType(type) {
 
 module.exports = {
   nextInvoiceNumber,
-  existsForSubmission,
   findIdsForSubmission,
   create,
   findById,

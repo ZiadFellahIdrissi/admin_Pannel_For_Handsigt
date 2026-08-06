@@ -3,6 +3,21 @@ const path = require('path');
 const PDFDocument = require('pdfkit');
 const { COMPANY_LOGO_DIR } = require('../config/uploadPaths');
 
+// Handsight's own brand tokens (see public/css/input.css :root) - reused
+// here so the PDF actually looks like it belongs to the same product as
+// the panel around it, instead of a generic black-and-white document.
+const COLOR_ACCENT = '#1a6eff';
+const COLOR_ACCENT_DARK = '#0d1628';
+const COLOR_TEXT = '#1f2937';
+const COLOR_MUTED = '#6b7280';
+const COLOR_BORDER = '#dbe3ee';
+const COLOR_BG_SOFT = '#f4f7fc';
+const COLOR_BG_CHIP = '#eaf1ff';
+const COLOR_WHITE = '#ffffff';
+
+const PAGE_MARGIN = 50;
+const PAGE_RIGHT = 545; // A4 width (595.28) minus the right margin
+
 function money(n) {
   return `${Number(n).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD`;
 }
@@ -17,15 +32,37 @@ function resolveLogoPath(invoiceLogoPath) {
   return fs.existsSync(filePath) ? filePath : null;
 }
 
-function addPartyBlock(doc, x, y, heading, lines) {
-  doc.font('Helvetica-Bold').fontSize(9).text(heading, x, y);
-  doc.font('Helvetica').fontSize(9);
-  let cursorY = y + 14;
-  lines.filter(Boolean).forEach((line) => {
-    doc.text(line, x, cursorY, { width: 240 });
-    cursorY = doc.y + 2;
+// Filled (and optionally bordered) rounded rectangle - always leaves
+// doc's fill color reset to the default body text color afterwards, so
+// callers never have to remember to restore it themselves.
+function panel(doc, x, y, w, h, fillColor, options) {
+  const radius = (options && options.radius) || 6;
+  doc.roundedRect(x, y, w, h, radius).fill(fillColor);
+  if (options && options.border) {
+    doc.roundedRect(x, y, w, h, radius).lineWidth(1).stroke(options.border);
+  }
+  doc.fillColor(COLOR_TEXT);
+}
+
+// One "party" card - a heading in accent color, the name in bold, then
+// whatever address/ICE/RC/contact lines are available underneath.
+function partyBlock(doc, x, y, width, heading, party) {
+  doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLOR_ACCENT)
+    .text(heading.toUpperCase(), x, y, { width, characterSpacing: 0.4 });
+
+  doc.font('Helvetica-Bold').fontSize(10.5).fillColor(COLOR_TEXT)
+    .text(party.name || '—', x, doc.y + 6, { width });
+
+  doc.font('Helvetica').fontSize(8.5).fillColor(COLOR_MUTED);
+  [
+    party.address,
+    party.ice ? `ICE : ${party.ice}` : null,
+    party.rc ? `RC : ${party.rc}` : null,
+    party.email,
+    party.phone
+  ].filter(Boolean).forEach((line) => {
+    doc.text(line, x, doc.y + 2, { width });
   });
-  return cursorY;
 }
 
 // data: { type: 'client'|'supplier', invoiceNumber, dateLabel, monthLabel,
@@ -35,7 +72,7 @@ function addPartyBlock(doc, x, y, heading, lines) {
 //         label, totalDays, rate, totalHt, totalTva, totalTtc }
 function generateInvoicePdf(data, destinationPath) {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: 'A4', margin: 50 });
+    const doc = new PDFDocument({ size: 'A4', margin: PAGE_MARGIN });
     const stream = fs.createWriteStream(destinationPath);
     doc.pipe(stream);
     stream.on('finish', resolve);
@@ -45,107 +82,151 @@ function generateInvoicePdf(data, destinationPath) {
     const { company } = data;
     const logoPath = resolveLogoPath(company.invoice_logo_path);
 
-    // Header - Handsight's own logo + admin/legal block, always shown
-    // (whether Handsight is the issuer or the recipient on this document).
-    let headerY = 50;
+    // --- Header: logo + Handsight's own letterhead block --------------
+    const headerTop = 50;
     if (logoPath) {
       try {
-        doc.image(logoPath, 50, headerY, { height: 40 });
+        doc.image(logoPath, PAGE_MARGIN, headerTop, { height: 42 });
       } catch {
         // Corrupt/unreadable image file - skip it, don't fail the whole PDF.
       }
+    } else {
+      doc.font('Helvetica-Bold').fontSize(15).fillColor(COLOR_ACCENT_DARK)
+        .text(company.legal_name || 'Handsight Solutions', PAGE_MARGIN, headerTop);
     }
-    doc.font('Helvetica-Bold').fontSize(9)
-      .text(company.legal_name || 'Handsight Solutions', 300, headerY, { width: 245, align: 'right' });
-    doc.font('Helvetica').fontSize(8);
+
+    doc.font('Helvetica-Bold').fontSize(10).fillColor(COLOR_ACCENT_DARK)
+      .text(company.legal_name || 'Handsight Solutions', 300, headerTop, { width: 245, align: 'right' });
+    doc.font('Helvetica').fontSize(8).fillColor(COLOR_MUTED);
     [
       company.address,
-      company.ice ? `ICE: ${company.ice}` : null,
-      company.rc ? `RC: ${company.rc}` : null,
-      company.tax_identifier ? `IF: ${company.tax_identifier}` : null,
+      [company.ice ? `ICE ${company.ice}` : null, company.rc ? `RC ${company.rc}` : null].filter(Boolean).join('   ') || null,
       company.email,
       company.phone
     ].filter(Boolean).forEach((line) => {
-      doc.text(line, 300, doc.y, { width: 245, align: 'right' });
+      doc.text(line, 300, doc.y + 2, { width: 245, align: 'right' });
     });
 
-    doc.moveDown(2);
-    const afterHeaderY = Math.max(doc.y, headerY + 70);
+    const headerBottom = Math.max(headerTop + 46, doc.y + 10);
+    doc.moveTo(PAGE_MARGIN, headerBottom).lineTo(PAGE_RIGHT, headerBottom)
+      .lineWidth(1.5).strokeColor(COLOR_ACCENT).stroke();
 
-    // Title + invoice metadata
-    doc.font('Helvetica-Bold').fontSize(16).text('FACTURE', 50, afterHeaderY);
-    doc.font('Helvetica').fontSize(9);
-    doc.text(`N°: ${data.invoiceNumber}`, 50, doc.y + 6);
-    doc.text(`Date: ${data.dateLabel}`, 50, doc.y + 2);
-    doc.text(`Période: ${data.monthLabel}`, 50, doc.y + 2);
+    // --- Title + metadata, with a total-due chip on the right ---------
+    const titleY = headerBottom + 22;
+    doc.font('Helvetica-Bold').fontSize(24).fillColor(COLOR_ACCENT_DARK).text('FACTURE', PAGE_MARGIN, titleY);
 
-    // Party blocks - who is billing whom flips by type. Client invoices:
-    // Handsight bills the client. Supplier invoices: framed as the
-    // consultant billing Handsight (Handsight is the recipient), even
-    // though this PDF is generated by Handsight's own system for its
-    // own records.
-    const partyY = doc.y + 20;
-    if (data.type === 'client') {
-      addPartyBlock(doc, 320, partyY, 'Facturé à :', [
-        data.party.name,
-        data.party.address,
-        data.party.ice ? `ICE: ${data.party.ice}` : null,
-        data.party.rc ? `RC: ${data.party.rc}` : null,
-        data.party.email,
-        data.party.phone
-      ]);
-    } else {
-      addPartyBlock(doc, 50, partyY, 'Fournisseur :', [data.party.name]);
-      addPartyBlock(doc, 320, partyY, 'Facturé à :', [
+    const metaY = titleY + 36;
+    doc.font('Helvetica').fontSize(8.5).fillColor(COLOR_MUTED).text('N° DE FACTURE', PAGE_MARGIN, metaY, { characterSpacing: 0.3 });
+    doc.font('Helvetica-Bold').fontSize(10.5).fillColor(COLOR_TEXT).text(data.invoiceNumber, PAGE_MARGIN, metaY + 11);
+    doc.font('Helvetica').fontSize(8.5).fillColor(COLOR_MUTED).text(`Date d'émission : ${data.dateLabel}`, PAGE_MARGIN, metaY + 30);
+    doc.text(`Période concernée : ${data.monthLabel}`, PAGE_MARGIN, metaY + 43);
+
+    const chipW = 190;
+    const chipH = 58;
+    const chipX = PAGE_RIGHT - chipW;
+    const chipY = titleY - 4;
+    panel(doc, chipX, chipY, chipW, chipH, COLOR_BG_CHIP);
+    doc.font('Helvetica-Bold').fontSize(8).fillColor(COLOR_ACCENT_DARK)
+      .text('MONTANT TOTAL TTC', chipX, chipY + 13, { width: chipW, align: 'center', characterSpacing: 0.4 });
+    doc.font('Helvetica-Bold').fontSize(19).fillColor(COLOR_ACCENT)
+      .text(money(data.totalTtc), chipX, chipY + 28, { width: chipW, align: 'center' });
+
+    // --- Party cards - "Émetteur" / "Facturé à" flip by invoice type --
+    const partyY = metaY + 68;
+    const partyH = 110;
+    const colW = (PAGE_RIGHT - PAGE_MARGIN - 20) / 2;
+    const issuer = data.type === 'client'
+      ? { name: company.legal_name, address: company.address, ice: company.ice, rc: company.rc, email: company.email, phone: company.phone }
+      : { name: data.party.name };
+    const recipient = data.type === 'client'
+      ? data.party
+      : { name: company.legal_name, address: company.address, ice: company.ice, rc: company.rc, email: company.email, phone: company.phone };
+
+    panel(doc, PAGE_MARGIN, partyY, colW, partyH, COLOR_BG_SOFT);
+    panel(doc, PAGE_MARGIN + colW + 20, partyY, colW, partyH, COLOR_BG_SOFT);
+    partyBlock(doc, PAGE_MARGIN + 14, partyY + 14, colW - 28, 'Émetteur', issuer);
+    partyBlock(doc, PAGE_MARGIN + colW + 20 + 14, partyY + 14, colW - 28, 'Facturé à', recipient);
+
+    // --- Line item table ------------------------------------------------
+    // Numeric columns are right-aligned (each defined by its own x/width
+    // pair) so amounts of any size line up cleanly against the page edge
+    // instead of risking an overflow-wrap on a wide total.
+    const tableY = partyY + partyH + 26;
+    const col = {
+      desc: { x: PAGE_MARGIN + 14, width: 240 },
+      qte: { x: 320, width: 55 },
+      pu: { x: 385, width: 75 },
+      montant: { x: 470, width: 75 }
+    };
+    const tableHeaderH = 26;
+    panel(doc, PAGE_MARGIN, tableY, PAGE_RIGHT - PAGE_MARGIN, tableHeaderH, COLOR_ACCENT_DARK, { radius: 5 });
+    doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLOR_WHITE);
+    doc.text('DESCRIPTION', col.desc.x, tableY + 9, { width: col.desc.width });
+    doc.text('QTÉ (J)', col.qte.x, tableY + 9, { width: col.qte.width, align: 'right' });
+    doc.text('PU HT', col.pu.x, tableY + 9, { width: col.pu.width, align: 'right' });
+    doc.text('MONTANT HT', col.montant.x, tableY + 9, { width: col.montant.width, align: 'right' });
+
+    const rowY = tableY + tableHeaderH;
+    const rowH = 36;
+    doc.rect(PAGE_MARGIN, rowY, PAGE_RIGHT - PAGE_MARGIN, rowH).lineWidth(1).strokeColor(COLOR_BORDER).stroke();
+    doc.font('Helvetica').fontSize(9).fillColor(COLOR_TEXT);
+    doc.text(data.label, col.desc.x, rowY + 12, { width: col.desc.width });
+    doc.text(String(data.totalDays), col.qte.x, rowY + 12, { width: col.qte.width, align: 'right' });
+    doc.text(money(data.rate), col.pu.x, rowY + 12, { width: col.pu.width, align: 'right' });
+    doc.font('Helvetica-Bold').text(money(data.totalHt), col.montant.x, rowY + 12, { width: col.montant.width, align: 'right' });
+
+    // --- Totals card -----------------------------------------------------
+    const totalsW = 220;
+    const totalsX = PAGE_RIGHT - totalsW;
+    const totalsY = rowY + rowH + 20;
+    const totalsH = 96;
+    panel(doc, totalsX, totalsY, totalsW, totalsH, COLOR_BG_SOFT, { border: COLOR_BORDER });
+
+    doc.font('Helvetica').fontSize(9).fillColor(COLOR_MUTED).text('Total HT', totalsX + 16, totalsY + 16);
+    doc.font('Helvetica').fontSize(9).fillColor(COLOR_TEXT).text(money(data.totalHt), totalsX, totalsY + 16, { width: totalsW - 16, align: 'right' });
+
+    doc.font('Helvetica').fontSize(9).fillColor(COLOR_MUTED).text('TVA (20%)', totalsX + 16, totalsY + 36);
+    doc.font('Helvetica').fontSize(9).fillColor(COLOR_TEXT).text(money(data.totalTva), totalsX, totalsY + 36, { width: totalsW - 16, align: 'right' });
+
+    doc.moveTo(totalsX + 16, totalsY + 60).lineTo(totalsX + totalsW - 16, totalsY + 60)
+      .lineWidth(1).strokeColor(COLOR_BORDER).stroke();
+
+    doc.font('Helvetica-Bold').fontSize(11).fillColor(COLOR_ACCENT_DARK).text('Total TTC', totalsX + 16, totalsY + 71);
+    doc.font('Helvetica-Bold').fontSize(13).fillColor(COLOR_ACCENT).text(money(data.totalTtc), totalsX, totalsY + 69, { width: totalsW - 16, align: 'right' });
+
+    // --- Footer: bank details + legal mention ----------------------------
+    const footerY = totalsY + totalsH + 26;
+    doc.moveTo(PAGE_MARGIN, footerY).lineTo(PAGE_RIGHT, footerY).lineWidth(0.75).strokeColor(COLOR_BORDER).stroke();
+
+    doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLOR_ACCENT_DARK)
+      .text('COORDONNÉES BANCAIRES', PAGE_MARGIN, footerY + 14, { characterSpacing: 0.3 });
+
+    const bankLines = [
+      company.bank_name ? `Banque : ${company.bank_name}` : null,
+      company.bank_agency ? `Agence : ${company.bank_agency}` : null,
+      company.bank_rib ? `RIB : ${company.bank_rib}` : null,
+      company.bank_iban ? `IBAN : ${company.bank_iban}` : null,
+      company.bank_swift ? `BIC/SWIFT : ${company.bank_swift}` : null
+    ].filter(Boolean);
+
+    const bankY = footerY + 28;
+    doc.font('Helvetica').fontSize(8.5).fillColor(COLOR_MUTED);
+    bankLines.forEach((line, i) => {
+      const colX = PAGE_MARGIN + (i % 2) * 250;
+      const colY = bankY + Math.floor(i / 2) * 14;
+      doc.text(line, colX, colY, { width: 230 });
+    });
+
+    const legalY = bankY + Math.ceil(bankLines.length / 2) * 14 + 18;
+    doc.font('Helvetica').fontSize(7.5).fillColor(COLOR_MUTED).text(
+      [
         company.legal_name,
-        company.address,
-        company.ice ? `ICE: ${company.ice}` : null
-      ]);
-    }
-
-    // Line item table
-    let tableY = partyY + 90;
-    const col = { desc: 50, qte: 330, pu: 400, montant: 470 };
-    doc.font('Helvetica-Bold').fontSize(9);
-    doc.text('Description', col.desc, tableY);
-    doc.text('Qté (j)', col.qte, tableY);
-    doc.text('PU HT', col.pu, tableY);
-    doc.text('Montant HT', col.montant, tableY);
-    doc.moveTo(50, tableY + 14).lineTo(545, tableY + 14).stroke();
-
-    const rowY = tableY + 20;
-    doc.font('Helvetica').fontSize(9);
-    doc.text(data.label, col.desc, rowY, { width: 270 });
-    doc.text(String(data.totalDays), col.qte, rowY);
-    doc.text(money(data.rate), col.pu, rowY);
-    doc.text(money(data.totalHt), col.montant, rowY);
-
-    doc.moveTo(50, rowY + 30).lineTo(545, rowY + 30).stroke();
-
-    // Totals
-    const totalsY = rowY + 45;
-    doc.font('Helvetica').fontSize(9);
-    doc.text('Total HT :', 400, totalsY, { width: 80 });
-    doc.text(money(data.totalHt), 470, totalsY, { width: 75, align: 'right' });
-    doc.text('TVA (20%) :', 400, totalsY + 16, { width: 80 });
-    doc.text(money(data.totalTva), 470, totalsY + 16, { width: 75, align: 'right' });
-    doc.font('Helvetica-Bold');
-    doc.text('Total TTC :', 400, totalsY + 32, { width: 80 });
-    doc.text(money(data.totalTtc), 470, totalsY + 32, { width: 75, align: 'right' });
-
-    // Footer - Handsight's own bank details, reference info either way.
-    const footerY = totalsY + 80;
-    doc.font('Helvetica-Bold').fontSize(8).text('Coordonnées bancaires', 50, footerY);
-    doc.font('Helvetica').fontSize(8);
-    [
-      company.bank_name ? `Banque: ${company.bank_name}` : null,
-      company.bank_agency ? `Agence: ${company.bank_agency}` : null,
-      company.bank_rib ? `RIB: ${company.bank_rib}` : null,
-      company.bank_iban ? `IBAN: ${company.bank_iban}` : null,
-      company.bank_swift ? `BIC/SWIFT: ${company.bank_swift}` : null
-    ].filter(Boolean).forEach((line) => {
-      doc.text(line, 50, doc.y + 2);
-    });
+        company.ice ? `ICE ${company.ice}` : null,
+        company.rc ? `RC ${company.rc}` : null,
+        company.tax_identifier ? `IF ${company.tax_identifier}` : null
+      ].filter(Boolean).join('   ·   '),
+      PAGE_MARGIN, legalY, { width: PAGE_RIGHT - PAGE_MARGIN, align: 'center' }
+    );
 
     doc.end();
   });

@@ -29,7 +29,7 @@
           <h2 class="section-title"><i class="fa-solid fa-circle-info"></i>Invoice</h2>
           <div class="grid grid-cols-2 gap-x-4 gap-y-2">
             <div><span class="text-brand-gray2">Number</span><br><%= invoice.invoice_number %></div>
-            <div><span class="text-brand-gray2">Type</span><br><%= isClientType ? 'Facture Client' : 'Facture Fournisseur' %></div>
+            <div><span class="text-brand-gray2">Type</span><br><%= isClientType ? 'Client Invoice' : 'Supplier Invoice' %></div>
             <div><span class="text-brand-gray2">Month</span><br><%= monthLabel(invoice.month) %></div>
             <div><span class="text-brand-gray2">Created</span><br><%= invoice.created_at %></div>
           </div>
@@ -47,17 +47,17 @@
           <h2 class="section-title"><i class="fa-solid fa-list"></i>Line Item</h2>
           <p class="mb-2"><%= invoice.label %></p>
           <div class="grid grid-cols-2 gap-x-4 gap-y-2">
-            <div><span class="text-brand-gray2">Qté (jours)</span><br><%= invoice.total_days %></div>
-            <div><span class="text-brand-gray2">PU HT</span><br><%= formatCurrency(invoice.rate) %></div>
+            <div><span class="text-brand-gray2">Quantity (days)</span><br><%= invoice.total_days %></div>
+            <div><span class="text-brand-gray2">Unit Price (excl. VAT)</span><br><%= formatCurrency(invoice.rate) %></div>
           </div>
         </div>
 
         <div>
           <h2 class="section-title"><i class="fa-solid fa-calculator"></i>Totals</h2>
           <div class="grid grid-cols-2 gap-x-4 gap-y-2">
-            <div><span class="text-brand-gray2">Total HT</span><br><%= formatCurrency(invoice.total_ht) %></div>
-            <div><span class="text-brand-gray2">TVA (20%)</span><br><%= formatCurrency(invoice.total_tva) %></div>
-            <div class="col-span-2"><span class="text-brand-gray2">Total TTC</span><br><span class="font-semibold text-base"><%= formatCurrency(invoice.total_ttc) %></span></div>
+            <div><span class="text-brand-gray2">Subtotal (excl. VAT)</span><br><%= formatCurrency(invoice.total_ht) %></div>
+            <div><span class="text-brand-gray2">VAT (20%)</span><br><%= formatCurrency(invoice.total_tva) %></div>
+            <div class="col-span-2"><span class="text-brand-gray2">Total (incl. VAT)</span><br><span class="font-semibold text-base"><%= formatCurrency(invoice.total_ttc) %></span></div>
           </div>
         </div>
       </div>

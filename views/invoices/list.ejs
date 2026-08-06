@@ -1,6 +1,6 @@
 <%
   var isClientType = type === 'client';
-  var pageTitle = isClientType ? 'Facture Clients' : 'Facture Fournisseur';
+  var pageTitle = isClientType ? 'Client Invoices' : 'Supplier Invoices';
   var basePath = isClientType ? '/invoices/clients' : '/invoices/suppliers';
 %>
 <%- include('../partials/head', { title: pageTitle }) %>
@@ -32,7 +32,7 @@
           </div>
           <div class="text-right shrink-0">
             <div class="font-semibold"><%= formatCurrency(inv.total_ttc) %></div>
-            <div class="text-xs text-brand-gray2">TTC &middot; <%= inv.total_days %> j</div>
+            <div class="text-xs text-brand-gray2">Total incl. VAT &middot; <%= inv.total_days %> days</div>
           </div>
         </a>
       <% }); %>
