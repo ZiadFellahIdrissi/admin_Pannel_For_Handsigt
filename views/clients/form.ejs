@@ -33,9 +33,16 @@
 
     <div class="card p-5 sm:p-6">
       <h2 class="section-title"><i class="fa-solid fa-building"></i>Basic Info</h2>
-      <div>
-        <label class="field-label" for="name">Client name</label>
-        <input class="field-input" type="text" id="name" name="name" value="<%= clientRow ? clientRow.name : '' %>" required autofocus>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="field-label" for="name">Client name</label>
+          <input class="field-input" type="text" id="name" name="name" value="<%= clientRow ? clientRow.name : '' %>" required autofocus>
+        </div>
+        <div>
+          <label class="field-label" for="legalName">Raison Sociale (Legal Name)</label>
+          <input class="field-input" type="text" id="legalName" name="legalName" value="<%= val('legalName', 'legal_name') %>">
+          <p class="text-xs text-brand-gray2 mt-1">Used on invoices instead of the client name above. Falls back to it if left blank.</p>
+        </div>
       </div>
     </div>
 

@@ -55,7 +55,7 @@ async function create({
 
 async function findById(id) {
   const [rows] = await pool.query(
-    `SELECT i.*, CONCAT(u.first_name, ' ', u.last_name) AS consultant_name, c.name AS client_name
+    `SELECT i.*, CONCAT(u.first_name, ' ', u.last_name) AS consultant_name, COALESCE(c.legal_name, c.name) AS client_name
        FROM invoices i
        JOIN users u ON u.id = i.consultant_id
        JOIN clients c ON c.id = i.client_id
@@ -68,7 +68,7 @@ async function findById(id) {
 
 async function listByType(type) {
   const [rows] = await pool.query(
-    `SELECT i.*, CONCAT(u.first_name, ' ', u.last_name) AS consultant_name, c.name AS client_name
+    `SELECT i.*, CONCAT(u.first_name, ' ', u.last_name) AS consultant_name, COALESCE(c.legal_name, c.name) AS client_name
        FROM invoices i
        JOIN users u ON u.id = i.consultant_id
        JOIN clients c ON c.id = i.client_id

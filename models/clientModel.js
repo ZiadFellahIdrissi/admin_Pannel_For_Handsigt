@@ -25,7 +25,7 @@ async function findById(id) {
 }
 
 async function create({
-  name,
+  name, legalName,
   ice, rc, rcCity, patente, taxIdentifier, cnssNumber, legalForm, registeredCapital, registeredAddress,
   contactName, contactTitle, contactPhone, contactEmail,
   bankName, bankRib, bankIban, bankSwift,
@@ -33,14 +33,14 @@ async function create({
 }) {
   const [result] = await pool.query(
     `INSERT INTO clients (
-       name, active,
+       name, active, legal_name,
        ice, rc, rc_city, patente, tax_identifier, cnss_number, legal_form, registered_capital, registered_address,
        contact_name, contact_title, contact_phone, contact_email,
        bank_name, bank_rib, bank_iban, bank_swift,
        company_phone, company_email, website, billing_address, payment_terms, notes
-     ) VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     ) VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      name,
+      name, legalName || null,
       ice || null, rc || null, rcCity || null, patente || null, taxIdentifier || null, cnssNumber || null,
       legalForm || null, registeredCapital || null, registeredAddress || null,
       contactName || null, contactTitle || null, contactPhone || null, contactEmail || null,
@@ -52,7 +52,7 @@ async function create({
 }
 
 async function update(id, {
-  name,
+  name, legalName,
   ice, rc, rcCity, patente, taxIdentifier, cnssNumber, legalForm, registeredCapital, registeredAddress,
   contactName, contactTitle, contactPhone, contactEmail,
   bankName, bankRib, bankIban, bankSwift,
@@ -60,7 +60,7 @@ async function update(id, {
 }) {
   await pool.query(
     `UPDATE clients SET
-       name = ?,
+       name = ?, legal_name = ?,
        ice = ?, rc = ?, rc_city = ?, patente = ?, tax_identifier = ?, cnss_number = ?,
        legal_form = ?, registered_capital = ?, registered_address = ?,
        contact_name = ?, contact_title = ?, contact_phone = ?, contact_email = ?,
@@ -68,7 +68,7 @@ async function update(id, {
        company_phone = ?, company_email = ?, website = ?, billing_address = ?, payment_terms = ?, notes = ?
      WHERE id = ?`,
     [
-      name,
+      name, legalName || null,
       ice || null, rc || null, rcCity || null, patente || null, taxIdentifier || null, cnssNumber || null,
       legalForm || null, registeredCapital || null, registeredAddress || null,
       contactName || null, contactTitle || null, contactPhone || null, contactEmail || null,

@@ -40,6 +40,22 @@ function money(n) {
   return `${formatAmount(n)} DH`;
 }
 
+// 'YYYY-MM' -> 'Juillet 2026' - French counterpart of utils/format.js's
+// monthLabel(). That shared helper stays English on purpose (it also
+// backs UI-facing pages like History), so invoice content - which must
+// be French - gets its own copy here instead of touching it.
+const MONTH_NAMES_FR = [
+  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+];
+
+function monthLabelFr(month) {
+  if (!month) return '';
+  const [year, m] = month.split('-');
+  const name = MONTH_NAMES_FR[Number(m) - 1] || m;
+  return `${name} ${year}`;
+}
+
 // --- French "amount in words" (Moroccan invoice convention) ------------
 
 const ONES = ['', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix',
@@ -348,4 +364,4 @@ function generateInvoicePdf(data, destinationPath) {
   });
 }
 
-module.exports = { generateInvoicePdf };
+module.exports = { generateInvoicePdf, monthLabelFr };

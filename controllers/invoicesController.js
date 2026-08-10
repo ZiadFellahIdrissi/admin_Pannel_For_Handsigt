@@ -7,8 +7,7 @@ const consultantClientModel = require('../models/consultantClientModel');
 const clientModel = require('../models/clientModel');
 const userModel = require('../models/userModel');
 const companyInfoModel = require('../models/companyInfoModel');
-const { generateInvoicePdf } = require('../utils/invoicePdf');
-const { monthLabel } = require('../utils/format');
+const { generateInvoicePdf, monthLabelFr } = require('../utils/invoicePdf');
 const { INVOICE_DIR } = require('../config/uploadPaths');
 
 // 'Ziad' + 'Fellah' -> 'ZIFE' - first 2 letters of each name, uppercased.
@@ -61,7 +60,7 @@ async function handleGenerate(req, res) {
   const initials = consultantInitials(consultant.first_name, consultant.last_name);
   const label = `Prestation de services – Consultant ${roleTitle} (Réf. ${initials})`;
   const dateLabel = new Date().toLocaleDateString('fr-FR');
-  const monthLbl = monthLabel(submission.month);
+  const monthLbl = monthLabelFr(submission.month);
 
   const clientRate = clientTjm;
   const clientHt = clientRate * totalDays;
@@ -80,7 +79,7 @@ async function handleGenerate(req, res) {
     const clientInvoiceNumber = await invoiceModel.nextInvoiceNumber('client');
     const clientPdfFilename = `${crypto.randomUUID()}.pdf`;
     const clientParty = {
-      name: client.name,
+      name: client.legal_name || client.name,
       address: client.billing_address || client.registered_address,
       ice: client.ice,
       rc: client.rc,

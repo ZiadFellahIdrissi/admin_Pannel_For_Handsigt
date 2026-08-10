@@ -320,6 +320,28 @@
     background: rgba(15, 23, 42, 0.5);
   }
 
+  /* Selectable "card" radio rows - the invoice-type picker in the History
+     page's Generate Invoice dialog. :has() lets the whole card react to
+     its own radio's checked state without any JS. */
+  .invoice-type-option {
+    @apply flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors;
+    border: 1px solid var(--border-light);
+  }
+  .invoice-type-option:hover {
+    border-color: var(--blue);
+  }
+  .invoice-type-option:has(input:checked) {
+    border-color: var(--blue);
+    background-color: var(--blue-dim);
+  }
+  /* Same look as a checked option, but non-interactive - used when only
+     one invoice type is left to generate, so there's nothing to pick. */
+  .invoice-type-option-static {
+    @apply flex items-center gap-3 p-3 rounded-lg;
+    border: 1px solid var(--blue);
+    background-color: var(--blue-dim);
+  }
+
   /* Read-only month calendar grid, matching the Consultant Dashboard's own
      calendar (day-cell/day-cell-weekend/day-cell-filled) so the admin's
      "view details" popup looks like the same calendar the consultant

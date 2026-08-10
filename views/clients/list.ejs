@@ -32,7 +32,12 @@
     <div class="space-y-3">
       <% clients.forEach(function(cl) { %>
         <div class="card-interactive p-4 flex items-center justify-between gap-3 flex-wrap">
-          <a href="/clients/<%= cl.id %>" class="font-semibold hover:text-brand-accent"><%= cl.name %></a>
+          <div class="min-w-0">
+            <a href="/clients/<%= cl.id %>" class="font-semibold hover:text-brand-accent"><%= cl.name %></a>
+            <% if (cl.legal_name) { %>
+              <div class="text-xs text-brand-gray2 mt-0.5">Raison Sociale: <%= cl.legal_name %></div>
+            <% } %>
+          </div>
           <div class="flex items-center gap-2 shrink-0">
             <span class="<%= cl.active ? 'badge-approved' : 'badge-draft' %>"><%= cl.active ? 'Active' : 'Inactive' %></span>
             <a href="/clients/<%= cl.id %>/edit" class="btn-secondary text-sm"><i class="fa-solid fa-pen"></i></a>

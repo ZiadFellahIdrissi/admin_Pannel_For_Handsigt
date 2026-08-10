@@ -145,6 +145,18 @@ CREATE TABLE invoices (
 );
 
 -- ---------------------------------------------------------------------
+-- MIGRATION - run once in phpMyAdmin's SQL tab.
+--
+-- Adds the client's registered legal name ("Raison Sociale"), distinct
+-- from `name` (the short/trading name used throughout the panel's lists
+-- and links). Invoices must bill the client's full legal entity name -
+-- controllers/invoicesController.js falls back to `name` when this is
+-- left blank, so existing clients don't break.
+-- ---------------------------------------------------------------------
+ALTER TABLE clients
+  ADD COLUMN legal_name VARCHAR(255) DEFAULT NULL;
+
+-- ---------------------------------------------------------------------
 -- REFERENCE ONLY - this table already exists live (created outside this
 -- app, alongside the public landing page). `IF NOT EXISTS` makes this
 -- safe/idempotent to run - it's here purely so this file stays the one

@@ -18,6 +18,7 @@ function extractExtendedFields(body) {
   };
 
   return {
+    legalName: trim(body.legalName),
     ice: trim(body.ice),
     rc: trim(body.rc),
     rcCity: trim(body.rcCity),
