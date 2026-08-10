@@ -181,9 +181,10 @@ function generateInvoicePdf(data, destinationPath) {
     doc.fillColor(COLOR_TEXT);
 
     const LOGO_Y = 42;
+    const LOGO_H = 84;
     if (logoPath) {
       try {
-        doc.image(logoPath, MARGIN, LOGO_Y, { height: 46 });
+        doc.image(logoPath, MARGIN, LOGO_Y, { height: LOGO_H });
       } catch {
         // Corrupt/unreadable image file - skip it, don't fail the whole PDF.
       }
@@ -192,7 +193,7 @@ function generateInvoicePdf(data, destinationPath) {
         .text(company.legal_name || 'Handsight Solutions', MARGIN, LOGO_Y);
     }
 
-    const companyY = LOGO_Y + 46 + 14;
+    const companyY = LOGO_Y + LOGO_H + 12;
     doc.font('Helvetica-Bold').fontSize(11).fillColor(COLOR_NAVY)
       .text(company.legal_name || 'Handsight Solutions', MARGIN, companyY, { width: 260 });
     doc.font('Helvetica').fontSize(8.5).fillColor(COLOR_MUTED);

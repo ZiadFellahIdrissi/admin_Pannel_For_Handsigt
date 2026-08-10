@@ -94,7 +94,7 @@
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <% if (!hasClientInvoice && !hasSupplierInvoice) { %>
                   <div class="space-y-2">
-                    <label class="invoice-type-option">
+                    <label class="option-card">
                       <input type="radio" name="invoiceType" value="both" checked class="accent-brand-accent">
                       <div class="icon-circle-accent !w-9 !h-9 !text-sm shrink-0"><i class="fa-solid fa-layer-group"></i></div>
                       <div class="min-w-0">
@@ -102,7 +102,7 @@
                         <div class="text-xs text-brand-gray2">Client + Supplier, generated together</div>
                       </div>
                     </label>
-                    <label class="invoice-type-option">
+                    <label class="option-card">
                       <input type="radio" name="invoiceType" value="client" class="accent-brand-accent">
                       <div class="icon-circle-accent !w-9 !h-9 !text-sm shrink-0"><i class="fa-solid fa-file-invoice-dollar"></i></div>
                       <div class="min-w-0">
@@ -110,7 +110,7 @@
                         <div class="text-xs text-brand-gray2">Bills the client for this submission</div>
                       </div>
                     </label>
-                    <label class="invoice-type-option">
+                    <label class="option-card">
                       <input type="radio" name="invoiceType" value="supplier" class="accent-brand-accent">
                       <div class="icon-circle-accent !w-9 !h-9 !text-sm shrink-0"><i class="fa-solid fa-file-invoice"></i></div>
                       <div class="min-w-0">
@@ -121,7 +121,7 @@
                   </div>
                 <% } else if (!hasClientInvoice) { %>
                   <input type="hidden" name="invoiceType" value="client">
-                  <div class="invoice-type-option-static">
+                  <div class="option-card-static">
                     <div class="icon-circle-accent !w-9 !h-9 !text-sm shrink-0"><i class="fa-solid fa-file-invoice-dollar"></i></div>
                     <div class="min-w-0">
                       <div class="font-semibold text-sm">Client invoice</div>
@@ -130,7 +130,7 @@
                   </div>
                 <% } else { %>
                   <input type="hidden" name="invoiceType" value="supplier">
-                  <div class="invoice-type-option-static">
+                  <div class="option-card-static">
                     <div class="icon-circle-accent !w-9 !h-9 !text-sm shrink-0"><i class="fa-solid fa-file-invoice"></i></div>
                     <div class="min-w-0">
                       <div class="font-semibold text-sm">Supplier invoice</div>

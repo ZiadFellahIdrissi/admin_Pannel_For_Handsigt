@@ -320,23 +320,25 @@
     background: rgba(15, 23, 42, 0.5);
   }
 
-  /* Selectable "card" radio rows - the invoice-type picker in the History
-     page's Generate Invoice dialog. :has() lets the whole card react to
-     its own radio's checked state without any JS. */
-  .invoice-type-option {
+  /* Selectable "card" checkbox/radio rows - the History page's Generate
+     Invoice type picker, the candidate form's Open To checkboxes, and any
+     future picker like them. :has() lets the whole card react to its own
+     input's checked state without any JS - works for both input types. */
+  .option-card {
     @apply flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors;
     border: 1px solid var(--border-light);
   }
-  .invoice-type-option:hover {
+  .option-card:hover {
     border-color: var(--blue);
   }
-  .invoice-type-option:has(input:checked) {
+  .option-card:has(input:checked) {
     border-color: var(--blue);
     background-color: var(--blue-dim);
   }
-  /* Same look as a checked option, but non-interactive - used when only
-     one invoice type is left to generate, so there's nothing to pick. */
-  .invoice-type-option-static {
+  /* Same look as a checked option, but non-interactive - used when there's
+     only one choice left (e.g. one invoice type already generated), so
+     there's nothing to actually pick. */
+  .option-card-static {
     @apply flex items-center gap-3 p-3 rounded-lg;
     border: 1px solid var(--blue);
     background-color: var(--blue-dim);

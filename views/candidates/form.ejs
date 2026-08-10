@@ -163,15 +163,30 @@
         </div>
         <div class="sm:col-span-2">
           <label class="field-label">Open to</label>
-          <div class="flex flex-wrap gap-4">
-            <label class="flex items-center gap-2 text-sm cursor-pointer">
-              <input type="checkbox" name="openToCdd" class="rounded" <%= checked('openToCdd', 'open_to_cdd') %>> CDD
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <label class="option-card !p-2.5">
+              <input type="checkbox" name="openToCdd" class="accent-brand-accent" <%= checked('openToCdd', 'open_to_cdd') %>>
+              <div class="icon-circle-accent !w-8 !h-8 !text-xs shrink-0"><i class="fa-solid fa-calendar-check"></i></div>
+              <div class="min-w-0">
+                <div class="font-semibold text-sm">CDD</div>
+                <div class="text-xs text-brand-gray2">Fixed-term contract</div>
+              </div>
             </label>
-            <label class="flex items-center gap-2 text-sm cursor-pointer">
-              <input type="checkbox" name="openToCdi" class="rounded" <%= checked('openToCdi', 'open_to_cdi') %>> CDI
+            <label class="option-card !p-2.5">
+              <input type="checkbox" name="openToCdi" class="accent-brand-accent" <%= checked('openToCdi', 'open_to_cdi') %>>
+              <div class="icon-circle-accent !w-8 !h-8 !text-xs shrink-0"><i class="fa-solid fa-briefcase"></i></div>
+              <div class="min-w-0">
+                <div class="font-semibold text-sm">CDI</div>
+                <div class="text-xs text-brand-gray2">Permanent contract</div>
+              </div>
             </label>
-            <label class="flex items-center gap-2 text-sm cursor-pointer">
-              <input type="checkbox" name="openToFreelance" class="rounded" <%= checked('openToFreelance', 'open_to_freelance') %>> Freelance
+            <label class="option-card !p-2.5">
+              <input type="checkbox" name="openToFreelance" class="accent-brand-accent" <%= checked('openToFreelance', 'open_to_freelance') %>>
+              <div class="icon-circle-accent !w-8 !h-8 !text-xs shrink-0"><i class="fa-solid fa-laptop-code"></i></div>
+              <div class="min-w-0">
+                <div class="font-semibold text-sm">Freelance</div>
+                <div class="text-xs text-brand-gray2">Contract / mission-based</div>
+              </div>
             </label>
           </div>
         </div>
