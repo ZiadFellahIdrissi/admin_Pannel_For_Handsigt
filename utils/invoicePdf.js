@@ -160,7 +160,7 @@ function generateInvoicePdf(data, destinationPath) {
     const logoPath = resolveLogoPath(company.invoice_logo_path);
 
     // --- Top band: logo + letterhead on the left, dark info card on the right
-    const TOP_BAND_H = 320;
+    const TOP_BAND_H = 280;
     doc.rect(0, 0, PAGE_W, TOP_BAND_H).fill(COLOR_BAND_BG);
     doc.fillColor(COLOR_TEXT);
 
@@ -195,7 +195,7 @@ function generateInvoicePdf(data, destinationPath) {
     const CARD_X = 335;
     const CARD_W = RIGHT - CARD_X;
     const CARD_Y = 42;
-    const CARD_H = 270;
+    const CARD_H = 230;
     panel(doc, CARD_X, CARD_Y, CARD_W, CARD_H, COLOR_NAVY, { radius: 10 });
 
     const innerX = CARD_X + 16;
@@ -326,14 +326,14 @@ function generateInvoicePdf(data, destinationPath) {
         .text(row.value, rightX + labelW + 3, y + (row.highlight ? 9 : 10), { width: valueW - 12, align: 'right' });
     });
 
-    // --- Footer band, anchored to the bottom of the page --------------------
-    const FOOTER_H = 68;
+    // --- Footer band, anchored flush to the bottom of the page --------------
+    const FOOTER_H = 42;
     const footerY = PAGE_H - FOOTER_H;
     doc.rect(0, footerY, PAGE_W, FOOTER_H).fill(COLOR_BAND_BG);
 
     const addressLine = [company.legal_name, company.address].filter(Boolean).join(' : ');
-    doc.font('Helvetica').fontSize(7.5).fillColor(COLOR_MUTED)
-      .text(addressLine, MARGIN, footerY + 18, { width: RIGHT - MARGIN, align: 'center' });
+    doc.font('Helvetica').fontSize(7).fillColor(COLOR_MUTED)
+      .text(addressLine, MARGIN, footerY + 10, { width: RIGHT - MARGIN, align: 'center' });
 
     const legalLine = [
       company.ice ? `ICE : ${company.ice}` : null,
@@ -341,8 +341,8 @@ function generateInvoicePdf(data, destinationPath) {
       company.patente ? `TP : ${company.patente}` : null,
       company.tax_identifier ? `I.F : ${company.tax_identifier}` : null
     ].filter(Boolean).join('   -   ');
-    doc.font('Helvetica-Bold').fontSize(7.5).fillColor(COLOR_NAVY)
-      .text(legalLine, MARGIN, footerY + 34, { width: RIGHT - MARGIN, align: 'center' });
+    doc.font('Helvetica-Bold').fontSize(7).fillColor(COLOR_NAVY)
+      .text(legalLine, MARGIN, footerY + 24, { width: RIGHT - MARGIN, align: 'center' });
 
     doc.end();
   });
