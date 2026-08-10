@@ -139,7 +139,17 @@ function sectionHeading(doc, x, y, width, text) {
 //         label, totalDays, rate, totalHt, totalTva, totalTtc }
 function generateInvoicePdf(data, destinationPath) {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: 'A4', margin: MARGIN });
+    // Every element in this document is placed at explicit x/y coordinates
+    // (never relying on pdfkit's automatic cursor-based flow), but pdfkit
+    // still auto-inserts a page break whenever a text call's computed
+    // bottom would cross the document's own bottom margin - regardless of
+    // whether we ever asked it to flow anything there. With the default
+    // 50pt margin, that boundary sat right in the middle of the footer
+    // band, splitting its two lines across two pages. Margins are set to 0
+    // here since we already guarantee everything stays within PAGE_H by
+    // construction (the footer band itself is anchored a fixed offset
+    // above the physical page bottom).
+    const doc = new PDFDocument({ size: 'A4', margins: { top: 0, bottom: 0, left: 0, right: 0 } });
     const stream = fs.createWriteStream(destinationPath);
     doc.pipe(stream);
     stream.on('finish', resolve);
@@ -150,7 +160,7 @@ function generateInvoicePdf(data, destinationPath) {
     const logoPath = resolveLogoPath(company.invoice_logo_path);
 
     // --- Top band: logo + letterhead on the left, dark info card on the right
-    const TOP_BAND_H = 260;
+    const TOP_BAND_H = 320;
     doc.rect(0, 0, PAGE_W, TOP_BAND_H).fill(COLOR_BAND_BG);
     doc.fillColor(COLOR_TEXT);
 
@@ -185,7 +195,7 @@ function generateInvoicePdf(data, destinationPath) {
     const CARD_X = 335;
     const CARD_W = RIGHT - CARD_X;
     const CARD_Y = 42;
-    const CARD_H = 210;
+    const CARD_H = 270;
     panel(doc, CARD_X, CARD_Y, CARD_W, CARD_H, COLOR_NAVY, { radius: 10 });
 
     const innerX = CARD_X + 16;
@@ -214,17 +224,17 @@ function generateInvoicePdf(data, destinationPath) {
     const partyBoxH = (CARD_Y + CARD_H) - partyBoxY - 14;
     panel(doc, innerX - 4, partyBoxY, innerW + 8, partyBoxH, COLOR_PARTY_BG, { radius: 6 });
     const partyHeading = data.type === 'client' ? 'FACTURÉ À' : 'FOURNISSEUR';
-    doc.font('Helvetica-Bold').fontSize(7.5).fillColor(COLOR_NAVY)
-      .text(partyHeading, innerX, partyBoxY + 9, { width: innerW - 8, characterSpacing: 0.3 });
-    doc.font('Helvetica-Bold').fontSize(9).fillColor(COLOR_TEXT)
-      .text(data.party.name || '—', innerX, doc.y + 3, { width: innerW - 8 });
-    doc.font('Helvetica').fontSize(7.5).fillColor(COLOR_MUTED);
+    doc.font('Helvetica-Bold').fontSize(8).fillColor(COLOR_NAVY)
+      .text(partyHeading, innerX, partyBoxY + 12, { width: innerW - 8, characterSpacing: 0.3 });
+    doc.font('Helvetica-Bold').fontSize(10.5).fillColor(COLOR_TEXT)
+      .text(data.party.name || '—', innerX, doc.y + 6, { width: innerW - 8 });
+    doc.font('Helvetica').fontSize(8.5).fillColor(COLOR_MUTED);
     [
       data.party.address,
       data.party.ice ? `ICE : ${data.party.ice}` : null,
       data.party.rc ? `RC : ${data.party.rc}` : null
     ].filter(Boolean).forEach((line) => {
-      doc.text(line, innerX, doc.y + 2, { width: innerW - 8 });
+      doc.text(line, innerX, doc.y + 4, { width: innerW - 8 });
     });
 
     // --- Line item table -------------------------------------------------
