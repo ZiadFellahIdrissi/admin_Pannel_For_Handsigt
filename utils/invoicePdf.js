@@ -150,7 +150,7 @@ function generateInvoicePdf(data, destinationPath) {
     const logoPath = resolveLogoPath(company.invoice_logo_path);
 
     // --- Top band: logo + letterhead on the left, dark info card on the right
-    const TOP_BAND_H = 235;
+    const TOP_BAND_H = 260;
     doc.rect(0, 0, PAGE_W, TOP_BAND_H).fill(COLOR_BAND_BG);
     doc.fillColor(COLOR_TEXT);
 
@@ -185,7 +185,7 @@ function generateInvoicePdf(data, destinationPath) {
     const CARD_X = 335;
     const CARD_W = RIGHT - CARD_X;
     const CARD_Y = 42;
-    const CARD_H = 190;
+    const CARD_H = 210;
     panel(doc, CARD_X, CARD_Y, CARD_W, CARD_H, COLOR_NAVY, { radius: 10 });
 
     const innerX = CARD_X + 16;
@@ -218,38 +218,68 @@ function generateInvoicePdf(data, destinationPath) {
       .text(partyHeading, innerX, partyBoxY + 9, { width: innerW - 8, characterSpacing: 0.3 });
     doc.font('Helvetica-Bold').fontSize(9).fillColor(COLOR_TEXT)
       .text(data.party.name || '—', innerX, doc.y + 3, { width: innerW - 8 });
-    if (data.party.address) {
-      doc.font('Helvetica').fontSize(7.5).fillColor(COLOR_MUTED)
-        .text(data.party.address, innerX, doc.y + 2, { width: innerW - 8 });
-    }
+    doc.font('Helvetica').fontSize(7.5).fillColor(COLOR_MUTED);
+    [
+      data.party.address,
+      data.party.ice ? `ICE : ${data.party.ice}` : null,
+      data.party.rc ? `RC : ${data.party.rc}` : null
+    ].filter(Boolean).forEach((line) => {
+      doc.text(line, innerX, doc.y + 2, { width: innerW - 8 });
+    });
 
     // --- Line item table -------------------------------------------------
+    // Header + body are drawn as flat-edged fills clipped to one shared
+    // rounded-rect silhouette, so the navy header sits flush against the
+    // body row below instead of showing its own (independently) rounded
+    // bottom corners floating above a separately-rounded row.
     const tableY = TOP_BAND_H + 20;
+    const headerH = 36;
+    const rowH = 46;
+    const tableH = headerH + rowH;
+    const tableRadius = 8;
+
+    // Evenly-gapped column grid - each entry is the full cell (border to
+    // border); text is inset from those bounds per-column below so the
+    // numeric columns get consistent left/right breathing room instead of
+    // crowding the divider.
     const col = {
-      desc: { x: MARGIN + 14, width: 196 },
-      qte: { x: 266, width: 80, align: 'center' },
-      pu: { x: 352, width: 90, align: 'right' },
-      montant: { x: 450, width: 95, align: 'right' }
+      desc: { x: MARGIN, width: 220 },
+      qte: { x: MARGIN + 220, width: 70 },
+      pu: { x: MARGIN + 290, width: 90 },
+      montant: { x: MARGIN + 380, width: 115 }
     };
-    const headerH = 34;
-    panel(doc, MARGIN, tableY, RIGHT - MARGIN, headerH, COLOR_NAVY, { radius: 6 });
+
+    doc.save();
+    doc.roundedRect(MARGIN, tableY, RIGHT - MARGIN, tableH, tableRadius).clip();
+    doc.rect(MARGIN, tableY, RIGHT - MARGIN, headerH).fill(COLOR_NAVY);
+    doc.rect(MARGIN, tableY + headerH, RIGHT - MARGIN, rowH).fill(COLOR_WHITE);
+    doc.restore();
+    doc.roundedRect(MARGIN, tableY, RIGHT - MARGIN, tableH, tableRadius)
+      .lineWidth(1).strokeColor(COLOR_BORDER).stroke();
+    doc.fillColor(COLOR_TEXT);
+
     doc.font('Helvetica-Bold').fontSize(8).fillColor(COLOR_WHITE);
-    doc.text('DÉSIGNATION', col.desc.x, tableY + 12, { width: col.desc.width });
-    doc.text('QTÉ\n(JOURS)', col.qte.x, tableY + 6, { width: col.qte.width, align: 'center' });
-    doc.text('PRIX UNIT.\n(HT)', col.pu.x, tableY + 6, { width: col.pu.width, align: 'right' });
-    doc.text('MONTANT\n(HT)', col.montant.x, tableY + 6, { width: col.montant.width, align: 'right' });
+    doc.text('DÉSIGNATION', col.desc.x + 16, tableY + 14, { width: col.desc.width - 22 });
+    doc.text('QTÉ\n(JOURS)', col.qte.x, tableY + 8, { width: col.qte.width, align: 'center', lineGap: 1 });
+    doc.text('PRIX UNIT.\n(HT)', col.pu.x, tableY + 8, { width: col.pu.width - 16, align: 'right', lineGap: 1 });
+    doc.text('MONTANT\n(HT)', col.montant.x, tableY + 8, { width: col.montant.width - 18, align: 'right', lineGap: 1 });
 
     const rowY = tableY + headerH;
-    const rowH = 42;
-    doc.rect(MARGIN, rowY, RIGHT - MARGIN, rowH).lineWidth(1).strokeColor(COLOR_BORDER).stroke();
     doc.font('Helvetica').fontSize(9).fillColor(COLOR_TEXT);
-    doc.text(data.label, col.desc.x, rowY + 13, { width: col.desc.width });
-    doc.text(String(data.totalDays), col.qte.x, rowY + 13, { width: col.qte.width, align: 'center' });
-    doc.text(money(data.rate), col.pu.x, rowY + 13, { width: col.pu.width, align: 'right' });
-    doc.font('Helvetica-Bold').text(money(data.totalHt), col.montant.x, rowY + 13, { width: col.montant.width, align: 'right' });
+    doc.text(data.label, col.desc.x + 16, rowY + 17, { width: col.desc.width - 22 });
+    doc.text(String(data.totalDays), col.qte.x, rowY + 17, { width: col.qte.width, align: 'center' });
+    doc.text(money(data.rate), col.pu.x, rowY + 17, { width: col.pu.width - 16, align: 'right' });
+    doc.font('Helvetica-Bold').text(money(data.totalHt), col.montant.x, rowY + 17, { width: col.montant.width - 18, align: 'right' });
+
+    // Faint column dividers, body row only - the header needs none of its
+    // own (the navy fill against white labels already reads as one block).
+    doc.strokeColor(COLOR_BORDER).lineWidth(0.5);
+    [col.qte.x, col.pu.x, col.montant.x].forEach((x) => {
+      doc.moveTo(x, rowY).lineTo(x, rowY + rowH).stroke();
+    });
 
     // --- Amount in words (left) + totals mini-table (right) --------------
-    const sectionY = rowY + rowH + 24;
+    const sectionY = tableY + tableH + 24;
 
     const leftX = MARGIN;
     const leftW = 260;
@@ -284,37 +314,6 @@ function generateInvoicePdf(data, destinationPath) {
         .text(row.label, rightX + 12, y + 10, { width: labelW - 20 });
       doc.font('Helvetica-Bold').fontSize(row.highlight ? 11 : 9).fillColor(valueColor)
         .text(row.value, rightX + labelW + 3, y + (row.highlight ? 9 : 10), { width: valueW - 12, align: 'right' });
-    });
-
-    // --- Bank details ------------------------------------------------------
-    const columnsBottom = Math.max(
-      wordsBoxY + wordsBoxH,
-      sectionY + totalsRows.length * (totalsRowH + totalsGap) - totalsGap
-    );
-    const paymentY = columnsBottom + 26;
-    const bankHeadingBoxY = sectionHeading(doc, MARGIN, paymentY, 300, 'MODE DE PAIEMENT');
-    doc.font('Helvetica').fontSize(8.5).fillColor(COLOR_MUTED)
-      .text('Virement bancaire au compte suivant', MARGIN, paymentY + 12);
-
-    const bankRows = [
-      company.bank_name ? { label: 'Banque', value: company.bank_name } : null,
-      company.bank_agency ? { label: 'Agence', value: company.bank_agency } : null,
-      company.bank_rib ? { label: 'RIB', value: company.bank_rib } : null,
-      company.bank_iban ? { label: 'IBAN', value: company.bank_iban } : null,
-      company.bank_swift ? { label: 'BIC / SWIFT', value: company.bank_swift } : null
-    ].filter(Boolean);
-
-    const bankBoxY = bankHeadingBoxY + 4;
-    const bankRowH = 20;
-    const bankBoxH = bankRows.length * bankRowH + 16;
-    panel(doc, MARGIN, bankBoxY, RIGHT - MARGIN, bankBoxH, COLOR_BAND_BG, { border: COLOR_BORDER });
-    bankRows.forEach((row, i) => {
-      const ry = bankBoxY + 10 + i * bankRowH;
-      doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLOR_NAVY).text(row.label, MARGIN + 16, ry, { width: 110 });
-      doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLOR_TEXT).text(row.value, MARGIN + 140, ry, { width: 360 });
-      if (i < bankRows.length - 1) {
-        doc.moveTo(MARGIN + 16, ry + 16).lineTo(RIGHT - 16, ry + 16).lineWidth(0.5).strokeColor(COLOR_BORDER).stroke();
-      }
     });
 
     // --- Footer band, anchored to the bottom of the page --------------------
