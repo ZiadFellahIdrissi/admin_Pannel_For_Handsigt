@@ -83,12 +83,6 @@
                   <i class="fa-solid fa-file-invoice-dollar"></i>Generate Invoice
                 </button>
               <% } %>
-              <% if (!hasSupplierInvoice) { %>
-                <label class="consolidate-check" title="Include this submission in one consolidated supplier invoice with others">
-                  <input type="checkbox" name="submissionIds" value="<%= s.id %>" form="consolidate-supplier-form" data-bulk-select-item="consolidate-supplier" class="sr-only">
-                  <i class="fa-solid fa-check"></i>
-                </label>
-              <% } %>
             <% } %>
             <% if (s.status !== 'draft' && !hasClientInvoice && !hasSupplierInvoice) { %>
               <form action="/approvals/<%= s.id %>/reopen" method="POST">
@@ -96,6 +90,12 @@
                 <input type="hidden" name="returnTo" value="/history">
                 <button type="submit" class="btn-secondary text-xs !px-3 !py-1.5"><i class="fa-solid fa-rotate-left"></i>Reopen</button>
               </form>
+            <% } %>
+            <% if (s.status === 'approved' && !hasSupplierInvoice) { %>
+              <label class="consolidate-check" title="Include this submission in one consolidated supplier invoice with others">
+                <input type="checkbox" name="submissionIds" value="<%= s.id %>" form="consolidate-supplier-form" data-bulk-select-item="consolidate-supplier" class="sr-only">
+                <i class="fa-solid fa-check"></i>
+              </label>
             <% } %>
           </div>
         </div>
