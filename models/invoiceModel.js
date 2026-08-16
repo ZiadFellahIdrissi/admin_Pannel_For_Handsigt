@@ -65,18 +65,24 @@ async function create({
   return result.insertId;
 }
 
-// Combined supplier invoice: one parent `invoices` row with the seven
-// per-submission columns left NULL (there's no single value for any of
-// them across N consultants), plus one invoice_line_items row per
-// consultant holding the actual breakdown. totalHt/totalTva/totalTtc are
-// the sums across lineItems, computed by the caller.
-async function createCombined({ invoiceNumber, totalHt, totalTva, totalTtc, pdfPath, isSimulation, lineItems }) {
+// Combined supplier invoice: one parent `invoices` row with
+// submission_id/client_id/consultant_id/total_days/rate/label left NULL
+// (there's no single value for any of them across N consultants), plus
+// one invoice_line_items row per consultant holding the actual
+// breakdown. totalHt/totalTva/totalTtc are the sums across lineItems,
+// computed by the caller. month IS stored on the parent row when every
+// line item happens to share the same one (the common case - most
+// consolidated invoices are for one month across several consultants) -
+// only genuinely mixed-month invoices leave it NULL, so
+// findById/listByType can show the real month instead of always
+// falling back to "Multiple periods".
+async function createCombined({ invoiceNumber, month, totalHt, totalTva, totalTtc, pdfPath, isSimulation, lineItems }) {
   const [result] = await pool.query(
     `INSERT INTO invoices
        (invoice_number, type, submission_id, client_id, consultant_id, month,
         total_days, rate, total_ht, total_tva, total_ttc, label, pdf_path, is_simulation)
-     VALUES (?, 'supplier', NULL, NULL, NULL, NULL, NULL, NULL, ?, ?, ?, NULL, ?, ?)`,
-    [invoiceNumber, totalHt, totalTva, totalTtc, pdfPath, isSimulation ? 1 : 0]
+     VALUES (?, 'supplier', NULL, NULL, NULL, ?, NULL, NULL, ?, ?, ?, NULL, ?, ?)`,
+    [invoiceNumber, month || null, totalHt, totalTva, totalTtc, pdfPath, isSimulation ? 1 : 0]
   );
   const invoiceId = result.insertId;
 

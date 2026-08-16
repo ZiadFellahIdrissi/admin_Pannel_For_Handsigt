@@ -273,6 +273,7 @@ async function handleGenerateCombinedSupplier(req, res) {
 
   await invoiceModel.createCombined({
     invoiceNumber,
+    month: months.length === 1 ? months[0] : null,
     totalHt,
     totalTva,
     totalTtc,
