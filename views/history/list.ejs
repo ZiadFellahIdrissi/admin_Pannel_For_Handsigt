@@ -84,10 +84,9 @@
                 </button>
               <% } %>
               <% if (!hasSupplierInvoice) { %>
-                <label class="chip-toggle" title="Include this submission in one consolidated supplier invoice with others">
+                <label class="consolidate-check" title="Include this submission in one consolidated supplier invoice with others">
                   <input type="checkbox" name="submissionIds" value="<%= s.id %>" form="consolidate-supplier-form" data-bulk-select-item="consolidate-supplier" class="sr-only">
-                  <i class="fa-solid fa-layer-group"></i>
-                  Consolidate
+                  <i class="fa-solid fa-check"></i>
                 </label>
               <% } %>
             <% } %>

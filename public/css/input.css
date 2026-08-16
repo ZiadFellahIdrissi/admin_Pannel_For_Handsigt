@@ -344,24 +344,30 @@
     background-color: var(--blue-dim);
   }
 
-  /* Small pill toggle - a checkbox styled as a chip instead of a bare
-     checkbox+label (e.g. History's "mark for a consolidated invoice"
-     row action). The real checkbox is visually hidden (sr-only) but
-     still drives the chip's look via :has(), same technique as
-     .option-card, and stays fully keyboard/screen-reader accessible. */
-  .chip-toggle {
-    @apply inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-full cursor-pointer transition-colors shrink-0;
-    border: 1px solid var(--border-light);
-    color: var(--gray-2);
+  /* Wordless round check control (History's "mark for one consolidated
+     supplier invoice" row action) - just a circle that fills solid with
+     a checkmark once picked, no label text. The real checkbox is
+     visually hidden (sr-only) but still drives the look via :has(),
+     same technique as .option-card, and stays fully keyboard/
+     screen-reader accessible. */
+  .consolidate-check {
+    @apply w-7 h-7 rounded-full flex items-center justify-center cursor-pointer transition-all shrink-0 text-xs;
+    border: 1.5px solid var(--border-light);
+    color: transparent;
   }
-  .chip-toggle:hover {
+  .consolidate-check:hover {
     border-color: var(--blue);
-    color: var(--blue);
   }
-  .chip-toggle:has(input:checked) {
+  .consolidate-check:has(input:checked) {
+    background-color: var(--blue);
     border-color: var(--blue);
+    color: #fff;
+  }
+  /* Lights up the whole row (not just the little circle) once its check
+     is picked, so a selected submission is obvious at a glance. */
+  .card-interactive:has(.consolidate-check input:checked) {
     background-color: var(--blue-dim);
-    color: var(--blue);
+    border-color: var(--blue);
   }
 
   /* Read-only month calendar grid, matching the Consultant Dashboard's own
