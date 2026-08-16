@@ -344,6 +344,26 @@
     background-color: var(--blue-dim);
   }
 
+  /* Small pill toggle - a checkbox styled as a chip instead of a bare
+     checkbox+label (e.g. History's "mark for a consolidated invoice"
+     row action). The real checkbox is visually hidden (sr-only) but
+     still drives the chip's look via :has(), same technique as
+     .option-card, and stays fully keyboard/screen-reader accessible. */
+  .chip-toggle {
+    @apply inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-full cursor-pointer transition-colors shrink-0;
+    border: 1px solid var(--border-light);
+    color: var(--gray-2);
+  }
+  .chip-toggle:hover {
+    border-color: var(--blue);
+    color: var(--blue);
+  }
+  .chip-toggle:has(input:checked) {
+    border-color: var(--blue);
+    background-color: var(--blue-dim);
+    color: var(--blue);
+  }
+
   /* Read-only month calendar grid, matching the Consultant Dashboard's own
      calendar (day-cell/day-cell-weekend/day-cell-filled) so the admin's
      "view details" popup looks like the same calendar the consultant

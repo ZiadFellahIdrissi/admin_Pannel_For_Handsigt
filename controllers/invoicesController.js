@@ -192,7 +192,7 @@ async function handleGenerateCombinedSupplier(req, res) {
     .filter((id) => Number.isInteger(id) && id > 0);
 
   if (submissionIds.length === 0) {
-    req.flash('error', 'Choose at least one submission to combine.');
+    req.flash('error', 'Choose at least one submission to consolidate.');
     return res.redirect('/history');
   }
 
@@ -282,7 +282,7 @@ async function handleGenerateCombinedSupplier(req, res) {
   });
 
   const skipNote = skippedCount > 0 ? ` (${skippedCount} skipped - already invoiced or not approved)` : '';
-  req.flash('success', `Combined supplier invoice ${invoiceNumber} generated for ${eligible.length} consultant(s)${skipNote}.`);
+  req.flash('success', `Consolidated supplier invoice ${invoiceNumber} generated for ${eligible.length} consultant(s)${skipNote}.`);
   res.redirect('/history');
 }
 

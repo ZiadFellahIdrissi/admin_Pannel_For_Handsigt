@@ -54,7 +54,7 @@
           <h2 class="section-title"><i class="fa-solid fa-circle-info"></i>Invoice</h2>
           <div class="grid grid-cols-2 gap-x-4 gap-y-2">
             <div><span class="text-brand-gray2">Number</span><br><%= invoice.invoice_number %></div>
-            <div><span class="text-brand-gray2">Type</span><br><%= isClientType ? 'Client Invoice' : 'Supplier Invoice' %><% if (lineItems.length > 0) { %> <span class="badge-pending !py-0.5 !px-2 ml-1">Combined</span><% } %></div>
+            <div><span class="text-brand-gray2">Type</span><br><%= isClientType ? 'Client Invoice' : 'Supplier Invoice' %><% if (lineItems.length > 0) { %> <span class="badge-pending !py-0.5 !px-2 ml-1">Consolidated</span><% } %></div>
             <div><span class="text-brand-gray2">Month</span><br><%= invoice.month ? monthLabel(invoice.month) : 'Multiple periods' %></div>
             <div><span class="text-brand-gray2">Created</span><br><%= invoice.created_at %></div>
           </div>

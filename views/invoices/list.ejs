@@ -18,8 +18,9 @@
   <!-- Month navigation - same prev/input/next pattern as /summary, plus an
        All Periods option (which /summary doesn't have) since here "no
        month selected" is a real, useful state rather than something to
-       default away from. -->
-  <div class="flex items-center gap-2 mb-6 flex-wrap">
+       default away from. Full-width card, matching the filter bars on
+       History/Clients, instead of a compact inline row. -->
+  <div class="card p-4 mb-6 flex items-center gap-2 flex-wrap">
     <a href="<%= basePath %>?month=<%= prevMonth %>" class="btn-secondary !px-3" aria-label="Previous month">
       <i class="fa-solid fa-chevron-left"></i>
     </a>
@@ -65,7 +66,7 @@
               <div class="font-semibold truncate flex items-center gap-2">
                 <%= inv.invoice_number %>
                 <% if (!inv.submission_id) { %>
-                  <span class="badge-pending !py-0.5 !px-2">Combined</span>
+                  <span class="badge-pending !py-0.5 !px-2">Consolidated</span>
                 <% } %>
               </div>
               <div class="text-xs text-brand-gray2 mt-0.5">
@@ -85,7 +86,7 @@
                 <div class="font-semibold truncate flex items-center gap-2">
                   <%= inv.invoice_number %>
                   <% if (!inv.submission_id) { %>
-                    <span class="badge-pending !py-0.5 !px-2">Combined</span>
+                    <span class="badge-pending !py-0.5 !px-2">Consolidated</span>
                   <% } %>
                   <% if (inv.is_simulation) { %>
                     <span class="badge-pending !py-0.5 !px-2">Simulation</span>
