@@ -155,7 +155,10 @@ function sectionHeading(doc, x, y, width, text) {
 //         company (company_info row), party ({ name, ice, rc, address,
 //         email, phone } - client row for type client, just { name } for
 //         type supplier since consultants have no legal/business fields),
-//         label, totalDays, rate, totalHt, totalTva, totalTtc }
+//         lineItems ([{ label, totalDays, rate, totalHt }] - always an
+//         array; a single-submission invoice just has one entry, a
+//         combined supplier invoice has one per consultant),
+//         totalHt, totalTva, totalTtc (summed across lineItems) }
 function generateInvoicePdf(data, destinationPath) {
   return new Promise((resolve, reject) => {
     // Every element in this document is placed at explicit x/y coordinates
@@ -278,10 +281,14 @@ function generateInvoicePdf(data, destinationPath) {
     // Header + body are drawn as flat-edged fills clipped to one shared
     // rounded-rect silhouette, so the navy header sits flush against the
     // body row below instead of showing its own (independently) rounded
-    // bottom corners floating above a separately-rounded row.
+    // bottom corners floating above a separately-rounded row. The body is
+    // as many rows as lineItems has - 1 for a normal invoice, N for a
+    // combined supplier invoice (one row per consultant).
+    const lineItems = data.lineItems;
     const headerH = 36;
-    const rowH = 46;
-    const tableH = headerH + rowH;
+    const rowH = 32;
+    const bodyH = rowH * lineItems.length;
+    const tableH = headerH + bodyH;
     const tableRadius = 8;
 
     // Evenly-gapped column grid - each entry is the full cell (border to
@@ -298,7 +305,7 @@ function generateInvoicePdf(data, destinationPath) {
     doc.save();
     doc.roundedRect(MARGIN, tableY, RIGHT - MARGIN, tableH, tableRadius).clip();
     doc.rect(MARGIN, tableY, RIGHT - MARGIN, headerH).fill(COLOR_NAVY);
-    doc.rect(MARGIN, tableY + headerH, RIGHT - MARGIN, rowH).fill(COLOR_WHITE);
+    doc.rect(MARGIN, tableY + headerH, RIGHT - MARGIN, bodyH).fill(COLOR_WHITE);
     doc.restore();
     doc.roundedRect(MARGIN, tableY, RIGHT - MARGIN, tableH, tableRadius)
       .lineWidth(1).strokeColor(COLOR_BORDER).stroke();
@@ -310,19 +317,28 @@ function generateInvoicePdf(data, destinationPath) {
     doc.text('PRIX UNIT.\n(HT)', col.pu.x, tableY + 8, { width: col.pu.width - 16, align: 'right', lineGap: 1 });
     doc.text('MONTANT\n(HT)', col.montant.x, tableY + 8, { width: col.montant.width - 18, align: 'right', lineGap: 1 });
 
-    const rowY = tableY + headerH;
-    doc.font('Helvetica').fontSize(9).fillColor(COLOR_TEXT);
-    doc.text(data.label, col.desc.x + 16, rowY + 17, { width: col.desc.width - 22 });
-    doc.text(String(data.totalDays), col.qte.x, rowY + 17, { width: col.qte.width, align: 'center' });
-    doc.text(money(data.rate), col.pu.x, rowY + 17, { width: col.pu.width - 16, align: 'right' });
-    doc.font('Helvetica-Bold').text(money(data.totalHt), col.montant.x, rowY + 17, { width: col.montant.width - 18, align: 'right' });
+    const rowsY = tableY + headerH;
+    lineItems.forEach((item, i) => {
+      const y = rowsY + i * rowH;
+      doc.font('Helvetica').fontSize(9).fillColor(COLOR_TEXT);
+      doc.text(item.label, col.desc.x + 16, y + 10, { width: col.desc.width - 22 });
+      doc.text(String(item.totalDays), col.qte.x, y + 10, { width: col.qte.width, align: 'center' });
+      doc.text(money(item.rate), col.pu.x, y + 10, { width: col.pu.width - 16, align: 'right' });
+      doc.font('Helvetica-Bold').text(money(item.totalHt), col.montant.x, y + 10, { width: col.montant.width - 18, align: 'right' });
+    });
 
-    // Faint column dividers, body row only - the header needs none of its
-    // own (the navy fill against white labels already reads as one block).
+    // Faint column dividers spanning the full body height, plus thin row
+    // dividers between line items when there's more than one. The header
+    // needs neither of its own (the navy fill against white labels
+    // already reads as one block).
     doc.strokeColor(COLOR_BORDER).lineWidth(0.5);
     [col.qte.x, col.pu.x, col.montant.x].forEach((x) => {
-      doc.moveTo(x, rowY).lineTo(x, rowY + rowH).stroke();
+      doc.moveTo(x, rowsY).lineTo(x, rowsY + bodyH).stroke();
     });
+    for (let i = 1; i < lineItems.length; i++) {
+      const y = rowsY + i * rowH;
+      doc.moveTo(MARGIN, y).lineTo(RIGHT, y).stroke();
+    }
 
     // --- Amount in words (left) + totals mini-table (right) --------------
     const sectionY = tableY + tableH + 24;

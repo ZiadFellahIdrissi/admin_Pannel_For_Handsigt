@@ -27,6 +27,9 @@
           <div class="min-w-0">
             <div class="font-semibold truncate flex items-center gap-2">
               <%= inv.invoice_number %>
+              <% if (!inv.submission_id) { %>
+                <span class="badge-pending !py-0.5 !px-2">Combined</span>
+              <% } %>
               <% if (!isClientType) { %>
                 <% if (inv.is_simulation) { %>
                   <span class="badge-pending !py-0.5 !px-2">Simulation</span>
@@ -36,12 +39,12 @@
               <% } %>
             </div>
             <div class="text-xs text-brand-gray2 mt-0.5">
-              <%= inv.consultant_name %> &middot; <%= inv.client_name %> &middot; <%= monthLabel(inv.month) %>
+              <%= inv.consultant_name %> &middot; <%= inv.client_name %> &middot; <%= inv.month ? monthLabel(inv.month) : 'Multiple periods' %>
             </div>
           </div>
           <div class="text-right shrink-0">
             <div class="font-semibold"><%= formatCurrency(inv.total_ttc) %></div>
-            <div class="text-xs text-brand-gray2">Total incl. VAT &middot; <%= inv.total_days %> days</div>
+            <div class="text-xs text-brand-gray2">Total incl. VAT<% if (inv.total_days) { %> &middot; <%= inv.total_days %> days<% } %></div>
           </div>
         </a>
       <% }); %>

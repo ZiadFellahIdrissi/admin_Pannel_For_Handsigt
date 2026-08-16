@@ -31,6 +31,7 @@ router.get('/invoices/suppliers', asyncHandler(invoicesController.listSuppliers)
 router.get('/invoices/suppliers/:id', asyncHandler(invoicesController.showSupplierDetail));
 router.get('/invoices/:id/pdf', asyncHandler(invoicesController.servePdf));
 router.post('/invoices/generate/:submissionId', verifyToken, asyncHandler(invoicesController.handleGenerate));
+router.post('/invoices/generate-combined-supplier', verifyToken, asyncHandler(invoicesController.handleGenerateCombinedSupplier));
 router.post(
   '/invoices/:id/upload-real',
   handleRealInvoiceUpload((req) => `/invoices/suppliers/${req.params.id}`),

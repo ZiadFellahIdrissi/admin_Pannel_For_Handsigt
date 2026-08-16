@@ -173,6 +173,45 @@ ALTER TABLE invoices
   ADD COLUMN is_simulation TINYINT(1) NOT NULL DEFAULT 0;
 
 -- ---------------------------------------------------------------------
+-- MIGRATION - run once in phpMyAdmin's SQL tab.
+--
+-- Combined supplier invoices: sometimes a supplier/agency sends ONE real
+-- invoice covering several consultants at once, even across different
+-- Handsight clients - client invoices stay one-per-submission
+-- (unaffected). A combined supplier invoice's parent `invoices` row has
+-- submission_id/client_id/consultant_id/month/total_days/rate/label all
+-- NULL (there's no single value for any of them); its actual per-
+-- consultant breakdown lives in invoice_line_items instead. Every
+-- existing invoice (client, and single-submission supplier) keeps using
+-- the flat top-level columns exactly as before - nothing about them
+-- changes. total_ht/total_tva/total_ttc on `invoices` stay NOT NULL on
+-- every row - for a combined invoice they're the sum across its line
+-- items.
+-- ---------------------------------------------------------------------
+ALTER TABLE invoices
+  MODIFY COLUMN submission_id INT NULL,
+  MODIFY COLUMN client_id INT NULL,
+  MODIFY COLUMN consultant_id INT NULL,
+  MODIFY COLUMN month VARCHAR(7) NULL,
+  MODIFY COLUMN total_days DECIMAL(6,2) NULL,
+  MODIFY COLUMN rate DECIMAL(10,2) NULL,
+  MODIFY COLUMN label VARCHAR(255) NULL;
+
+CREATE TABLE invoice_line_items (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  invoice_id INT NOT NULL,
+  submission_id INT NOT NULL,
+  consultant_id INT NOT NULL,
+  client_id INT NOT NULL,
+  month VARCHAR(7) NOT NULL,
+  label VARCHAR(255) NOT NULL,
+  total_days DECIMAL(6,2) NOT NULL,
+  rate DECIMAL(10,2) NOT NULL,
+  total_ht DECIMAL(12,2) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ---------------------------------------------------------------------
 -- REFERENCE ONLY - this table already exists live (created outside this
 -- app, alongside the public landing page). `IF NOT EXISTS` makes this
 -- safe/idempotent to run - it's here purely so this file stays the one

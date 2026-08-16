@@ -42,7 +42,19 @@
       <p class="text-sm text-brand-gray2">No submissions match these filters.</p>
     </div>
   <% } else { %>
-    <div class="space-y-3">
+    <%
+      // Empty form for the "combine into one supplier invoice" bulk
+      // action - deliberately doesn't wrap the row list, since each row
+      // already has its own independent Reopen/Generate <form>s and HTML
+      // doesn't allow nesting <form> elements. Row checkboxes below point
+      // at this by id via the native `form="..."` attribute instead, same
+      // pattern as views/career-offers/list.ejs's bulk-delete form.
+    %>
+    <form id="combine-supplier-form" action="/invoices/generate-combined-supplier" method="POST" data-confirm="Generate one combined supplier invoice for the selected submissions?">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    </form>
+
+    <div class="space-y-3 mb-16">
       <% submissions.forEach(function(s) { %>
         <% var hasClientInvoice = !!s.client_invoice_id; var hasSupplierInvoice = !!s.supplier_invoice_id; %>
         <div class="card-interactive p-4 flex items-center justify-between gap-3 flex-wrap">
@@ -69,6 +81,12 @@
                 <button type="button" class="btn-primary text-xs !px-3 !py-1.5" data-dialog-open="generate-invoice-<%= s.id %>">
                   <i class="fa-solid fa-file-invoice-dollar"></i>Generate Invoice
                 </button>
+              <% } %>
+              <% if (!hasSupplierInvoice) { %>
+                <label class="flex items-center gap-1.5 text-xs text-brand-gray2 cursor-pointer" title="Select to combine into one supplier invoice with other submissions">
+                  <input type="checkbox" name="submissionIds" value="<%= s.id %>" form="combine-supplier-form" data-bulk-select-item="combine-supplier" class="rounded w-3.5 h-3.5 accent-brand-accent">
+                  Combine
+                </label>
               <% } %>
             <% } %>
             <% if (s.status !== 'draft') { %>
@@ -145,10 +163,16 @@
         <% } %>
       <% }); %>
     </div>
+
+    <div data-bulk-select-bar="combine-supplier" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 card px-4 py-3 shadow-xl flex items-center gap-3" style="display: none;">
+      <span class="text-sm font-medium"><span data-bulk-select-count>0</span> selected</span>
+      <button type="submit" form="combine-supplier-form" class="btn-primary text-sm !px-3 !py-1.5"><i class="fa-solid fa-layer-group"></i>Generate Combined Supplier Invoice</button>
+    </div>
   <% } %>
     </div>
   </div>
 </div>
 <script src="/js/dialog-toggle.js?v=<%= assetVersion %>" defer></script>
+<script src="/js/bulk-select.js?v=<%= assetVersion %>" defer></script>
 
 <%- include('../partials/foot') %>

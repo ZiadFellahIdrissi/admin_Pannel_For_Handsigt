@@ -48,8 +48,8 @@
           <h2 class="section-title"><i class="fa-solid fa-circle-info"></i>Invoice</h2>
           <div class="grid grid-cols-2 gap-x-4 gap-y-2">
             <div><span class="text-brand-gray2">Number</span><br><%= invoice.invoice_number %></div>
-            <div><span class="text-brand-gray2">Type</span><br><%= isClientType ? 'Client Invoice' : 'Supplier Invoice' %></div>
-            <div><span class="text-brand-gray2">Month</span><br><%= monthLabel(invoice.month) %></div>
+            <div><span class="text-brand-gray2">Type</span><br><%= isClientType ? 'Client Invoice' : 'Supplier Invoice' %><% if (lineItems.length > 0) { %> <span class="badge-pending !py-0.5 !px-2 ml-1">Combined</span><% } %></div>
+            <div><span class="text-brand-gray2">Month</span><br><%= invoice.month ? monthLabel(invoice.month) : 'Multiple periods' %></div>
             <div><span class="text-brand-gray2">Created</span><br><%= invoice.created_at %></div>
           </div>
         </div>
@@ -62,14 +62,33 @@
           </div>
         </div>
 
-        <div>
-          <h2 class="section-title"><i class="fa-solid fa-list"></i>Line Item</h2>
-          <p class="mb-2"><%= invoice.label %></p>
-          <div class="grid grid-cols-2 gap-x-4 gap-y-2">
-            <div><span class="text-brand-gray2">Quantity (days)</span><br><%= invoice.total_days %></div>
-            <div><span class="text-brand-gray2">Unit Price (excl. VAT)</span><br><%= formatCurrency(invoice.rate) %></div>
+        <% if (lineItems.length > 0) { %>
+          <div>
+            <h2 class="section-title"><i class="fa-solid fa-list"></i>Line Items (<%= lineItems.length %> consultants)</h2>
+            <div class="space-y-2">
+              <% lineItems.forEach(function(item) { %>
+                <div class="rounded-lg border border-brand-borderLight p-2.5 text-xs">
+                  <div class="font-medium text-sm mb-1"><%= item.consultant_name %> &middot; <%= item.client_name %></div>
+                  <div class="text-brand-gray2 mb-1"><%= item.label %></div>
+                  <div class="flex flex-wrap gap-x-4 gap-y-1">
+                    <span><%= item.total_days %> days</span>
+                    <span>&times; <%= formatCurrency(item.rate) %></span>
+                    <span class="font-medium text-brand-text">= <%= formatCurrency(item.total_ht) %></span>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
           </div>
-        </div>
+        <% } else { %>
+          <div>
+            <h2 class="section-title"><i class="fa-solid fa-list"></i>Line Item</h2>
+            <p class="mb-2"><%= invoice.label %></p>
+            <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+              <div><span class="text-brand-gray2">Quantity (days)</span><br><%= invoice.total_days %></div>
+              <div><span class="text-brand-gray2">Unit Price (excl. VAT)</span><br><%= formatCurrency(invoice.rate) %></div>
+            </div>
+          </div>
+        <% } %>
 
         <div>
           <h2 class="section-title"><i class="fa-solid fa-calculator"></i>Totals</h2>
@@ -101,6 +120,11 @@
         <p class="text-sm text-brand-gray2 mb-4">Replaces the current PDF with the real invoice you received from the supplier. This can't be undone.</p>
         <form action="/invoices/<%= invoice.id %>/upload-real" method="POST" enctype="multipart/form-data" class="space-y-3">
           <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div>
+            <label class="field-label" for="invoiceNumber">Invoice number</label>
+            <input class="field-input" type="text" id="invoiceNumber" name="invoiceNumber" value="<%= invoice.invoice_number %>">
+            <p class="text-xs text-brand-gray2 mt-1">Update this to match the real invoice's own number if it's different.</p>
+          </div>
           <div>
             <label class="field-label" for="realInvoice">PDF file</label>
             <input class="field-input" type="file" id="realInvoice" name="realInvoice" accept="application/pdf" required>

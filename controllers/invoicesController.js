@@ -16,6 +16,26 @@ function consultantInitials(firstName, lastName) {
   return `${(firstName || '').slice(0, 2)}${(lastName || '').slice(0, 2)}`.toUpperCase();
 }
 
+function buildLineLabel(pairing, consultant) {
+  const roleTitle = (pairing && pairing.role_title) || 'Consultant';
+  const initials = consultantInitials(consultant.first_name, consultant.last_name);
+  return `Prestation de services – Consultant ${roleTitle} (Réf. ${initials})`;
+}
+
+// Supplier-side fee math - consultant_tjm is treated as already
+// TVA-inclusive by default (the extra_fee_percent = 0 case simplifies to
+// consultant_tjm / 1.2). Shared by the single-submission generation path
+// and the combined-invoice path below so the formula only lives once.
+function computeSupplierAmounts(submission) {
+  const totalDays = Number(submission.total_days);
+  const consultantTjm = Number(submission.consultant_tjm || 0);
+  const extraFeePercent = Number(submission.extra_fee_percent || 0);
+  const feeDenominator = 1 - extraFeePercent / 100;
+  const rate = feeDenominator !== 0 ? (consultantTjm / feeDenominator) / 1.2 : 0;
+  const totalHt = rate * totalDays;
+  return { totalDays, rate, totalHt };
+}
+
 // req.body.invoiceType is 'both' | 'client' | 'supplier' - which type(s)
 // the admin picked in the History page's Generate popup. Whichever of the
 // two already exists for this submission is always skipped (never
@@ -54,11 +74,7 @@ async function handleGenerate(req, res) {
 
   const totalDays = Number(submission.total_days);
   const clientTjm = Number(submission.client_tjm || 0);
-  const consultantTjm = Number(submission.consultant_tjm || 0);
-  const extraFeePercent = Number(submission.extra_fee_percent || 0);
-  const roleTitle = (pairing && pairing.role_title) || 'Consultant';
-  const initials = consultantInitials(consultant.first_name, consultant.last_name);
-  const label = `Prestation de services – Consultant ${roleTitle} (Réf. ${initials})`;
+  const label = buildLineLabel(pairing, consultant);
   const dateLabel = new Date().toLocaleDateString('fr-FR');
   const monthLbl = monthLabelFr(submission.month);
 
@@ -67,9 +83,9 @@ async function handleGenerate(req, res) {
   const clientTva = clientHt * 0.2;
   const clientTtc = clientHt + clientTva;
 
-  const feeDenominator = 1 - extraFeePercent / 100;
-  const supplierRate = feeDenominator !== 0 ? (consultantTjm / feeDenominator) / 1.2 : 0;
-  const supplierHt = supplierRate * totalDays;
+  const supplierAmounts = computeSupplierAmounts(submission);
+  const supplierRate = supplierAmounts.rate;
+  const supplierHt = supplierAmounts.totalHt;
   const supplierTva = supplierHt * 0.2;
   const supplierTtc = supplierHt + supplierTva;
 
@@ -94,9 +110,7 @@ async function handleGenerate(req, res) {
       monthLabel: monthLbl,
       company,
       party: clientParty,
-      label,
-      totalDays,
-      rate: clientRate,
+      lineItems: [{ label, totalDays, rate: clientRate, totalHt: clientHt }],
       totalHt: clientHt,
       totalTva: clientTva,
       totalTtc: clientTtc
@@ -132,9 +146,7 @@ async function handleGenerate(req, res) {
       monthLabel: monthLbl,
       company,
       party: { name: `${consultant.first_name} ${consultant.last_name}` },
-      label,
-      totalDays,
-      rate: supplierRate,
+      lineItems: [{ label, totalDays: supplierAmounts.totalDays, rate: supplierRate, totalHt: supplierHt }],
       totalHt: supplierHt,
       totalTva: supplierTva,
       totalTtc: supplierTtc
@@ -164,6 +176,113 @@ async function handleGenerate(req, res) {
   res.redirect('/history');
 }
 
+// Some suppliers are agencies that send ONE real invoice covering several
+// consultants at once, even across different Handsight clients - client
+// invoices are unaffected, always generated individually as above. This
+// builds one supplier invoice (invoiceModel.createCombined) with one
+// invoice_line_items row per selected submission, instead of one
+// `invoices` row per submission.
+async function handleGenerateCombinedSupplier(req, res) {
+  const rawIds = req.body.submissionIds;
+  const submissionIds = (Array.isArray(rawIds) ? rawIds : rawIds ? [rawIds] : [])
+    .map(Number)
+    .filter((id) => Number.isInteger(id) && id > 0);
+
+  if (submissionIds.length === 0) {
+    req.flash('error', 'Choose at least one submission to combine.');
+    return res.redirect('/history');
+  }
+
+  const submissions = await Promise.all(submissionIds.map((id) => monthSubmissionModel.findByIdWithTotals(id)));
+
+  const eligible = [];
+  let skippedCount = 0;
+  for (const submission of submissions) {
+    if (!submission || submission.status !== 'approved') {
+      skippedCount += 1;
+      continue;
+    }
+    const existing = await invoiceModel.findIdsForSubmission(submission.id);
+    if (existing.supplierInvoiceId) {
+      skippedCount += 1;
+      continue;
+    }
+    eligible.push(submission);
+  }
+
+  if (eligible.length === 0) {
+    req.flash('error', 'None of the selected submissions are eligible (must be approved and not already supplier-invoiced).');
+    return res.redirect('/history');
+  }
+
+  const [consultants, clients, pairings, company] = await Promise.all([
+    Promise.all(eligible.map((s) => userModel.findById(s.user_id))),
+    Promise.all(eligible.map((s) => clientModel.findById(s.client_id))),
+    Promise.all(eligible.map((s) => consultantClientModel.find(s.user_id, s.client_id))),
+    companyInfoModel.get()
+  ]);
+
+  const lineItems = eligible.map((submission, i) => {
+    const consultant = consultants[i];
+    const client = clients[i];
+    const pairing = pairings[i];
+    const amounts = computeSupplierAmounts(submission);
+    const clientLabel = client.legal_name || client.name;
+    return {
+      submissionId: submission.id,
+      consultantId: submission.user_id,
+      clientId: submission.client_id,
+      month: submission.month,
+      label: `${buildLineLabel(pairing, consultant)} – ${clientLabel}`,
+      totalDays: amounts.totalDays,
+      rate: amounts.rate,
+      totalHt: amounts.totalHt
+    };
+  });
+
+  const totalHt = lineItems.reduce((sum, item) => sum + item.totalHt, 0);
+  const totalTva = totalHt * 0.2;
+  const totalTtc = totalHt + totalTva;
+
+  const consultantNames = consultants.map((c) => `${c.first_name} ${c.last_name}`);
+  const partyName = consultantNames.length <= 4
+    ? consultantNames.join(', ')
+    : `${consultantNames.length} consultants`;
+
+  const months = [...new Set(eligible.map((s) => s.month))];
+  const monthLbl = months.length === 1 ? monthLabelFr(months[0]) : 'Plusieurs périodes';
+
+  const invoiceNumber = await invoiceModel.nextInvoiceNumber('supplier');
+  const pdfFilename = `${crypto.randomUUID()}.pdf`;
+
+  await generateInvoicePdf({
+    type: 'supplier',
+    invoiceNumber,
+    dateLabel: new Date().toLocaleDateString('fr-FR'),
+    monthLabel: monthLbl,
+    company,
+    party: { name: partyName },
+    lineItems: lineItems.map((item) => ({ label: item.label, totalDays: item.totalDays, rate: item.rate, totalHt: item.totalHt })),
+    totalHt,
+    totalTva,
+    totalTtc
+  }, path.join(INVOICE_DIR, pdfFilename));
+
+  await invoiceModel.createCombined({
+    invoiceNumber,
+    totalHt,
+    totalTva,
+    totalTtc,
+    pdfPath: pdfFilename,
+    isSimulation: true,
+    lineItems
+  });
+
+  const skipNote = skippedCount > 0 ? ` (${skippedCount} skipped - already invoiced or not approved)` : '';
+  req.flash('success', `Combined supplier invoice ${invoiceNumber} generated for ${eligible.length} consultant(s)${skipNote}.`);
+  res.redirect('/history');
+}
+
 async function listClients(req, res) {
   const invoices = await invoiceModel.listByType('client');
   res.render('invoices/list', { invoices, type: 'client' });
@@ -179,15 +298,20 @@ async function showClientDetail(req, res) {
   if (!invoice || invoice.type !== 'client') {
     return res.status(404).render('error', { message: 'Invoice not found.' });
   }
-  res.render('invoices/detail', { invoice, type: 'client' });
+  res.render('invoices/detail', { invoice, type: 'client', lineItems: [] });
 }
 
+// lineItems is non-empty only for a combined supplier invoice (see
+// invoiceModel.createCombined) - empty for a classic single-submission
+// one, which the detail view renders using invoice's own flat fields
+// exactly as before.
 async function showSupplierDetail(req, res) {
   const invoice = await invoiceModel.findById(req.params.id);
   if (!invoice || invoice.type !== 'supplier') {
     return res.status(404).render('error', { message: 'Invoice not found.' });
   }
-  res.render('invoices/detail', { invoice, type: 'supplier' });
+  const lineItems = await invoiceModel.findLineItems(invoice.id);
+  res.render('invoices/detail', { invoice, type: 'supplier', lineItems });
 }
 
 // Supplier invoices are generated as Handsight's own estimate (see the
@@ -206,11 +330,25 @@ async function handleUploadReal(req, res) {
     return res.redirect(`/invoices/suppliers/${invoice.id}`);
   }
 
+  const invoiceNumber = (req.body.invoiceNumber || '').trim() || invoice.invoice_number;
+
+  try {
+    await invoiceModel.replacePdf(invoice.id, { pdfPath: req.file.filename, isSimulation: false, invoiceNumber });
+  } catch (err) {
+    // Uploaded file was already saved to disk by multer before this ran -
+    // clean it up so it isn't orphaned with no invoice row pointing at it.
+    fs.unlink(path.join(INVOICE_DIR, req.file.filename), () => {});
+    if (err.code === 'ER_DUP_ENTRY') {
+      req.flash('error', `Invoice number "${invoiceNumber}" is already used by another invoice.`);
+      return res.redirect(`/invoices/suppliers/${invoice.id}`);
+    }
+    throw err;
+  }
+
   if (invoice.pdf_path) {
     fs.unlink(path.join(INVOICE_DIR, invoice.pdf_path), () => {});
   }
 
-  await invoiceModel.replacePdf(invoice.id, { pdfPath: req.file.filename, isSimulation: false });
   req.flash('success', 'Real invoice uploaded.');
   res.redirect(`/invoices/suppliers/${invoice.id}`);
 }
@@ -238,6 +376,7 @@ async function servePdf(req, res) {
 
 module.exports = {
   handleGenerate,
+  handleGenerateCombinedSupplier,
   listClients,
   listSuppliers,
   showClientDetail,
