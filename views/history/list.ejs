@@ -58,7 +58,11 @@
     <div class="space-y-3 mb-16">
       <% submissions.forEach(function(s) { %>
         <% var hasClientInvoice = !!s.client_invoice_id; var hasSupplierInvoice = !!s.supplier_invoice_id; %>
-        <div class="card-interactive p-4 flex items-center justify-between gap-3 flex-wrap">
+        <% var isSelectable = s.status === 'approved' && !hasSupplierInvoice; %>
+        <div class="card-interactive p-4 flex items-center justify-between gap-3 flex-wrap <%= isSelectable ? 'cursor-pointer' : '' %>" data-row-select>
+          <% if (isSelectable) { %>
+            <input type="checkbox" name="submissionIds" value="<%= s.id %>" form="consolidate-supplier-form" data-bulk-select-item="consolidate-supplier" class="hidden">
+          <% } %>
           <div class="min-w-0">
             <div class="font-semibold truncate"><%= s.consultant_name %> &middot; <%= monthLabel(s.month) %> &middot; <%= s.client_name %></div>
             <div class="text-xs text-brand-gray2 mt-0.5">
@@ -71,6 +75,9 @@
           </div>
           <div class="flex items-center gap-2 shrink-0">
             <span class="badge-<%= s.status %>"><%= s.status.charAt(0).toUpperCase() + s.status.slice(1) %></span>
+            <button type="button" class="btn-secondary text-xs !px-3 !py-1.5" data-dialog-open="details-<%= s.id %>">
+              <i class="fa-solid fa-eye"></i>View Details
+            </button>
             <% if (s.status === 'approved') { %>
               <% if (hasClientInvoice) { %>
                 <a href="/invoices/clients/<%= s.client_invoice_id %>" class="btn-secondary text-xs !px-3 !py-1.5"><i class="fa-solid fa-file-invoice-dollar"></i>Client Invoice</a>
@@ -91,14 +98,49 @@
                 <button type="submit" class="btn-secondary text-xs !px-3 !py-1.5"><i class="fa-solid fa-rotate-left"></i>Reopen</button>
               </form>
             <% } %>
-            <% if (s.status === 'approved' && !hasSupplierInvoice) { %>
-              <label class="consolidate-check" title="Include this submission in one consolidated supplier invoice with others">
-                <input type="checkbox" name="submissionIds" value="<%= s.id %>" form="consolidate-supplier-form" data-bulk-select-item="consolidate-supplier" class="sr-only">
-                <i class="fa-solid fa-check"></i>
-              </label>
-            <% } %>
           </div>
         </div>
+
+        <dialog id="details-<%= s.id %>" class="dialog-panel">
+          <div class="p-5 sm:p-6">
+            <div class="flex items-center justify-between gap-3 mb-4">
+              <h3 class="font-bold"><%= s.consultant_name %> &middot; <%= s.client_name %> &middot; <%= monthLabel(s.month) %></h3>
+              <button type="button" class="theme-toggle" data-dialog-close aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <% var cal = calendarBySubmission.get(s.id); %>
+            <div class="grid grid-cols-7 gap-1 sm:gap-1.5">
+              <% cal.weekdayNames.forEach(function(wd) { %>
+                <div class="text-center text-[9px] sm:text-[10px] font-bold text-brand-gray2 uppercase tracking-wide pb-1"><%= wd %></div>
+              <% }); %>
+              <% cal.leadingBlanks.forEach(function() { %>
+                <div></div>
+              <% }); %>
+              <% cal.days.forEach(function(d) {
+                var isWeekend = d.weekday === cal.weekdayNames[0] || d.weekday === cal.weekdayNames[6];
+                var isFilled = d.value !== '';
+              %>
+                <div class="day-cell <%= isWeekend ? 'day-cell-weekend' : '' %> <%= isFilled ? 'day-cell-filled' : '' %>">
+                  <span class="text-[10px] sm:text-xs font-semibold <%= isFilled ? 'text-brand-accent' : 'text-brand-textLight' %>"><%= d.day %></span>
+                  <span class="text-[10px] sm:text-xs font-semibold <%= isFilled ? 'text-brand-accent' : 'text-brand-gray2' %>"><%= isFilled ? Number(d.value) : '–' %></span>
+                </div>
+              <% }); %>
+            </div>
+
+            <div class="flex items-center justify-between mt-4 pt-4 border-t border-brand-borderLight text-sm">
+              <span class="font-semibold"><%= s.total_days %> days</span>
+              <span class="font-semibold">Payout <%= formatCurrency(s.total_payout) %></span>
+            </div>
+            <% if (s.total_billed > 0) { %>
+              <div class="flex items-center justify-between text-sm text-brand-gray2">
+                <span>Billed to client</span>
+                <span><%= formatCurrency(s.total_billed) %></span>
+              </div>
+            <% } %>
+          </div>
+        </dialog>
 
         <% if (s.status === 'approved' && (!hasClientInvoice || !hasSupplierInvoice)) { %>
           <dialog id="generate-invoice-<%= s.id %>" class="dialog-panel">
@@ -175,5 +217,6 @@
 </div>
 <script src="/js/dialog-toggle.js?v=<%= assetVersion %>" defer></script>
 <script src="/js/bulk-select.js?v=<%= assetVersion %>" defer></script>
+<script src="/js/row-select.js?v=<%= assetVersion %>" defer></script>
 
 <%- include('../partials/foot') %>
