@@ -27,6 +27,13 @@ async function listPending() {
   return rows;
 }
 
+// supplier_invoice_id has to cover two shapes: a classic single-submission
+// supplier invoice (si_direct, submission_id set directly on `invoices`)
+// and a combined one (si_combined, reached via invoice_line_items since
+// the parent `invoices` row's own submission_id is NULL for those) - see
+// invoiceModel.createCombined. Without the second path, a submission
+// that's already part of a combined invoice would still show as
+// uninvoiced here.
 async function listHistory({ month, clientId, status } = {}) {
   const conditions = [];
   const params = [];
@@ -55,13 +62,16 @@ async function listHistory({ month, clientId, status } = {}) {
             COALESCE(SUM(de.value * COALESCE(ms.client_tjm, 0)), 0) AS total_billed,
             COALESCE(SUM(de.value * COALESCE(ms.consultant_tjm, 0) * COALESCE(ms.extra_fee_percent, 0) / 100), 0) AS total_fees,
             ms.submitted_at, ms.reviewed_at,
-            ci.id AS client_invoice_id, si.id AS supplier_invoice_id
+            ci.id AS client_invoice_id,
+            COALESCE(si_direct.id, si_combined.id) AS supplier_invoice_id
        FROM month_submissions ms
        JOIN users u ON u.id = ms.user_id
        JOIN clients c ON c.id = ms.client_id
        LEFT JOIN daily_entries de ON de.submission_id = ms.id
        LEFT JOIN invoices ci ON ci.submission_id = ms.id AND ci.type = 'client'
-       LEFT JOIN invoices si ON si.submission_id = ms.id AND si.type = 'supplier'
+       LEFT JOIN invoices si_direct ON si_direct.submission_id = ms.id AND si_direct.type = 'supplier'
+       LEFT JOIN invoice_line_items sili ON sili.submission_id = ms.id
+       LEFT JOIN invoices si_combined ON si_combined.id = sili.invoice_id
        ${whereClause}
       GROUP BY ms.id
       ORDER BY ms.month DESC, ms.id DESC`,

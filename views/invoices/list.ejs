@@ -21,37 +21,85 @@
       <p class="text-sm text-brand-gray2">No invoices yet. Generate one from an approved submission in History.</p>
     </div>
   <% } else { %>
-    <div class="space-y-3">
+    <% if (!isClientType) { %>
+      <%
+        // Empty form for the bulk-delete action - deliberately doesn't
+        // wrap the row list, since each row already has its own
+        // independent delete <form> and HTML doesn't allow nesting
+        // <form> elements. Row checkboxes below point at this by id via
+        // the native `form="..."` attribute instead, same pattern as
+        // views/career-offers/list.ejs's bulk-delete form.
+      %>
+      <form id="suppliers-bulk-delete" action="/invoices/suppliers/bulk-delete" method="POST" data-confirm="Delete the selected invoices? This can't be undone.">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      </form>
+    <% } %>
+
+    <div class="space-y-3 <%= isClientType ? '' : 'mb-16' %>">
       <% invoices.forEach(function(inv) { %>
-        <a href="<%= basePath %>/<%= inv.id %>" class="card-interactive p-4 flex items-center justify-between gap-3 flex-wrap">
-          <div class="min-w-0">
-            <div class="font-semibold truncate flex items-center gap-2">
-              <%= inv.invoice_number %>
-              <% if (!inv.submission_id) { %>
-                <span class="badge-pending !py-0.5 !px-2">Combined</span>
-              <% } %>
-              <% if (!isClientType) { %>
-                <% if (inv.is_simulation) { %>
-                  <span class="badge-pending !py-0.5 !px-2">Simulation</span>
-                <% } else { %>
-                  <span class="badge-approved !py-0.5 !px-2">Real Invoice</span>
+        <% if (isClientType) { %>
+          <a href="<%= basePath %>/<%= inv.id %>" class="card-interactive p-4 flex items-center justify-between gap-3 flex-wrap">
+            <div class="min-w-0">
+              <div class="font-semibold truncate flex items-center gap-2">
+                <%= inv.invoice_number %>
+                <% if (!inv.submission_id) { %>
+                  <span class="badge-pending !py-0.5 !px-2">Combined</span>
                 <% } %>
-              <% } %>
+              </div>
+              <div class="text-xs text-brand-gray2 mt-0.5">
+                <%= inv.consultant_name %> &middot; <%= inv.client_name %> &middot; <%= inv.month ? monthLabel(inv.month) : 'Multiple periods' %>
+              </div>
             </div>
-            <div class="text-xs text-brand-gray2 mt-0.5">
-              <%= inv.consultant_name %> &middot; <%= inv.client_name %> &middot; <%= inv.month ? monthLabel(inv.month) : 'Multiple periods' %>
+            <div class="text-right shrink-0">
+              <div class="font-semibold"><%= formatCurrency(inv.total_ttc) %></div>
+              <div class="text-xs text-brand-gray2">Total incl. VAT<% if (inv.total_days) { %> &middot; <%= inv.total_days %> days<% } %></div>
             </div>
+          </a>
+        <% } else { %>
+          <div class="card-interactive p-4 flex items-center gap-3 flex-wrap">
+            <input type="checkbox" name="invoiceIds" value="<%= inv.id %>" form="suppliers-bulk-delete" data-bulk-select-item="suppliers-list" class="rounded w-4 h-4 accent-brand-accent shrink-0">
+            <a href="<%= basePath %>/<%= inv.id %>" class="flex-1 min-w-0 flex items-center justify-between gap-3 flex-wrap">
+              <div class="min-w-0">
+                <div class="font-semibold truncate flex items-center gap-2">
+                  <%= inv.invoice_number %>
+                  <% if (!inv.submission_id) { %>
+                    <span class="badge-pending !py-0.5 !px-2">Combined</span>
+                  <% } %>
+                  <% if (inv.is_simulation) { %>
+                    <span class="badge-pending !py-0.5 !px-2">Simulation</span>
+                  <% } else { %>
+                    <span class="badge-approved !py-0.5 !px-2">Real Invoice</span>
+                  <% } %>
+                </div>
+                <div class="text-xs text-brand-gray2 mt-0.5">
+                  <%= inv.consultant_name %> &middot; <%= inv.client_name %> &middot; <%= inv.month ? monthLabel(inv.month) : 'Multiple periods' %>
+                </div>
+              </div>
+              <div class="text-right shrink-0">
+                <div class="font-semibold"><%= formatCurrency(inv.total_ttc) %></div>
+                <div class="text-xs text-brand-gray2">Total incl. VAT<% if (inv.total_days) { %> &middot; <%= inv.total_days %> days<% } %></div>
+              </div>
+            </a>
+            <form action="/invoices/<%= inv.id %>/delete" method="POST" data-confirm="Delete invoice &quot;<%= inv.invoice_number %>&quot;? This can't be undone." class="shrink-0">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn-danger text-xs !px-2.5 !py-1.5"><i class="fa-solid fa-trash"></i></button>
+            </form>
           </div>
-          <div class="text-right shrink-0">
-            <div class="font-semibold"><%= formatCurrency(inv.total_ttc) %></div>
-            <div class="text-xs text-brand-gray2">Total incl. VAT<% if (inv.total_days) { %> &middot; <%= inv.total_days %> days<% } %></div>
-          </div>
-        </a>
+        <% } %>
       <% }); %>
     </div>
+
+    <% if (!isClientType) { %>
+      <div data-bulk-select-bar="suppliers-list" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 card px-4 py-3 shadow-xl flex items-center gap-3" style="display: none;">
+        <span class="text-sm font-medium"><span data-bulk-select-count>0</span> selected</span>
+        <button type="submit" form="suppliers-bulk-delete" class="btn-danger text-sm !px-3 !py-1.5"><i class="fa-solid fa-trash"></i>Delete Selected</button>
+      </div>
+    <% } %>
   <% } %>
     </div>
   </div>
 </div>
+<script src="/js/confirm-submit.js?v=<%= assetVersion %>" defer></script>
+<script src="/js/bulk-select.js?v=<%= assetVersion %>" defer></script>
 
 <%- include('../partials/foot') %>

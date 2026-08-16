@@ -108,6 +108,17 @@ async function findLineItems(invoiceId) {
   return rows;
 }
 
+// Deletes an invoice and, if it's a combined supplier invoice, its
+// invoice_line_items rows too (no FK cascade in this schema). Frees up
+// every submission it covered to be invoiced again, since
+// findIdsForSubmission/listHistory simply stop finding it. The caller is
+// responsible for deleting the PDF file from disk first (needs
+// findById's pdf_path before this runs).
+async function remove(id) {
+  await pool.query('DELETE FROM invoice_line_items WHERE invoice_id = ?', [id]);
+  await pool.query('DELETE FROM invoices WHERE id = ?', [id]);
+}
+
 // Swaps in the real PDF the admin received from the supplier, replacing
 // whatever's on file (simulated or a previous real upload) and clearing
 // the simulation flag - the caller is responsible for deleting the old
@@ -161,6 +172,7 @@ module.exports = {
   create,
   createCombined,
   findLineItems,
+  remove,
   replacePdf,
   findById,
   listByType

@@ -23,6 +23,12 @@
         </button>
       <% } %>
       <a href="/invoices/<%= invoice.id %>/pdf?download=1" class="btn-primary"><i class="fa-solid fa-download"></i>Download</a>
+      <% if (!isClientType) { %>
+        <form action="/invoices/<%= invoice.id %>/delete" method="POST" data-confirm="Delete invoice &quot;<%= invoice.invoice_number %>&quot;? This can't be undone.">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn-danger"><i class="fa-solid fa-trash"></i>Delete</button>
+        </form>
+      <% } %>
     </div>
   </div>
 
@@ -138,5 +144,6 @@
   </div>
 </div>
 <script src="/js/dialog-toggle.js?v=<%= assetVersion %>" defer></script>
+<script src="/js/confirm-submit.js?v=<%= assetVersion %>" defer></script>
 
 <%- include('../partials/foot') %>

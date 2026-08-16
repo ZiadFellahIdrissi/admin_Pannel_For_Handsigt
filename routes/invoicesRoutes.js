@@ -32,11 +32,13 @@ router.get('/invoices/suppliers/:id', asyncHandler(invoicesController.showSuppli
 router.get('/invoices/:id/pdf', asyncHandler(invoicesController.servePdf));
 router.post('/invoices/generate/:submissionId', verifyToken, asyncHandler(invoicesController.handleGenerate));
 router.post('/invoices/generate-combined-supplier', verifyToken, asyncHandler(invoicesController.handleGenerateCombinedSupplier));
+router.post('/invoices/suppliers/bulk-delete', verifyToken, asyncHandler(invoicesController.handleBulkDeleteSuppliers));
 router.post(
   '/invoices/:id/upload-real',
   handleRealInvoiceUpload((req) => `/invoices/suppliers/${req.params.id}`),
   verifyToken,
   asyncHandler(invoicesController.handleUploadReal)
 );
+router.post('/invoices/:id/delete', verifyToken, asyncHandler(invoicesController.handleDelete));
 
 module.exports = router;

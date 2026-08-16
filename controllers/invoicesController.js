@@ -374,6 +374,49 @@ async function servePdf(req, res) {
   res.sendFile(filePath);
 }
 
+// Deletes an invoice and its PDF from disk. For a combined supplier
+// invoice this also drops its invoice_line_items rows (invoiceModel.remove)
+// - either way, every submission it covered becomes eligible to be
+// invoiced again afterwards, with no special-casing needed since History
+// simply stops finding it.
+async function handleDelete(req, res) {
+  const invoice = await invoiceModel.findById(req.params.id);
+  if (!invoice) {
+    return res.status(404).render('error', { message: 'Invoice not found.' });
+  }
+
+  if (invoice.pdf_path) {
+    fs.unlink(path.join(INVOICE_DIR, invoice.pdf_path), () => {});
+  }
+  await invoiceModel.remove(invoice.id);
+
+  req.flash('success', `Invoice ${invoice.invoice_number} deleted.`);
+  res.redirect(invoice.type === 'client' ? '/invoices/clients' : '/invoices/suppliers');
+}
+
+async function handleBulkDeleteSuppliers(req, res) {
+  const rawIds = req.body.invoiceIds;
+  const ids = (Array.isArray(rawIds) ? rawIds : rawIds ? [rawIds] : [])
+    .map(Number)
+    .filter((id) => Number.isInteger(id) && id > 0);
+
+  if (ids.length === 0) {
+    req.flash('error', 'Choose at least one invoice to delete.');
+    return res.redirect('/invoices/suppliers');
+  }
+
+  const invoices = (await Promise.all(ids.map((id) => invoiceModel.findById(id)))).filter(Boolean);
+  for (const invoice of invoices) {
+    if (invoice.pdf_path) {
+      fs.unlink(path.join(INVOICE_DIR, invoice.pdf_path), () => {});
+    }
+    await invoiceModel.remove(invoice.id);
+  }
+
+  req.flash('success', `Deleted ${invoices.length} invoice(s).`);
+  res.redirect('/invoices/suppliers');
+}
+
 module.exports = {
   handleGenerate,
   handleGenerateCombinedSupplier,
@@ -382,5 +425,7 @@ module.exports = {
   showClientDetail,
   showSupplierDetail,
   handleUploadReal,
+  handleDelete,
+  handleBulkDeleteSuppliers,
   servePdf
 };
