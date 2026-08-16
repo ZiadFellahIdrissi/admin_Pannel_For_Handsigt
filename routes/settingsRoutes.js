@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const settingsController = require('../controllers/settingsController');
+const twoFactorController = require('../controllers/twoFactorController');
 const { requireAuth } = require('../middleware/auth');
 const { verifyToken } = require('../middleware/csrf');
 const asyncHandler = require('../utils/asyncHandler');
@@ -31,5 +32,10 @@ router.post(
   verifyToken,
   asyncHandler(settingsController.handleUpdateAdministrativeInfo)
 );
+
+router.get('/settings/security', asyncHandler(twoFactorController.showSetup));
+router.post('/settings/security/activate', verifyToken, asyncHandler(twoFactorController.handleActivate));
+router.post('/settings/security/deactivate', verifyToken, asyncHandler(twoFactorController.handleDeactivate));
+router.post('/settings/security/regenerate-backup-codes', verifyToken, asyncHandler(twoFactorController.handleRegenerateBackupCodes));
 
 module.exports = router;

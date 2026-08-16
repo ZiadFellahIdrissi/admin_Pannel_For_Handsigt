@@ -1,0 +1,39 @@
+<%- include('partials/head', { title: 'Verify Code' }) %>
+<div class="flex min-h-screen">
+  <%- include('partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('partials/topbar', { title: 'Verify Code' }) %>
+    <%- include('partials/flash') %>
+
+    <div class="flex-1 flex items-center justify-center px-3 sm:px-4">
+      <div class="card w-full max-w-sm p-6 sm:p-8 shadow-xl shadow-slate-900/[0.06]">
+        <div class="text-center mb-7">
+          <div class="icon-circle-accent !w-14 !h-14 !text-xl mx-auto mb-4"><i class="fa-solid fa-shield-halved"></i></div>
+          <h1 class="text-xl font-bold text-brand-text">Two-Factor Authentication</h1>
+          <% if (username) { %>
+            <p class="text-sm text-brand-gray2 mt-1">Signing in as <strong><%= username %></strong></p>
+          <% } %>
+        </div>
+
+        <% if (error) { %>
+          <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 px-4 py-2.5 text-sm flex items-center gap-2">
+            <i class="fa-solid fa-circle-exclamation"></i><%= error %>
+          </div>
+        <% } %>
+
+        <form action="/login/verify" method="POST" class="space-y-4" autocomplete="off">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div>
+            <label class="field-label" for="code">Authentication code</label>
+            <input class="field-input text-center tracking-widest" type="text" id="code" name="code" inputmode="text" autocapitalize="off" autocomplete="one-time-code" required autofocus>
+            <p class="text-xs text-brand-gray2 mt-1">Enter the 6-digit code from your authenticator app, or one of your backup codes.</p>
+          </div>
+          <button type="submit" class="btn-primary w-full">
+            <i class="fa-solid fa-right-to-bracket"></i>Verify
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('partials/foot') %>

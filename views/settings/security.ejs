@@ -1,0 +1,112 @@
+<%- include('../partials/head', { title: 'Security' }) %>
+<div class="flex min-h-screen">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('../partials/topbar', { title: 'Security' }) %>
+    <%- include('../partials/flash') %>
+    <div class="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
+      <h1 class="text-lg sm:text-xl font-bold mb-6 flex items-center gap-3">
+        <div class="icon-circle-accent"><i class="fa-solid fa-shield-halved"></i></div>
+        Security
+      </h1>
+
+      <% if (enabled) { %>
+        <div class="card p-5 sm:p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="icon-circle-emerald"><i class="fa-solid fa-check"></i></div>
+            <div>
+              <div class="font-semibold">Two-Factor Authentication is on</div>
+              <div class="text-xs text-brand-gray2 mt-0.5">Your account requires a code from your authenticator app to sign in.</div>
+            </div>
+          </div>
+
+          <div class="rounded-lg border border-brand-borderLight p-3 flex items-center justify-between text-sm mb-4">
+            <span class="text-brand-gray2">Backup codes remaining</span>
+            <span class="font-semibold"><%= unusedCount %> / 10</span>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" class="btn-secondary" data-dialog-open="regenerate-codes">
+              <i class="fa-solid fa-rotate"></i>Regenerate Backup Codes
+            </button>
+            <button type="button" class="btn-danger" data-dialog-open="deactivate-2fa">
+              <i class="fa-solid fa-shield-halved"></i>Deactivate
+            </button>
+          </div>
+        </div>
+
+        <dialog id="regenerate-codes" class="dialog-panel">
+          <div class="p-5 sm:p-6">
+            <div class="flex items-center justify-between gap-3 mb-4">
+              <h3 class="font-bold">Regenerate Backup Codes</h3>
+              <button type="button" class="theme-toggle" data-dialog-close aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            <p class="text-sm text-brand-gray2 mb-4">Your current 10 backup codes will stop working and be replaced with a new set. Enter a current code to confirm.</p>
+            <form action="/settings/security/regenerate-backup-codes" method="POST" class="space-y-3">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <div>
+                <label class="field-label" for="regenerate-code">Authentication code</label>
+                <input class="field-input text-center tracking-widest" type="text" id="regenerate-code" name="code" autocomplete="off" required autofocus>
+              </div>
+              <button type="submit" class="btn-primary w-full">Confirm</button>
+            </form>
+          </div>
+        </dialog>
+
+        <dialog id="deactivate-2fa" class="dialog-panel">
+          <div class="p-5 sm:p-6">
+            <div class="flex items-center justify-between gap-3 mb-4">
+              <h3 class="font-bold">Deactivate Two-Factor Authentication</h3>
+              <button type="button" class="theme-toggle" data-dialog-close aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            <p class="text-sm text-brand-gray2 mb-4">Your remaining backup codes will also be deleted. Enter a current code to confirm.</p>
+            <form action="/settings/security/deactivate" method="POST" class="space-y-3">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <div>
+                <label class="field-label" for="deactivate-code">Authentication code</label>
+                <input class="field-input text-center tracking-widest" type="text" id="deactivate-code" name="code" autocomplete="off" required autofocus>
+              </div>
+              <button type="submit" class="btn-danger w-full">Deactivate</button>
+            </form>
+          </div>
+        </dialog>
+      <% } else { %>
+        <div class="card p-5 sm:p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="icon-circle-amber"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div>
+              <div class="font-semibold">Two-Factor Authentication is off</div>
+              <div class="text-xs text-brand-gray2 mt-0.5">Scan the QR code below with Google Authenticator (or any TOTP app), then confirm with a code to turn it on.</div>
+            </div>
+          </div>
+
+          <div class="flex flex-col items-center gap-3 py-4 border-y border-brand-borderLight mb-4">
+            <img src="<%= qrDataUrl %>" alt="Two-factor setup QR code" class="w-44 h-44 rounded-lg border border-brand-borderLight">
+            <div class="text-center">
+              <div class="text-xs text-brand-gray2 mb-1">Can't scan? Enter this key manually:</div>
+              <code class="text-sm font-mono tracking-wide"><%= secretFormatted %></code>
+            </div>
+          </div>
+
+          <form action="/settings/security/activate" method="POST" class="space-y-3">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div>
+              <label class="field-label" for="activate-code">Authentication code</label>
+              <input class="field-input text-center tracking-widest" type="text" id="activate-code" name="code" autocomplete="off" required autofocus>
+            </div>
+            <button type="submit" class="btn-primary w-full">
+              <i class="fa-solid fa-check"></i>Activate
+            </button>
+          </form>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+<script src="/js/dialog-toggle.js?v=<%= assetVersion %>" defer></script>
+
+<%- include('../partials/foot') %>

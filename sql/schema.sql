@@ -212,6 +212,30 @@ CREATE TABLE invoice_line_items (
 );
 
 -- ---------------------------------------------------------------------
+-- MIGRATION - run once in phpMyAdmin's SQL tab.
+--
+-- Per-admin two-factor authentication (TOTP, Google Authenticator
+-- compatible). two_factor_secret holds the pending/confirmed secret -
+-- it's written as soon as an admin opens the setup screen, and
+-- two_factor_enabled is the only thing that flips once they confirm a
+-- real code from their app (see controllers/twoFactorController.js).
+-- admin_backup_codes holds 10 one-time recovery codes per admin,
+-- bcrypt-hashed like passwords (never stored in plaintext) - used_at
+-- marks a code as spent so it can't be reused.
+-- ---------------------------------------------------------------------
+ALTER TABLE admins
+  ADD COLUMN two_factor_secret VARCHAR(64) DEFAULT NULL,
+  ADD COLUMN two_factor_enabled TINYINT(1) NOT NULL DEFAULT 0;
+
+CREATE TABLE admin_backup_codes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  admin_id INT NOT NULL,
+  code_hash VARCHAR(255) NOT NULL,
+  used_at TIMESTAMP DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ---------------------------------------------------------------------
 -- REFERENCE ONLY - this table already exists live (created outside this
 -- app, alongside the public landing page). `IF NOT EXISTS` makes this
 -- safe/idempotent to run - it's here purely so this file stays the one
