@@ -153,7 +153,8 @@ async function handleGenerate(req, res) {
       totalTva: supplierTva,
       totalTtc: supplierTtc,
       label,
-      pdfPath: supplierPdfFilename
+      pdfPath: supplierPdfFilename,
+      isSimulation: true
     });
 
     generatedNumbers.push(`${supplierInvoiceNumber} (Supplier)`);
@@ -189,6 +190,31 @@ async function showSupplierDetail(req, res) {
   res.render('invoices/detail', { invoice, type: 'supplier' });
 }
 
+// Supplier invoices are generated as Handsight's own estimate (see the
+// is_simulation flag set in handleGenerate above) - this swaps in the
+// real PDF the admin actually received from the consultant/supplier,
+// deleting the old file (simulated, or a previous real upload) so only
+// one ever exists on disk at a time.
+async function handleUploadReal(req, res) {
+  const invoice = await invoiceModel.findById(req.params.id);
+  if (!invoice || invoice.type !== 'supplier') {
+    return res.status(404).render('error', { message: 'Invoice not found.' });
+  }
+
+  if (!req.file) {
+    req.flash('error', 'Choose a PDF file to upload.');
+    return res.redirect(`/invoices/suppliers/${invoice.id}`);
+  }
+
+  if (invoice.pdf_path) {
+    fs.unlink(path.join(INVOICE_DIR, invoice.pdf_path), () => {});
+  }
+
+  await invoiceModel.replacePdf(invoice.id, { pdfPath: req.file.filename, isSimulation: false });
+  req.flash('success', 'Real invoice uploaded.');
+  res.redirect(`/invoices/suppliers/${invoice.id}`);
+}
+
 // Private/authenticated only - invoice PDFs are financial documents and
 // must never get a public URL (unlike career-offer images/the company
 // logo, which do). Same 404-if-missing pattern as candidatesController.serveCv.
@@ -216,5 +242,6 @@ module.exports = {
   listSuppliers,
   showClientDetail,
   showSupplierDetail,
+  handleUploadReal,
   servePdf
 };

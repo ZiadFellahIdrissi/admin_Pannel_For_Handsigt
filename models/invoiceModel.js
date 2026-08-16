@@ -40,17 +40,28 @@ async function findIdsForSubmission(submissionId) {
 
 async function create({
   invoiceNumber, type, submissionId, clientId, consultantId, month,
-  totalDays, rate, totalHt, totalTva, totalTtc, label, pdfPath
+  totalDays, rate, totalHt, totalTva, totalTtc, label, pdfPath, isSimulation
 }) {
   const [result] = await pool.query(
     `INSERT INTO invoices
        (invoice_number, type, submission_id, client_id, consultant_id, month,
-        total_days, rate, total_ht, total_tva, total_ttc, label, pdf_path)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        total_days, rate, total_ht, total_tva, total_ttc, label, pdf_path, is_simulation)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [invoiceNumber, type, submissionId, clientId, consultantId, month,
-      totalDays, rate, totalHt, totalTva, totalTtc, label, pdfPath]
+      totalDays, rate, totalHt, totalTva, totalTtc, label, pdfPath, isSimulation ? 1 : 0]
   );
   return result.insertId;
+}
+
+// Swaps in the real PDF the admin received from the supplier, replacing
+// whatever's on file (simulated or a previous real upload) and clearing
+// the simulation flag - the caller is responsible for deleting the old
+// file from disk first.
+async function replacePdf(id, { pdfPath, isSimulation }) {
+  await pool.query(
+    'UPDATE invoices SET pdf_path = ?, is_simulation = ? WHERE id = ?',
+    [pdfPath, isSimulation ? 1 : 0, id]
+  );
 }
 
 async function findById(id) {
@@ -83,6 +94,7 @@ module.exports = {
   nextInvoiceNumber,
   findIdsForSubmission,
   create,
+  replacePdf,
   findById,
   listByType
 };

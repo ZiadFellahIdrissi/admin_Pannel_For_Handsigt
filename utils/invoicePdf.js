@@ -17,6 +17,9 @@ const COLOR_BAND_BG = '#f1f3f6';
 const COLOR_CARD_LABEL = '#9db3d6';
 const COLOR_PARTY_BG = '#e7ecf5';
 const COLOR_WHITE = '#ffffff';
+const COLOR_WARN_BG = '#fdecea';
+const COLOR_WARN_BORDER = '#e8a49c';
+const COLOR_WARN_TEXT = '#a12b1f';
 
 const PAGE_W = 595.28;
 const PAGE_H = 841.89;
@@ -254,12 +257,28 @@ function generateInvoicePdf(data, destinationPath) {
       doc.text(line, innerX, doc.y + 4, { width: innerW - 8 });
     });
 
+    // Supplier invoices are Handsight's own estimate, not the document the
+    // supplier is actually supposed to issue - a visible notice bar here
+    // (plus the diagonal watermark at the very end of this function) makes
+    // that unmistakable even if the PDF is opened or shared on its own.
+    let tableY = TOP_BAND_H + 20;
+    if (data.type === 'supplier') {
+      const noticeY = TOP_BAND_H + 10;
+      const noticeH = 30;
+      panel(doc, MARGIN, noticeY, RIGHT - MARGIN, noticeH, COLOR_WARN_BG, { border: COLOR_WARN_BORDER, radius: 5 });
+      doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLOR_WARN_TEXT)
+        .text(
+          "SIMULATION — Ceci n'est pas la facture officielle du fournisseur. En attente du document réel.",
+          MARGIN + 14, noticeY + 10, { width: RIGHT - MARGIN - 28 }
+        );
+      tableY = noticeY + noticeH + 16;
+    }
+
     // --- Line item table -------------------------------------------------
     // Header + body are drawn as flat-edged fills clipped to one shared
     // rounded-rect silhouette, so the navy header sits flush against the
     // body row below instead of showing its own (independently) rounded
     // bottom corners floating above a separately-rounded row.
-    const tableY = TOP_BAND_H + 20;
     const headerH = 36;
     const rowH = 46;
     const tableH = headerH + rowH;
@@ -360,6 +379,21 @@ function generateInvoicePdf(data, destinationPath) {
     ].filter(Boolean).join('   -   ');
     doc.font('Helvetica-Bold').fontSize(7).fillColor(COLOR_NAVY)
       .text(legalLine, MARGIN, footerY + 24, { width: RIGHT - MARGIN, align: 'center' });
+
+    // Diagonal watermark stamp, drawn last so it sits on top of
+    // everything else - the notice bar above explains why in readable
+    // text; this makes the same point unmissable even at a glance.
+    if (data.type === 'supplier') {
+      doc.save();
+      doc.rotate(-35, { origin: [PAGE_W / 2, PAGE_H / 2] });
+      doc.fillOpacity(0.14);
+      doc.font('Helvetica-Bold').fontSize(50).fillColor(COLOR_WARN_TEXT)
+        .text('SIMULATION', 0, PAGE_H / 2 - 60, { width: PAGE_W, align: 'center' });
+      doc.font('Helvetica-Bold').fontSize(16)
+        .text('DOCUMENT NON OFFICIEL', 0, PAGE_H / 2 + 5, { width: PAGE_W, align: 'center', characterSpacing: 2 });
+      doc.fillOpacity(1);
+      doc.restore();
+    }
 
     doc.end();
   });
