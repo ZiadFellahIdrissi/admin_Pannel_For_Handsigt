@@ -151,7 +151,21 @@ async function findById(id) {
   return rows[0] || null;
 }
 
-async function listByType(type) {
+// month is optional ('YYYY-MM' or falsy for "all periods"). A combined
+// invoice's own `month` column is NULL (its submissions can span more
+// than one), so matching by month alone would silently hide every
+// combined invoice - the EXISTS clause also matches it if any of its
+// line items fall in that month.
+async function listByType(type, month) {
+  const conditions = ['i.type = ?'];
+  const params = [type];
+  if (month) {
+    conditions.push(`(i.month = ? OR EXISTS (
+      SELECT 1 FROM invoice_line_items ili WHERE ili.invoice_id = i.id AND ili.month = ?
+    ))`);
+    params.push(month, month);
+  }
+
   const [rows] = await pool.query(
     `SELECT i.*,
             COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Multiple consultants') AS consultant_name,
@@ -159,9 +173,9 @@ async function listByType(type) {
        FROM invoices i
        LEFT JOIN users u ON u.id = i.consultant_id
        LEFT JOIN clients c ON c.id = i.client_id
-      WHERE i.type = ?
+      WHERE ${conditions.join(' AND ')}
       ORDER BY i.created_at DESC`,
-    [type]
+    params
   );
   return rows;
 }

@@ -15,10 +15,32 @@
     <%= pageTitle %>
   </h1>
 
+  <!-- Month navigation - same prev/input/next pattern as /summary, plus an
+       All Periods option (which /summary doesn't have) since here "no
+       month selected" is a real, useful state rather than something to
+       default away from. -->
+  <div class="flex items-center gap-2 mb-6 flex-wrap">
+    <a href="<%= basePath %>?month=<%= prevMonth %>" class="btn-secondary !px-3" aria-label="Previous month">
+      <i class="fa-solid fa-chevron-left"></i>
+    </a>
+    <form action="<%= basePath %>" method="GET" class="flex items-center gap-2">
+      <input type="month" name="month" value="<%= month || '' %>" class="field-input">
+      <button type="submit" class="btn-secondary">Go</button>
+    </form>
+    <a href="<%= basePath %>?month=<%= nextMonth %>" class="btn-secondary !px-3" aria-label="Next month">
+      <i class="fa-solid fa-chevron-right"></i>
+    </a>
+    <a href="<%= basePath %>" class="btn-secondary <%= !month ? '!border-brand-accent !text-brand-accent' : '' %>">All Periods</a>
+  </div>
+
   <% if (invoices.length === 0) { %>
     <div class="card p-8 text-center">
       <i class="fa-regular fa-folder-open text-2xl text-brand-gray2 mb-2"></i>
-      <p class="text-sm text-brand-gray2">No invoices yet. Generate one from an approved submission in History.</p>
+      <% if (month) { %>
+        <p class="text-sm text-brand-gray2">No invoices for <%= monthLabel(month) %>.</p>
+      <% } else { %>
+        <p class="text-sm text-brand-gray2">No invoices yet. Generate one from an approved submission in History.</p>
+      <% } %>
     </div>
   <% } else { %>
     <% if (!isClientType) { %>

@@ -8,7 +8,10 @@ const clientModel = require('../models/clientModel');
 const userModel = require('../models/userModel');
 const companyInfoModel = require('../models/companyInfoModel');
 const { generateInvoicePdf, monthLabelFr } = require('../utils/invoicePdf');
+const { currentMonthKey, shiftMonth } = require('../utils/format');
 const { INVOICE_DIR } = require('../config/uploadPaths');
+
+const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 // 'Ziad' + 'Fellah' -> 'ZIFE' - first 2 letters of each name, uppercased.
 // Falls back to whatever's there if a name is shorter than 2 characters.
@@ -283,14 +286,28 @@ async function handleGenerateCombinedSupplier(req, res) {
   res.redirect('/history');
 }
 
+// month is null for "All Periods" (no filter) - otherwise a validated
+// 'YYYY-MM'. prevMonth/nextMonth always anchor off a concrete month
+// (the selected one, or the current calendar month while in "All
+// Periods") so the prev/next arrows have somewhere sensible to jump to
+// even when no month is currently selected.
+function monthFilterLocals(req) {
+  const monthParam = (req.query.month || '').trim();
+  const month = MONTH_RE.test(monthParam) ? monthParam : null;
+  const anchorMonth = month || currentMonthKey();
+  return { month, prevMonth: shiftMonth(anchorMonth, -1), nextMonth: shiftMonth(anchorMonth, 1) };
+}
+
 async function listClients(req, res) {
-  const invoices = await invoiceModel.listByType('client');
-  res.render('invoices/list', { invoices, type: 'client' });
+  const { month, prevMonth, nextMonth } = monthFilterLocals(req);
+  const invoices = await invoiceModel.listByType('client', month);
+  res.render('invoices/list', { invoices, type: 'client', month, prevMonth, nextMonth });
 }
 
 async function listSuppliers(req, res) {
-  const invoices = await invoiceModel.listByType('supplier');
-  res.render('invoices/list', { invoices, type: 'supplier' });
+  const { month, prevMonth, nextMonth } = monthFilterLocals(req);
+  const invoices = await invoiceModel.listByType('supplier', month);
+  res.render('invoices/list', { invoices, type: 'supplier', month, prevMonth, nextMonth });
 }
 
 async function showClientDetail(req, res) {

@@ -1,19 +1,8 @@
 const monthSubmissionModel = require('../models/monthSubmissionModel');
-const { monthLabel } = require('../utils/format');
+const { monthLabel, currentMonthKey, shiftMonth } = require('../utils/format');
 const { pieSlicePath } = require('../utils/charts');
 
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
-
-function currentMonthKey() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-}
-
-function shiftMonth(month, delta) {
-  const [year, m] = month.split('-').map(Number);
-  const date = new Date(year, m - 1 + delta, 1);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-}
 
 async function show(req, res) {
   const monthParam = (req.query.month || '').trim();

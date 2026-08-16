@@ -33,6 +33,21 @@ function yearsSince(date) {
   return Math.round(years * 10) / 10;
 }
 
+// 'YYYY-MM' for the current calendar month - the default anchor for
+// month-navigator UIs (Summary, Invoices) when no month is selected yet.
+function currentMonthKey() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+// 'YYYY-MM' + a +/-1 delta -> the adjacent month's 'YYYY-MM' - powers the
+// prev/next arrows next to a month-navigator's <input type="month">.
+function shiftMonth(month, delta) {
+  const [year, m] = month.split('-').map(Number);
+  const date = new Date(year, m - 1 + delta, 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
 // 'jean-pierre o'brien' -> "Jean-Pierre O'Brien" - capitalizes the first
 // letter after the start of the string and after any space/hyphen/
 // apostrophe. Used to normalize first/last names on save (form and Excel
@@ -44,4 +59,4 @@ function toTitleCase(str) {
     .replace(/(^|[\s'-])([a-zà-ÿ])/g, (match, sep, letter) => sep + letter.toUpperCase());
 }
 
-module.exports = { formatCurrency, monthLabel, yearsSince, toTitleCase };
+module.exports = { formatCurrency, monthLabel, yearsSince, toTitleCase, currentMonthKey, shiftMonth };
