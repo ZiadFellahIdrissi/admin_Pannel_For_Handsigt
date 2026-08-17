@@ -22,16 +22,34 @@ function normalize(code) {
 // used for both first activation and "regenerate backup codes". Returns
 // the plaintext codes so the caller can show them exactly once; nothing
 // after this call ever has access to them again.
+//
+// Delete + inserts run in one transaction so a second, near-simultaneous
+// call (e.g. a double-clicked "Regenerate" button) can't interleave with
+// this one and leave a corrupted mix of two code sets - InnoDB's row
+// locking makes the second transaction's DELETE wait for this one to
+// commit rather than racing it. Hashing happens before the transaction
+// opens (and in parallel) so the transaction itself - and any lock it
+// holds - stays open as briefly as possible.
 async function replaceAll(adminId) {
   const codes = Array.from({ length: 10 }, () => generateCode());
+  const hashes = await Promise.all(codes.map((code) => bcrypt.hash(normalize(code), 12)));
 
-  await pool.query('DELETE FROM admin_backup_codes WHERE admin_id = ?', [adminId]);
-  for (const code of codes) {
-    const hash = await bcrypt.hash(normalize(code), 12);
-    await pool.query(
-      'INSERT INTO admin_backup_codes (admin_id, code_hash) VALUES (?, ?)',
-      [adminId, hash]
-    );
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    await connection.query('DELETE FROM admin_backup_codes WHERE admin_id = ?', [adminId]);
+    for (const hash of hashes) {
+      await connection.query(
+        'INSERT INTO admin_backup_codes (admin_id, code_hash) VALUES (?, ?)',
+        [adminId, hash]
+      );
+    }
+    await connection.commit();
+  } catch (err) {
+    await connection.rollback();
+    throw err;
+  } finally {
+    connection.release();
   }
 
   return codes;

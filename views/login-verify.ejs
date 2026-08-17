@@ -21,7 +21,7 @@
           </div>
         <% } %>
 
-        <form action="/login/verify" method="POST" class="space-y-4" autocomplete="off">
+        <form action="/login/verify" method="POST" class="space-y-4" autocomplete="off" data-prevent-double-submit>
           <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <div>
             <label class="field-label" for="code">Authentication code</label>
@@ -36,4 +36,5 @@
     </div>
   </div>
 </div>
+<script src="/js/prevent-double-submit.js?v=<%= assetVersion %>" defer></script>
 <%- include('partials/foot') %>

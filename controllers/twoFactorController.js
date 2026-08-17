@@ -56,7 +56,18 @@ async function handleActivate(req, res) {
     return res.redirect('/settings/security');
   }
 
-  await adminModel.enableTwoFactor(admin.id);
+  const won = await adminModel.enableTwoFactor(admin.id);
+  if (!won) {
+    // Lost the race to a duplicate submission (e.g. a double click, or a
+    // slow response that got retried) that already flipped the flag a
+    // moment ago - that request is the one showing the real backup
+    // codes. Generating a second set here would silently invalidate
+    // them without the admin ever seeing this one either.
+    req.session.admin.twoFactorEnabled = true;
+    req.flash('error', 'Two-factor authentication is already active. If you didn\'t see your backup codes, use "Regenerate Backup Codes" below to get a fresh set.');
+    return res.redirect('/settings/security');
+  }
+
   const codes = await adminBackupCodeModel.replaceAll(admin.id);
 
   // Reflect the change in the session immediately - otherwise the nag

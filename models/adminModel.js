@@ -33,8 +33,18 @@ async function setPendingTwoFactorSecret(id, secret) {
 
 // Only called after twoFactorController verifies a real code against the
 // pending secret - the secret itself doesn't change here, just the flag.
+// Scoped with `AND two_factor_enabled = 0`, same "only one winner"
+// pattern as monthSubmissionModel.approve()/reject() - a duplicate
+// activation request (e.g. a double form submit racing the first one
+// before it commits) gets affectedRows === 0 back and knows to stand
+// down, instead of regenerating a second, unrelated set of backup codes
+// on top of the first.
 async function enableTwoFactor(id) {
-  await pool.query('UPDATE admins SET two_factor_enabled = 1 WHERE id = ?', [id]);
+  const [result] = await pool.query(
+    'UPDATE admins SET two_factor_enabled = 1 WHERE id = ? AND two_factor_enabled = 0',
+    [id]
+  );
+  return result.affectedRows > 0;
 }
 
 // Only called after a re-auth code check passes (see
