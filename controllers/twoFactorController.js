@@ -59,6 +59,12 @@ async function handleActivate(req, res) {
   await adminModel.enableTwoFactor(admin.id);
   const codes = await adminBackupCodeModel.replaceAll(admin.id);
 
+  // Reflect the change in the session immediately - otherwise the nag
+  // banner (views/partials/topbar.ejs) would keep showing until the next
+  // login, since it reads req.session.admin.twoFactorEnabled, not a
+  // fresh DB lookup on every page.
+  req.session.admin.twoFactorEnabled = true;
+
   res.render('settings/security-codes-revealed', { codes });
 }
 
@@ -77,6 +83,7 @@ async function handleDeactivate(req, res) {
 
   await adminModel.disableTwoFactor(admin.id);
   await adminBackupCodeModel.removeAll(admin.id);
+  req.session.admin.twoFactorEnabled = false;
 
   req.flash('success', 'Two-factor authentication has been disabled.');
   res.redirect('/settings/security');

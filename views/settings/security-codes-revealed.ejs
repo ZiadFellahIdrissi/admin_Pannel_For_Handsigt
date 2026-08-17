@@ -25,9 +25,25 @@
         </div>
       </div>
 
-      <a href="/settings/security" class="btn-primary w-full sm:w-auto">
-        <i class="fa-solid fa-check"></i>I've saved these codes
-      </a>
+      <%
+        // Built client-side via a data: URI + the `download` attribute -
+        // no server round-trip, and nothing to keep around afterward:
+        // this is the only place these codes ever exist in plaintext.
+        var txtContent = [
+          'Handsight Admin Panel - Two-Factor Backup Codes',
+          'Generated: ' + new Date().toISOString().slice(0, 10),
+          'Each code works once, as a way back in if you lose access to your authenticator app.',
+          ''
+        ].concat(codes).join('\n') + '\n';
+      %>
+      <div class="flex flex-wrap items-center gap-2">
+        <a href="data:text/plain;charset=utf-8,<%= encodeURIComponent(txtContent) %>" download="handsight-backup-codes.txt" class="btn-secondary">
+          <i class="fa-solid fa-download"></i>Download as .txt
+        </a>
+        <a href="/settings/security" class="btn-primary">
+          <i class="fa-solid fa-check"></i>I've saved these codes
+        </a>
+      </div>
     </div>
   </div>
 </div>

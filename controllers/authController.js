@@ -60,7 +60,8 @@ async function handleLogin(req, res) {
     }
     req.session.admin = {
       id: admin.id,
-      username: admin.username
+      username: admin.username,
+      twoFactorEnabled: !!admin.two_factor_enabled
     };
     res.redirect('/');
   });
@@ -105,7 +106,8 @@ async function handleTwoFactorVerify(req, res) {
     }
     req.session.admin = {
       id: admin.id,
-      username: admin.username
+      username: admin.username,
+      twoFactorEnabled: true
     };
     res.redirect('/');
   });

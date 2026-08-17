@@ -123,6 +123,15 @@
     </nav>
   <% } %>
 </header>
+<% if (!currentUser.twoFactorEnabled && currentPath.indexOf('/settings/security') !== 0) { %>
+  <!-- Deliberately not dismissible - stays on every page until the admin
+       actually activates 2FA, not just until they close it once. -->
+  <div class="bg-red-600 text-white px-3 sm:px-4 py-2.5 flex items-center justify-center gap-2 sm:gap-3 flex-wrap text-xs sm:text-sm font-medium text-center sticky top-16 z-20 shadow-md">
+    <i class="fa-solid fa-triangle-exclamation"></i>
+    <span>Two-Factor Authentication is not enabled on your account.</span>
+    <a href="/settings/security" class="bg-white text-red-600 rounded-full px-3 py-1 text-xs font-bold hover:bg-red-50 transition-colors shrink-0">Activate Now</a>
+  </div>
+<% } %>
 <script src="/js/theme-toggle.js?v=<%= assetVersion %>" defer></script>
 <script src="/js/sidebar-toggle.js?v=<%= assetVersion %>" defer></script>
 <% } %>
