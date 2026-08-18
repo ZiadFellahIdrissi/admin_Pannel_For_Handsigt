@@ -58,8 +58,15 @@ function fieldValue(f, data) {
 
 // Optional status/experience/position/skills/city filters + a simple
 // name/email search - the same URL-query-filter convention as
-// clientModel.list(active).
-async function list({ status, q, minExperience, position, skills, city } = {}) {
+// clientModel.list(active). Extended to cover every remaining candidate
+// field so the filter bar (and the LLM-driven search box built on top of
+// it) can express any combination.
+async function list({
+  status, q, minExperience, position, skills, city,
+  country, gender, educationLevel, specialty, certifications, languages,
+  availability, source, minRating, maxSalary, maxTjm,
+  openToCdd, openToCdi, openToFreelance
+} = {}) {
   const conditions = [];
   const params = [];
 
@@ -97,6 +104,64 @@ async function list({ status, q, minExperience, position, skills, city } = {}) {
   if (city && city.trim()) {
     conditions.push('city LIKE ?');
     params.push(`%${city.trim()}%`);
+  }
+  if (country && country.trim()) {
+    conditions.push('country LIKE ?');
+    params.push(`%${country.trim()}%`);
+  }
+  if (gender && GENDERS.includes(gender)) {
+    conditions.push('gender = ?');
+    params.push(gender);
+  }
+  if (educationLevel && EDUCATION_LEVELS.includes(educationLevel)) {
+    conditions.push('education_level = ?');
+    params.push(educationLevel);
+  }
+  if (specialty && specialty.trim()) {
+    conditions.push('specialty LIKE ?');
+    params.push(`%${specialty.trim()}%`);
+  }
+  if (certifications && certifications.trim()) {
+    conditions.push('certifications LIKE ?');
+    params.push(`%${certifications.trim()}%`);
+  }
+  if (languages && languages.trim()) {
+    conditions.push('languages LIKE ?');
+    params.push(`%${languages.trim()}%`);
+  }
+  if (availability && availability.trim()) {
+    conditions.push('availability LIKE ?');
+    params.push(`%${availability.trim()}%`);
+  }
+  if (source && source.trim()) {
+    conditions.push('source LIKE ?');
+    params.push(`%${source.trim()}%`);
+  }
+  if (minRating !== undefined && minRating !== null && minRating !== '' && Number.isInteger(Number(minRating))) {
+    // Same "unknown can't confirm the bar is met" rule as minExperience -
+    // an unrated candidate doesn't satisfy "rating >= N".
+    conditions.push('rating IS NOT NULL AND rating >= ?');
+    params.push(Number(minRating));
+  }
+  if (maxSalary !== undefined && maxSalary !== null && maxSalary !== '' && Number.isFinite(Number(maxSalary))) {
+    // "Within budget" - a candidate with no stated expected salary can't
+    // confirm they fit under the ceiling, so NULL is excluded (same rule
+    // as minExperience/minRating above).
+    conditions.push('expected_salary IS NOT NULL AND expected_salary <= ?');
+    params.push(Number(maxSalary));
+  }
+  if (maxTjm !== undefined && maxTjm !== null && maxTjm !== '' && Number.isFinite(Number(maxTjm))) {
+    conditions.push('expected_tjm IS NOT NULL AND expected_tjm <= ?');
+    params.push(Number(maxTjm));
+  }
+  if (openToCdd) {
+    conditions.push('open_to_cdd = 1');
+  }
+  if (openToCdi) {
+    conditions.push('open_to_cdi = 1');
+  }
+  if (openToFreelance) {
+    conditions.push('open_to_freelance = 1');
   }
 
   const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';

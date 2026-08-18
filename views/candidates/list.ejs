@@ -15,37 +15,122 @@
     </a>
   </div>
 
-  <form action="/candidates" method="GET" class="card p-4 mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3 items-end">
-    <div class="sm:col-span-2 lg:col-span-2">
-      <label class="field-label" for="q">Search</label>
-      <input class="field-input" type="text" id="q" name="q" placeholder="Name or email..." value="<%= q %>">
+  <form action="/candidates" method="GET" class="card p-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3 items-end">
+      <div class="sm:col-span-2 lg:col-span-2">
+        <label class="field-label" for="q">Search</label>
+        <input class="field-input" type="text" id="q" name="q" placeholder="Name or email..." value="<%= q %>">
+      </div>
+      <div>
+        <label class="field-label" for="position">Role</label>
+        <input class="field-input" type="text" id="position" name="position" placeholder="Developer..." value="<%= position %>">
+      </div>
+      <div>
+        <label class="field-label" for="skills">Skills</label>
+        <input class="field-input" type="text" id="skills" name="skills" placeholder="SQL..." value="<%= skills %>">
+      </div>
+      <div>
+        <label class="field-label" for="city">City</label>
+        <input class="field-input" type="text" id="city" name="city" placeholder="Casablanca..." value="<%= city %>">
+      </div>
+      <div>
+        <label class="field-label" for="minExperience">Min. experience (yrs)</label>
+        <input class="field-input" type="number" step="0.5" min="0" id="minExperience" name="minExperience" value="<%= minExperience %>">
+      </div>
+      <div>
+        <label class="field-label" for="status">Status</label>
+        <select class="field-input" id="status" name="status">
+          <option value="">All</option>
+          <% statuses.forEach(function(s) { %>
+            <option value="<%= s %>" <%= status === s ? 'selected' : '' %>><%= statusLabels[s] %></option>
+          <% }); %>
+        </select>
+      </div>
     </div>
-    <div>
-      <label class="field-label" for="position">Role</label>
-      <input class="field-input" type="text" id="position" name="position" placeholder="Developer..." value="<%= position %>">
+
+    <button type="button" data-collapse-toggle="advanced-filters" aria-expanded="<%= hasAdvancedFilters ? 'true' : 'false' %>" class="btn-secondary text-sm mt-3">
+      <i class="fa-solid fa-chevron-down transition-transform <%= hasAdvancedFilters ? 'rotate-180' : '' %>" data-collapse-icon></i>
+      Advanced filters
+    </button>
+
+    <div id="advanced-filters" class="<%= hasAdvancedFilters ? '' : 'hidden' %> grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3 items-end mt-3 pt-3 border-t border-brand-borderLight">
+      <div>
+        <label class="field-label" for="country">Country</label>
+        <input class="field-input" type="text" id="country" name="country" placeholder="Morocco..." value="<%= country %>">
+      </div>
+      <div>
+        <label class="field-label" for="gender">Gender</label>
+        <select class="field-input" id="gender" name="gender">
+          <option value="">All</option>
+          <% genders.forEach(function(g) { %>
+            <option value="<%= g %>" <%= gender === g ? 'selected' : '' %>><%= g.charAt(0).toUpperCase() + g.slice(1) %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="educationLevel">Education level</label>
+        <select class="field-input" id="educationLevel" name="educationLevel">
+          <option value="">All</option>
+          <% educationLevels.forEach(function(lvl) { %>
+            <option value="<%= lvl %>" <%= educationLevel === lvl ? 'selected' : '' %>><%= lvl %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="specialty">Specialty</label>
+        <input class="field-input" type="text" id="specialty" name="specialty" placeholder="Data Engineering..." value="<%= specialty %>">
+      </div>
+      <div>
+        <label class="field-label" for="certifications">Certifications</label>
+        <input class="field-input" type="text" id="certifications" name="certifications" placeholder="AWS..." value="<%= certifications %>">
+      </div>
+      <div>
+        <label class="field-label" for="languages">Languages</label>
+        <input class="field-input" type="text" id="languages" name="languages" placeholder="English..." value="<%= languages %>">
+      </div>
+      <div>
+        <label class="field-label" for="availability">Availability</label>
+        <input class="field-input" type="text" id="availability" name="availability" placeholder="Immediate..." value="<%= availability %>">
+      </div>
+
+      <div>
+        <label class="field-label" for="source">Source</label>
+        <input class="field-input" type="text" id="source" name="source" placeholder="LinkedIn..." value="<%= source %>">
+      </div>
+      <div>
+        <label class="field-label" for="minRating">Min. rating</label>
+        <select class="field-input" id="minRating" name="minRating">
+          <option value="">Any</option>
+          <% [1, 2, 3, 4, 5].forEach(function(r) { %>
+            <option value="<%= r %>" <%= String(minRating) === String(r) ? 'selected' : '' %>><%= r %>+</option>
+          <% }); %>
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="maxSalary">Max. expected salary</label>
+        <input class="field-input" type="number" step="1" min="0" id="maxSalary" name="maxSalary" value="<%= maxSalary %>">
+      </div>
+      <div>
+        <label class="field-label" for="maxTjm">Max. expected TJM</label>
+        <input class="field-input" type="number" step="1" min="0" id="maxTjm" name="maxTjm" value="<%= maxTjm %>">
+      </div>
+      <div class="sm:col-span-2 lg:col-span-3">
+        <label class="field-label">Open to</label>
+        <div class="flex items-center gap-4 h-[42px]">
+          <label class="flex items-center gap-1.5 text-sm cursor-pointer">
+            <input type="checkbox" name="openToCdd" <%= openToCdd ? 'checked' : '' %> class="rounded w-4 h-4">CDD
+          </label>
+          <label class="flex items-center gap-1.5 text-sm cursor-pointer">
+            <input type="checkbox" name="openToCdi" <%= openToCdi ? 'checked' : '' %> class="rounded w-4 h-4">CDI
+          </label>
+          <label class="flex items-center gap-1.5 text-sm cursor-pointer">
+            <input type="checkbox" name="openToFreelance" <%= openToFreelance ? 'checked' : '' %> class="rounded w-4 h-4">Freelance
+          </label>
+        </div>
+      </div>
     </div>
-    <div>
-      <label class="field-label" for="skills">Skills</label>
-      <input class="field-input" type="text" id="skills" name="skills" placeholder="SQL..." value="<%= skills %>">
-    </div>
-    <div>
-      <label class="field-label" for="city">City</label>
-      <input class="field-input" type="text" id="city" name="city" placeholder="Casablanca..." value="<%= city %>">
-    </div>
-    <div>
-      <label class="field-label" for="minExperience">Min. experience (yrs)</label>
-      <input class="field-input" type="number" step="0.5" min="0" id="minExperience" name="minExperience" value="<%= minExperience %>">
-    </div>
-    <div>
-      <label class="field-label" for="status">Status</label>
-      <select class="field-input" id="status" name="status">
-        <option value="">All</option>
-        <% statuses.forEach(function(s) { %>
-          <option value="<%= s %>" <%= status === s ? 'selected' : '' %>><%= statusLabels[s] %></option>
-        <% }); %>
-      </select>
-    </div>
-    <button type="submit" class="btn-primary sm:col-span-2 lg:col-span-7"><i class="fa-solid fa-filter"></i>Filter</button>
+
+    <button type="submit" class="btn-primary w-full mt-3"><i class="fa-solid fa-filter"></i>Filter</button>
   </form>
 
   <% if (candidates.length === 0) { %>
@@ -100,5 +185,6 @@
 </div>
 <script src="/js/confirm-submit.js?v=<%= assetVersion %>" defer></script>
 <script src="/js/bulk-select.js?v=<%= assetVersion %>" defer></script>
+<script src="/js/collapse-toggle.js?v=<%= assetVersion %>" defer></script>
 
 <%- include('../partials/foot') %>

@@ -73,18 +73,50 @@ async function list(req, res) {
   const position = req.query.position || '';
   const skills = req.query.skills || '';
   const city = req.query.city || '';
-  const candidates = await candidateModel.list({ status, q, minExperience, position, skills, city });
+  const country = req.query.country || '';
+  const gender = req.query.gender || '';
+  const educationLevel = req.query.educationLevel || '';
+  const specialty = req.query.specialty || '';
+  const certifications = req.query.certifications || '';
+  const languages = req.query.languages || '';
+  const availability = req.query.availability || '';
+  const source = req.query.source || '';
+  const minRating = req.query.minRating || '';
+  const maxSalary = req.query.maxSalary || '';
+  const maxTjm = req.query.maxTjm || '';
+  const openToCdd = req.query.openToCdd === 'on';
+  const openToCdi = req.query.openToCdi === 'on';
+  const openToFreelance = req.query.openToFreelance === 'on';
+
+  const candidates = await candidateModel.list({
+    status, q, minExperience, position, skills, city,
+    country, gender, educationLevel, specialty, certifications, languages,
+    availability, source, minRating, maxSalary, maxTjm,
+    openToCdd, openToCdi, openToFreelance
+  });
+
+  // Drives whether the "Advanced filters" section renders expanded or
+  // collapsed - if an advanced filter is already active (e.g. after
+  // submitting the form, or from a bookmarked/shared URL), show it open
+  // rather than hiding an active filter behind a closed toggle.
+  const hasAdvancedFilters = !!(
+    country || gender || educationLevel || specialty || certifications || languages ||
+    availability || source || minRating || maxSalary || maxTjm ||
+    openToCdd || openToCdi || openToFreelance
+  );
+
   res.render('candidates/list', {
     candidates,
-    status,
-    q,
-    minExperience,
-    position,
-    skills,
-    city,
+    status, q, minExperience, position, skills, city,
+    country, gender, educationLevel, specialty, certifications, languages,
+    availability, source, minRating, maxSalary, maxTjm,
+    openToCdd, openToCdi, openToFreelance,
+    hasAdvancedFilters,
     statuses: candidateModel.STATUSES,
     statusLabels: candidateModel.STATUS_LABELS,
-    statusBadgeClass: candidateModel.STATUS_BADGE_CLASS
+    statusBadgeClass: candidateModel.STATUS_BADGE_CLASS,
+    educationLevels: candidateModel.EDUCATION_LEVELS,
+    genders: candidateModel.GENDERS
   });
 }
 
