@@ -15,6 +15,15 @@
     </a>
   </div>
 
+  <form action="/candidates/ai-search" method="POST" class="card p-4 mb-4 flex flex-col sm:flex-row gap-3 sm:items-end" data-prevent-double-submit>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="flex-1">
+      <label class="field-label" for="ai-prompt"><i class="fa-solid fa-wand-magic-sparkles text-brand-accent"></i> Describe who you're looking for</label>
+      <input class="field-input" type="text" id="ai-prompt" name="prompt" placeholder="e.g. freelance data engineer in Casablanca, open to CDI, rating 4+">
+    </div>
+    <button type="submit" class="btn-primary"><i class="fa-solid fa-magnifying-glass"></i>AI Search</button>
+  </form>
+
   <form action="/candidates" method="GET" class="card p-4 mb-6">
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3 items-end">
       <div class="sm:col-span-2 lg:col-span-2">
@@ -186,5 +195,6 @@
 <script src="/js/confirm-submit.js?v=<%= assetVersion %>" defer></script>
 <script src="/js/bulk-select.js?v=<%= assetVersion %>" defer></script>
 <script src="/js/collapse-toggle.js?v=<%= assetVersion %>" defer></script>
+<script src="/js/prevent-double-submit.js?v=<%= assetVersion %>" defer></script>
 
 <%- include('../partials/foot') %>

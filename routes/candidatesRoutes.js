@@ -42,6 +42,7 @@ function handleExcel(redirectPath) {
 }
 
 router.get('/candidates', asyncHandler(candidatesController.list));
+router.post('/candidates/ai-search', verifyToken, asyncHandler(candidatesController.handleAiSearch));
 router.get('/candidates/new', candidatesController.showCreateForm);
 router.post(
   '/candidates',

@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const candidateModel = require('../models/candidateModel');
+const candidateSearch = require('../utils/candidateSearch');
 const { yearsSince, toTitleCase } = require('../utils/format');
 const { CANDIDATE_CV_DIR } = require('../config/uploadPaths');
 
@@ -118,6 +119,39 @@ async function list(req, res) {
     educationLevels: candidateModel.EDUCATION_LEVELS,
     genders: candidateModel.GENDERS
   });
+}
+
+// Turns a free-text "AI search" prompt into the same filter query string
+// the manual filter form produces, then redirects into the normal list()
+// flow above - so whatever Gemini returns still passes through
+// candidateModel.list()'s own field validation (STATUSES.includes,
+// Number.isFinite, etc.) exactly like a manually-submitted filter would.
+async function handleAiSearch(req, res) {
+  const prompt = (req.body.prompt || '').trim();
+  if (!prompt) {
+    req.flash('error', "Describe who you're looking for first.");
+    return res.redirect('/candidates');
+  }
+
+  let filters;
+  try {
+    filters = await candidateSearch.buildFilterFromPrompt(prompt);
+  } catch (err) {
+    req.flash('error', 'AI search is unavailable right now - try the filters below instead.');
+    return res.redirect('/candidates');
+  }
+
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') return;
+    if (typeof value === 'boolean') {
+      if (value) params.set(key, 'on');
+      return;
+    }
+    params.set(key, String(value));
+  });
+
+  res.redirect(`/candidates?${params.toString()}`);
 }
 
 function showCreateForm(req, res) {
@@ -328,6 +362,7 @@ async function handleBulkDelete(req, res) {
 
 module.exports = {
   list,
+  handleAiSearch,
   showCreateForm,
   handleCreate,
   showDetail,
