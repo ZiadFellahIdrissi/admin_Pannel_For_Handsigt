@@ -261,3 +261,35 @@ CREATE TABLE IF NOT EXISTS career_offers (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------
+-- MIGRATION - run once in phpMyAdmin's SQL tab.
+--
+-- Suppliers directory (Clients & Suppliers page) - the actual company
+-- that issues a supplier invoice, distinct from the consultant (the
+-- person being paid) and from the Handsight client. Mirrors the clients
+-- table's shape but trimmed to only the fields a Moroccan supplier
+-- invoice actually carries. legal_name is the only required field - an
+-- admin can quick-add a supplier straight from the Upload Real Invoice
+-- dialog with just that, and fill in the rest later from the Suppliers
+-- page. Never hard-linked to invoices via a real FK (no other table in
+-- this schema uses one either) - see invoices.supplier_id below.
+-- ---------------------------------------------------------------------
+CREATE TABLE suppliers (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  legal_name VARCHAR(255) NOT NULL,
+  ice VARCHAR(50) DEFAULT NULL,
+  tp VARCHAR(50) DEFAULT NULL,
+  if_number VARCHAR(50) DEFAULT NULL,
+  rc VARCHAR(50) DEFAULT NULL,
+  siege VARCHAR(500) DEFAULT NULL,
+  active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Set only once a real invoice is uploaded and linked to a supplier (see
+-- controllers/invoicesController.js's handleUploadReal) - NULL for every
+-- simulated invoice (nothing to link yet) and for client invoices
+-- (supplier concept doesn't apply to them at all).
+ALTER TABLE invoices
+  ADD COLUMN supplier_id INT DEFAULT NULL;

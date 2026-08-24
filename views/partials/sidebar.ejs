@@ -2,6 +2,7 @@
   var isConsultants = currentPath === '/consultants' || currentPath.indexOf('/consultants/') === 0;
   var isSummary = currentPath.indexOf('/summary') === 0;
   var isClients = currentPath === '/clients' || currentPath.indexOf('/clients/') === 0;
+  var isSuppliersPage = currentPath === '/suppliers' || currentPath.indexOf('/suppliers/') === 0;
   var isAddCandidate = currentPath === '/candidates/new';
   var isCandidatesAnalytics = currentPath === '/candidates/analytics';
   var isCandidatesImportExport = currentPath === '/candidates/import-export';
@@ -56,10 +57,13 @@
       </details>
     </div>
 
-    <div class="sidebar-section-title">Clients</div>
+    <div class="sidebar-section-title">Clients &amp; Suppliers</div>
     <div class="space-y-1">
       <a href="/clients" class="<%= isClients ? 'sidebar-link-active' : 'sidebar-link' %>">
         <i class="fa-solid fa-building w-4 text-center"></i>Clients
+      </a>
+      <a href="/suppliers" class="<%= isSuppliersPage ? 'sidebar-link-active' : 'sidebar-link' %>">
+        <i class="fa-solid fa-industry w-4 text-center"></i>Suppliers
       </a>
     </div>
 

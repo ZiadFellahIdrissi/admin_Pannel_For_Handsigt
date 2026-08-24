@@ -70,19 +70,20 @@ async function create({
 // (there's no single value for any of them across N consultants), plus
 // one invoice_line_items row per consultant holding the actual
 // breakdown. totalHt/totalTva/totalTtc are the sums across lineItems,
-// computed by the caller. month IS stored on the parent row when every
-// line item happens to share the same one (the common case - most
-// consolidated invoices are for one month across several consultants) -
-// only genuinely mixed-month invoices leave it NULL, so
-// findById/listByType can show the real month instead of always
-// falling back to "Multiple periods".
-async function createCombined({ invoiceNumber, month, totalHt, totalTva, totalTtc, pdfPath, isSimulation, lineItems }) {
+// computed by the caller. month and clientId ARE stored on the parent
+// row when every line item happens to share the same one (the common
+// case - e.g. one agency's consultants all placed at the same client,
+// or all invoiced for the same month) - only genuinely mixed-month or
+// mixed-client invoices leave the column NULL, so findById/listByType
+// can show the real value instead of always falling back to "Multiple
+// periods"/"Multiple clients".
+async function createCombined({ invoiceNumber, month, clientId, totalHt, totalTva, totalTtc, pdfPath, isSimulation, lineItems }) {
   const [result] = await pool.query(
     `INSERT INTO invoices
        (invoice_number, type, submission_id, client_id, consultant_id, month,
         total_days, rate, total_ht, total_tva, total_ttc, label, pdf_path, is_simulation)
-     VALUES (?, 'supplier', NULL, NULL, NULL, ?, NULL, NULL, ?, ?, ?, NULL, ?, ?)`,
-    [invoiceNumber, month || null, totalHt, totalTva, totalTtc, pdfPath, isSimulation ? 1 : 0]
+     VALUES (?, 'supplier', NULL, ?, NULL, ?, NULL, NULL, ?, ?, ?, NULL, ?, ?)`,
+    [invoiceNumber, clientId || null, month || null, totalHt, totalTva, totalTtc, pdfPath, isSimulation ? 1 : 0]
   );
   const invoiceId = result.insertId;
 
@@ -132,24 +133,33 @@ async function remove(id) {
 // the real document carries the supplier's own numbering, not ours - the
 // UNIQUE constraint on invoice_number surfaces as an ER_DUP_ENTRY error
 // if it collides with an existing invoice, left for the caller to handle.
-async function replacePdf(id, { pdfPath, isSimulation, invoiceNumber }) {
+// supplierId links the invoice to the company (see the suppliers table)
+// that actually issued this real document - null only for legacy
+// invoices uploaded before that concept existed.
+async function replacePdf(id, { pdfPath, isSimulation, invoiceNumber, supplierId }) {
   await pool.query(
-    'UPDATE invoices SET pdf_path = ?, is_simulation = ?, invoice_number = ? WHERE id = ?',
-    [pdfPath, isSimulation ? 1 : 0, invoiceNumber, id]
+    'UPDATE invoices SET pdf_path = ?, is_simulation = ?, invoice_number = ?, supplier_id = ? WHERE id = ?',
+    [pdfPath, isSimulation ? 1 : 0, invoiceNumber, supplierId || null, id]
   );
 }
 
 // LEFT JOIN (not INNER) - a combined supplier invoice has consultant_id/
 // client_id NULL on the parent row, so an inner join would silently
 // return zero rows for it. The COALESCE fallbacks cover that case.
+// suppliers is LEFT JOINed too - supplier_id is only ever set once a real
+// invoice has been uploaded and linked (see replacePdf above), so it's
+// NULL for every simulated invoice and every client invoice.
 async function findById(id) {
   const [rows] = await pool.query(
     `SELECT i.*,
             COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Multiple consultants') AS consultant_name,
-            COALESCE(c.legal_name, c.name, 'Multiple clients') AS client_name
+            COALESCE(c.legal_name, c.name, 'Multiple clients') AS client_name,
+            s.legal_name AS supplier_legal_name, s.ice AS supplier_ice, s.tp AS supplier_tp,
+            s.if_number AS supplier_if_number, s.rc AS supplier_rc, s.siege AS supplier_siege
        FROM invoices i
        LEFT JOIN users u ON u.id = i.consultant_id
        LEFT JOIN clients c ON c.id = i.client_id
+       LEFT JOIN suppliers s ON s.id = i.supplier_id
       WHERE i.id = ?
       LIMIT 1`,
     [id]
@@ -175,13 +185,27 @@ async function listByType(type, month) {
   const [rows] = await pool.query(
     `SELECT i.*,
             COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Multiple consultants') AS consultant_name,
-            COALESCE(c.legal_name, c.name, 'Multiple clients') AS client_name
+            COALESCE(c.legal_name, c.name, 'Multiple clients') AS client_name,
+            s.legal_name AS supplier_legal_name
        FROM invoices i
        LEFT JOIN users u ON u.id = i.consultant_id
        LEFT JOIN clients c ON c.id = i.client_id
+       LEFT JOIN suppliers s ON s.id = i.supplier_id
       WHERE ${conditions.join(' AND ')}
       ORDER BY i.created_at DESC`,
     params
+  );
+  return rows;
+}
+
+// Every invoice (simulated or real) ever linked to this supplier - shown
+// on the supplier's own detail page, same idea as a client's Submission
+// History. Simulated invoices never have a supplier_id (see replacePdf),
+// so in practice this only ever returns real, uploaded invoices.
+async function listBySupplier(supplierId) {
+  const [rows] = await pool.query(
+    'SELECT * FROM invoices WHERE supplier_id = ? ORDER BY created_at DESC',
+    [supplierId]
   );
   return rows;
 }
@@ -195,5 +219,6 @@ module.exports = {
   remove,
   replacePdf,
   findById,
-  listByType
+  listByType,
+  listBySupplier
 };

@@ -1,0 +1,73 @@
+<%- include('../partials/head', { title: mode === 'create' ? 'New Supplier' : 'Edit Supplier' }) %>
+<div class="flex min-h-screen">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('../partials/topbar', { title: mode === 'create' ? 'New Supplier' : 'Edit Supplier' }) %>
+    <%- include('../partials/flash') %>
+    <div class="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
+<%
+  // supplierRow is either null (new form), a raw DB row (snake_case
+  // columns, GET edit), or a reconstructed object from a failed
+  // validation POST (camelCase keys, matching extractFields in the
+  // controller) - this checks both shapes so the same markup works for
+  // all three, same convention as views/clients/form.ejs's val().
+  function val(camelKey, snakeKey) {
+    if (!supplierRow) return '';
+    if (supplierRow[camelKey] !== undefined && supplierRow[camelKey] !== null) return supplierRow[camelKey];
+    if (supplierRow[snakeKey] !== undefined && supplierRow[snakeKey] !== null) return supplierRow[snakeKey];
+    return '';
+  }
+%>
+  <h1 class="text-lg sm:text-xl font-bold mb-6 flex items-center gap-3">
+    <div class="icon-circle-accent"><i class="fa-solid <%= mode === 'create' ? 'fa-plus' : 'fa-pen' %>"></i></div>
+    <%= mode === 'create' ? 'New Supplier' : 'Edit Supplier' %>
+  </h1>
+
+  <% if (errors && errors.length) { %>
+    <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 px-4 py-2.5 text-sm space-y-1">
+      <% errors.forEach(function(e) { %><div class="flex items-center gap-2"><i class="fa-solid fa-circle-exclamation"></i><%= e %></div><% }); %>
+    </div>
+  <% } %>
+
+  <form action="<%= mode === 'create' ? '/suppliers' : '/suppliers/' + supplierRow.id %>" method="POST" class="space-y-4">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="card p-5 sm:p-6">
+      <h2 class="section-title"><i class="fa-solid fa-stamp"></i>Company Identification</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="sm:col-span-2">
+          <label class="field-label" for="legalName">Raison Sociale (Legal Name)</label>
+          <input class="field-input" type="text" id="legalName" name="legalName" value="<%= val('legalName', 'legal_name') %>" required autofocus>
+        </div>
+        <div>
+          <label class="field-label" for="ice">ICE</label>
+          <input class="field-input" type="text" id="ice" name="ice" value="<%= val('ice', 'ice') %>">
+        </div>
+        <div>
+          <label class="field-label" for="tp">TP (Taxe Professionnelle)</label>
+          <input class="field-input" type="text" id="tp" name="tp" value="<%= val('tp', 'tp') %>">
+        </div>
+        <div>
+          <label class="field-label" for="ifNumber">IF (Identifiant Fiscal)</label>
+          <input class="field-input" type="text" id="ifNumber" name="ifNumber" value="<%= val('ifNumber', 'if_number') %>">
+        </div>
+        <div>
+          <label class="field-label" for="rc">RC (Registre de Commerce)</label>
+          <input class="field-input" type="text" id="rc" name="rc" value="<%= val('rc', 'rc') %>">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="field-label" for="siege">Si&egrave;ge (Registered Address)</label>
+          <input class="field-input" type="text" id="siege" name="siege" value="<%= val('siege', 'siege') %>">
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn-primary w-full sm:w-auto">
+      <i class="fa-solid fa-check"></i><%= mode === 'create' ? 'Create Supplier' : 'Save Changes' %>
+    </button>
+  </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

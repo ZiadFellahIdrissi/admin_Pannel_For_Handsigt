@@ -5,6 +5,7 @@ const invoiceModel = require('../models/invoiceModel');
 const monthSubmissionModel = require('../models/monthSubmissionModel');
 const consultantClientModel = require('../models/consultantClientModel');
 const clientModel = require('../models/clientModel');
+const supplierModel = require('../models/supplierModel');
 const userModel = require('../models/userModel');
 const companyInfoModel = require('../models/companyInfoModel');
 const { generateInvoicePdf, monthLabelFr } = require('../utils/invoicePdf');
@@ -261,6 +262,7 @@ async function handleGenerateCombinedSupplier(req, res) {
 
   const months = [...new Set(eligible.map((s) => s.month))];
   const monthLbl = months.length === 1 ? monthLabelFr(months[0]) : 'Plusieurs périodes';
+  const clientIds = [...new Set(eligible.map((s) => s.client_id))];
 
   const invoiceNumber = await invoiceModel.nextInvoiceNumber('supplier');
   const pdfFilename = `${crypto.randomUUID()}.pdf`;
@@ -281,6 +283,7 @@ async function handleGenerateCombinedSupplier(req, res) {
   await invoiceModel.createCombined({
     invoiceNumber,
     month: months.length === 1 ? months[0] : null,
+    clientId: clientIds.length === 1 ? clientIds[0] : null,
     totalHt,
     totalTva,
     totalTtc,
@@ -323,27 +326,37 @@ async function showClientDetail(req, res) {
   if (!invoice || invoice.type !== 'client') {
     return res.status(404).render('error', { message: 'Invoice not found.' });
   }
-  res.render('invoices/detail', { invoice, type: 'client', lineItems: [] });
+  res.render('invoices/detail', { invoice, type: 'client', lineItems: [], suppliers: [] });
 }
 
 // lineItems is non-empty only for a combined supplier invoice (see
 // invoiceModel.createCombined) - empty for a classic single-submission
 // one, which the detail view renders using invoice's own flat fields
-// exactly as before.
+// exactly as before. suppliers (active only) feeds the "Upload Real
+// Invoice" dialog's existing-supplier picker.
 async function showSupplierDetail(req, res) {
   const invoice = await invoiceModel.findById(req.params.id);
   if (!invoice || invoice.type !== 'supplier') {
     return res.status(404).render('error', { message: 'Invoice not found.' });
   }
-  const lineItems = await invoiceModel.findLineItems(invoice.id);
-  res.render('invoices/detail', { invoice, type: 'supplier', lineItems });
+  const [lineItems, suppliers] = await Promise.all([
+    invoiceModel.findLineItems(invoice.id),
+    supplierModel.list(1)
+  ]);
+  res.render('invoices/detail', { invoice, type: 'supplier', lineItems, suppliers });
 }
 
 // Supplier invoices are generated as Handsight's own estimate (see the
 // is_simulation flag set in handleGenerate above) - this swaps in the
 // real PDF the admin actually received from the consultant/supplier,
 // deleting the old file (simulated, or a previous real upload) so only
-// one ever exists on disk at a time.
+// one ever exists on disk at a time. Also links the invoice to the
+// company that actually issued that real document - either an existing
+// suppliers row (picked from the dropdown) or a brand new one, created
+// on the spot from the "quick-add" fields. A supplier is mandatory at
+// this step (unlike at generation time, when nothing is known about the
+// real issuer yet): either supplierId is set, or newSupplierLegalName is
+// - if neither is, that's a validation error rather than a silent no-op.
 async function handleUploadReal(req, res) {
   const invoice = await invoiceModel.findById(req.params.id);
   if (!invoice || invoice.type !== 'supplier') {
@@ -357,8 +370,26 @@ async function handleUploadReal(req, res) {
 
   const invoiceNumber = (req.body.invoiceNumber || '').trim() || invoice.invoice_number;
 
+  let supplierId = req.body.supplierId ? Number(req.body.supplierId) : null;
+  if (!supplierId) {
+    const newLegalName = (req.body.newSupplierLegalName || '').trim();
+    if (!newLegalName) {
+      fs.unlink(path.join(INVOICE_DIR, req.file.filename), () => {});
+      req.flash('error', 'Select a registered supplier, or quick-add one (legal name required).');
+      return res.redirect(`/invoices/suppliers/${invoice.id}`);
+    }
+    supplierId = await supplierModel.create({
+      legalName: newLegalName,
+      ice: (req.body.newSupplierIce || '').trim() || null,
+      tp: (req.body.newSupplierTp || '').trim() || null,
+      ifNumber: (req.body.newSupplierIf || '').trim() || null,
+      rc: (req.body.newSupplierRc || '').trim() || null,
+      siege: (req.body.newSupplierSiege || '').trim() || null
+    });
+  }
+
   try {
-    await invoiceModel.replacePdf(invoice.id, { pdfPath: req.file.filename, isSimulation: false, invoiceNumber });
+    await invoiceModel.replacePdf(invoice.id, { pdfPath: req.file.filename, isSimulation: false, invoiceNumber, supplierId });
   } catch (err) {
     // Uploaded file was already saved to disk by multer before this ran -
     // clean it up so it isn't orphaned with no invoice row pointing at it.

@@ -68,6 +68,23 @@
           </div>
         </div>
 
+        <% if (!isClientType && invoice.supplier_legal_name) { %>
+          <div>
+            <h2 class="section-title"><i class="fa-solid fa-industry"></i>Supplier (Real Issuer)</h2>
+            <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+              <div class="col-span-2">
+                <span class="text-brand-gray2">Raison Sociale</span><br>
+                <a href="/suppliers/<%= invoice.supplier_id %>" class="hover:text-brand-accent"><%= invoice.supplier_legal_name %></a>
+              </div>
+              <% if (invoice.supplier_ice) { %><div><span class="text-brand-gray2">ICE</span><br><%= invoice.supplier_ice %></div><% } %>
+              <% if (invoice.supplier_tp) { %><div><span class="text-brand-gray2">TP</span><br><%= invoice.supplier_tp %></div><% } %>
+              <% if (invoice.supplier_if_number) { %><div><span class="text-brand-gray2">IF</span><br><%= invoice.supplier_if_number %></div><% } %>
+              <% if (invoice.supplier_rc) { %><div><span class="text-brand-gray2">RC</span><br><%= invoice.supplier_rc %></div><% } %>
+              <% if (invoice.supplier_siege) { %><div class="col-span-2"><span class="text-brand-gray2">Si&egrave;ge</span><br><%= invoice.supplier_siege %></div><% } %>
+            </div>
+          </div>
+        <% } %>
+
         <% if (lineItems.length > 0) { %>
           <div>
             <h2 class="section-title"><i class="fa-solid fa-list"></i>Line Items (<%= lineItems.length %> consultants)</h2>
@@ -135,6 +152,53 @@
             <label class="field-label" for="realInvoice">PDF file</label>
             <input class="field-input" type="file" id="realInvoice" name="realInvoice" accept="application/pdf" required>
           </div>
+
+          <div>
+            <label class="field-label" for="supplierId">Supplier (company that issued this invoice)</label>
+            <select class="field-input" id="supplierId" name="supplierId">
+              <option value="">&mdash; Select a registered supplier &mdash;</option>
+              <% suppliers.forEach(function(sp) { %>
+                <option value="<%= sp.id %>" <%= invoice.supplier_id == sp.id ? 'selected' : '' %>><%= sp.legal_name %></option>
+              <% }); %>
+            </select>
+          </div>
+
+          <button type="button" data-collapse-toggle="quick-add-supplier" aria-expanded="false" class="btn-secondary text-sm">
+            <i class="fa-solid fa-chevron-down transition-transform" data-collapse-icon></i>
+            Quick-add a new supplier instead
+          </button>
+
+          <div id="quick-add-supplier" class="hidden space-y-3 pt-1">
+            <div>
+              <label class="field-label" for="newSupplierLegalName">Raison Sociale (Legal Name)</label>
+              <input class="field-input" type="text" id="newSupplierLegalName" name="newSupplierLegalName">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="field-label" for="newSupplierIce">ICE</label>
+                <input class="field-input" type="text" id="newSupplierIce" name="newSupplierIce">
+              </div>
+              <div>
+                <label class="field-label" for="newSupplierTp">TP</label>
+                <input class="field-input" type="text" id="newSupplierTp" name="newSupplierTp">
+              </div>
+              <div>
+                <label class="field-label" for="newSupplierIf">IF</label>
+                <input class="field-input" type="text" id="newSupplierIf" name="newSupplierIf">
+              </div>
+              <div>
+                <label class="field-label" for="newSupplierRc">RC</label>
+                <input class="field-input" type="text" id="newSupplierRc" name="newSupplierRc">
+              </div>
+            </div>
+            <div>
+              <label class="field-label" for="newSupplierSiege">Si&egrave;ge</label>
+              <input class="field-input" type="text" id="newSupplierSiege" name="newSupplierSiege">
+            </div>
+          </div>
+
+          <p class="text-xs text-brand-gray2">Select a registered supplier, or quick-add one above (only the legal name is required - fill the rest in later from the Suppliers page if you don't have it yet).</p>
+
           <button type="submit" class="btn-primary w-full">Upload</button>
         </form>
       </div>
@@ -145,5 +209,6 @@
 </div>
 <script src="/js/dialog-toggle.js?v=<%= assetVersion %>" defer></script>
 <script src="/js/confirm-submit.js?v=<%= assetVersion %>" defer></script>
+<script src="/js/collapse-toggle.js?v=<%= assetVersion %>" defer></script>
 
 <%- include('../partials/foot') %>
