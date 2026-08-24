@@ -34,8 +34,15 @@ function computeSupplierAmounts(submission) {
   const consultantTjm = Number(submission.consultant_tjm || 0);
   const extraFeePercent = Number(submission.extra_fee_percent || 0);
   const feeDenominator = 1 - extraFeePercent / 100;
-  const rate = feeDenominator !== 0 ? (consultantTjm / feeDenominator) / 1.2 : 0;
-  const totalHt = rate * totalDays;
+  const rawRate = feeDenominator !== 0 ? (consultantTjm / feeDenominator) / 1.2 : 0;
+  // Round to cents before multiplying by totalDays - otherwise the PDF's
+  // "MONTANT (HT)" is computed from more decimal precision than what's
+  // actually printed as "PRIX UNIT. (HT)" (e.g. a raw rate of 1140.351
+  // prints as "1140.35" but, left unrounded, produces a total 0.02 higher
+  // than 20 x 1140.35). Rounding totalHt too guards against any residual
+  // floating-point noise from the multiplication itself.
+  const rate = Math.round(rawRate * 100) / 100;
+  const totalHt = Math.round(rate * totalDays * 100) / 100;
   return { totalDays, rate, totalHt };
 }
 
