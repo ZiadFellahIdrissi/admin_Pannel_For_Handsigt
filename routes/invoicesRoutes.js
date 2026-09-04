@@ -39,6 +39,7 @@ router.post(
   verifyToken,
   asyncHandler(invoicesController.handleUploadReal)
 );
+router.post('/invoices/:id/toggle-paid', verifyToken, asyncHandler(invoicesController.handleTogglePaid));
 router.post('/invoices/:id/delete', verifyToken, asyncHandler(invoicesController.handleDelete));
 
 module.exports = router;

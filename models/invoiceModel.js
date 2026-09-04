@@ -143,6 +143,16 @@ async function replacePdf(id, { pdfPath, isSimulation, invoiceNumber, supplierId
   );
 }
 
+// Client-invoice-only concept - "Handsight has actually been paid by this
+// client", manually toggled, unrelated to anything else on the row (see
+// the paid_at migration comment in sql/schema.sql). The controller is
+// responsible for only ever calling this on type = 'client' invoices;
+// supplier invoices derive their paid/unpaid state from is_simulation
+// instead and never touch this column.
+async function setPaid(id, paid) {
+  await pool.query('UPDATE invoices SET paid_at = ? WHERE id = ?', [paid ? new Date() : null, id]);
+}
+
 // LEFT JOIN (not INNER) - a combined supplier invoice has consultant_id/
 // client_id NULL on the parent row, so an inner join would silently
 // return zero rows for it. The COALESCE fallbacks cover that case.
@@ -218,6 +228,7 @@ module.exports = {
   findLineItems,
   remove,
   replacePdf,
+  setPaid,
   findById,
   listByType,
   listBySupplier

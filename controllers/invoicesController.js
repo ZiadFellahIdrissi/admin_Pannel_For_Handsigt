@@ -329,6 +329,21 @@ async function showClientDetail(req, res) {
   res.render('invoices/detail', { invoice, type: 'client', lineItems: [], suppliers: [] });
 }
 
+// Client-invoice-only - marks whether the client has actually sent
+// Handsight the money. Purely manual (see invoiceModel.setPaid); there's
+// no equivalent for supplier invoices, whose paid/unpaid state is
+// derived from is_simulation instead (see showSupplierDetail/the
+// invoices/detail and invoices/list views).
+async function handleTogglePaid(req, res) {
+  const invoice = await invoiceModel.findById(req.params.id);
+  if (!invoice || invoice.type !== 'client') {
+    return res.status(404).render('error', { message: 'Invoice not found.' });
+  }
+  await invoiceModel.setPaid(invoice.id, !invoice.paid_at);
+  req.flash('success', invoice.paid_at ? 'Invoice marked as unpaid.' : 'Invoice marked as paid.');
+  res.redirect(`/invoices/clients/${invoice.id}`);
+}
+
 // lineItems is non-empty only for a combined supplier invoice (see
 // invoiceModel.createCombined) - empty for a classic single-submission
 // one, which the detail view renders using invoice's own flat fields
@@ -481,6 +496,7 @@ module.exports = {
   showClientDetail,
   showSupplierDetail,
   handleUploadReal,
+  handleTogglePaid,
   handleDelete,
   handleBulkDeleteSuppliers,
   servePdf

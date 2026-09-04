@@ -68,6 +68,11 @@
                 <% if (!inv.submission_id) { %>
                   <span class="badge-pending !py-0.5 !px-2">Consolidated</span>
                 <% } %>
+                <% if (inv.paid_at) { %>
+                  <span class="badge-approved !py-0.5 !px-2">Paid</span>
+                <% } else { %>
+                  <span class="badge-pending !py-0.5 !px-2">Unpaid</span>
+                <% } %>
               </div>
               <div class="text-xs text-brand-gray2 mt-0.5">
                 <%= inv.consultant_name %> &middot; <%= inv.client_name %> &middot; <%= inv.month ? monthLabel(inv.month) : 'Multiple periods' %>
@@ -89,9 +94,9 @@
                     <span class="badge-pending !py-0.5 !px-2">Consolidated</span>
                   <% } %>
                   <% if (inv.is_simulation) { %>
-                    <span class="badge-pending !py-0.5 !px-2">Simulation</span>
+                    <span class="badge-pending !py-0.5 !px-2" title="Simulation - Handsight hasn't paid the supplier yet">Unpaid</span>
                   <% } else { %>
-                    <span class="badge-approved !py-0.5 !px-2">Real Invoice</span>
+                    <span class="badge-approved !py-0.5 !px-2" title="Real invoice on file - Handsight has paid the supplier">Paid</span>
                   <% } %>
                 </div>
                 <div class="text-xs text-brand-gray2 mt-0.5">

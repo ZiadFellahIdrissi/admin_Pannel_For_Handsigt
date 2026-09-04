@@ -293,3 +293,21 @@ CREATE TABLE suppliers (
 -- (supplier concept doesn't apply to them at all).
 ALTER TABLE invoices
   ADD COLUMN supplier_id INT DEFAULT NULL;
+
+-- ---------------------------------------------------------------------
+-- MIGRATION - run once in phpMyAdmin's SQL tab.
+--
+-- paid_at tracks money actually changing hands, which is a separate
+-- concept from anything else on the invoices table - and means something
+-- different depending on invoice type:
+--   - Client invoices: manually toggled (controllers/invoicesController.js's
+--     handleTogglePaid) once the client has actually paid Handsight.
+--     Nothing else drives it.
+--   - Supplier invoices: NEVER toggled directly - this column stays NULL
+--     for them. "Paid" for a supplier invoice is derived entirely from
+--     is_simulation instead (real invoice uploaded = Handsight paid the
+--     supplier = done), computed in the view rather than stored, since
+--     it's just a restatement of a flag that already exists.
+-- ---------------------------------------------------------------------
+ALTER TABLE invoices
+  ADD COLUMN paid_at TIMESTAMP DEFAULT NULL;
