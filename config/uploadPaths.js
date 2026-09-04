@@ -39,11 +39,16 @@ const INVOICE_DIR = path.join(UPLOAD_ROOT, 'admin-panel', 'invoices');
 // must never get a public URL.
 const PAYSLIP_DIR = path.join(UPLOAD_ROOT, 'admin-panel', 'payslips');
 
+// Purchase invoices/receipts for company expenses (Charges section) -
+// private, same reasoning as PAYSLIP_DIR/INVOICE_DIR.
+const CHARGE_INVOICE_DIR = path.join(UPLOAD_ROOT, 'admin-panel', 'charges');
+
 fs.mkdirSync(CANDIDATE_CV_DIR, { recursive: true });
 fs.mkdirSync(CAREER_IMAGE_DIR, { recursive: true });
 fs.mkdirSync(COMPANY_LOGO_DIR, { recursive: true });
 fs.mkdirSync(INVOICE_DIR, { recursive: true });
 fs.mkdirSync(PAYSLIP_DIR, { recursive: true });
+fs.mkdirSync(CHARGE_INVOICE_DIR, { recursive: true });
 
 module.exports = {
   UPLOAD_ROOT,
@@ -53,5 +58,6 @@ module.exports = {
   COMPANY_LOGO_DIR,
   COMPANY_LOGO_PUBLIC_BASE_URL,
   INVOICE_DIR,
-  PAYSLIP_DIR
+  PAYSLIP_DIR,
+  CHARGE_INVOICE_DIR
 };

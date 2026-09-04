@@ -1,0 +1,58 @@
+<%- include('../partials/head', { title: 'Charges' }) %>
+<div class="flex min-h-screen">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('../partials/topbar', { title: 'Charges' }) %>
+    <%- include('../partials/flash') %>
+    <div class="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
+  <div class="flex items-center justify-between flex-wrap gap-3 mb-4 sm:mb-6">
+    <h1 class="text-lg sm:text-xl font-bold flex items-center gap-3">
+      <div class="icon-circle-accent"><i class="fa-solid fa-receipt"></i></div>
+      Charges
+    </h1>
+    <a href="/charges/new" class="btn-primary">
+      <i class="fa-solid fa-plus"></i>New Charge
+    </a>
+  </div>
+
+  <form action="/charges" method="GET" class="card p-4 mb-6 flex items-end gap-3 flex-wrap">
+    <div class="flex-1 min-w-[180px]">
+      <label class="field-label" for="categoryId">Category</label>
+      <select class="field-input" id="categoryId" name="categoryId">
+        <option value="">All categories</option>
+        <% categories.forEach(function(cat) { %>
+          <option value="<%= cat.id %>" <%= String(categoryId) === String(cat.id) ? 'selected' : '' %>><%= cat.name %></option>
+        <% }); %>
+      </select>
+    </div>
+    <button type="submit" class="btn-secondary"><i class="fa-solid fa-filter"></i>Filter</button>
+  </form>
+
+  <% if (charges.length === 0) { %>
+    <div class="card p-8 text-center">
+      <i class="fa-regular fa-folder-open text-2xl text-brand-gray2 mb-2"></i>
+      <p class="text-sm text-brand-gray2">No charges recorded yet.</p>
+    </div>
+  <% } else { %>
+    <div class="space-y-3">
+      <% charges.forEach(function(ch) { %>
+        <a href="/charges/<%= ch.id %>" class="card-interactive p-4 flex items-center justify-between gap-3 flex-wrap">
+          <div class="min-w-0">
+            <div class="font-semibold truncate flex items-center gap-2">
+              <%= ch.category_name %>
+              <% if (ch.invoice_path) { %><span class="badge-approved !py-0.5 !px-2">Invoice on file</span><% } %>
+            </div>
+            <div class="text-xs text-brand-gray2 mt-0.5"><%= ch.label || '—' %> &middot; <%= ch.charge_date %></div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="font-semibold"><%= formatCurrency(ch.amount) %></div>
+          </div>
+        </a>
+      <% }); %>
+    </div>
+  <% } %>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

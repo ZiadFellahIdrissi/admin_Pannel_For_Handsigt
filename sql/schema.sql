@@ -357,3 +357,48 @@ CREATE TABLE salary_payments (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY employee_month (employee_id, month)
 );
+
+-- ---------------------------------------------------------------------
+-- MIGRATION - run once in phpMyAdmin's SQL tab.
+--
+-- Charges section - general company expenses (bank fees, telephony,
+-- equipment, etc.), unrelated to consultants/clients/suppliers/payroll.
+-- charge_categories is a deliberately open-ended taxonomy, not a fixed
+-- ENUM like STATUSES elsewhere in this app: the 8 rows seeded below are
+-- starting defaults the admin picks from, but controllers/chargesController.js's
+-- quick-add lets them create more inline while recording a charge, the
+-- same "select existing or quick-add" pattern as suppliers on the
+-- Upload Real Invoice dialog. There's deliberately no rename/delete for
+-- categories (out of scope for what was asked) - once created, a
+-- category just accumulates charges.
+-- ---------------------------------------------------------------------
+CREATE TABLE charge_categories (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL UNIQUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO charge_categories (name) VALUES
+  ('Bank Fees & Charges'),
+  ('Telephony & Internet'),
+  ('Equipment (Laptops, Phones...)'),
+  ('Office Rent'),
+  ('Utilities (Electricity, Water...)'),
+  ('Software & Subscriptions'),
+  ('Office Supplies'),
+  ('Travel & Transport');
+
+-- invoice_path is optional - a charge can be recorded before the
+-- purchase invoice/receipt is in hand, and attached later (see
+-- chargesController.handleUploadInvoice), same "optional at creation,
+-- addable later" idea as salary_payments.payslip_path.
+CREATE TABLE charges (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  category_id INT NOT NULL,
+  label VARCHAR(255) DEFAULT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  charge_date DATE NOT NULL,
+  invoice_path VARCHAR(255) DEFAULT NULL,
+  invoice_original_name VARCHAR(255) DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
