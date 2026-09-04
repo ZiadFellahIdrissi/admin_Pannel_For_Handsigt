@@ -1,0 +1,105 @@
+<%- include('../partials/head', { title: mode === 'create' ? 'New Employee' : 'Edit Employee' }) %>
+<div class="flex min-h-screen">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('../partials/topbar', { title: mode === 'create' ? 'New Employee' : 'Edit Employee' }) %>
+    <%- include('../partials/flash') %>
+    <div class="max-w-3xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
+<%
+  // employeeRow is either null (new form), a raw DB row (snake_case
+  // columns, GET edit), or a reconstructed object from a failed
+  // validation POST (camelCase keys, matching extractFields in the
+  // controller) - same val() convention as views/suppliers/form.ejs.
+  function val(camelKey, snakeKey) {
+    if (!employeeRow) return '';
+    if (employeeRow[camelKey] !== undefined && employeeRow[camelKey] !== null) return employeeRow[camelKey];
+    if (employeeRow[snakeKey] !== undefined && employeeRow[snakeKey] !== null) return employeeRow[snakeKey];
+    return '';
+  }
+%>
+  <h1 class="text-lg sm:text-xl font-bold mb-6 flex items-center gap-3">
+    <div class="icon-circle-accent"><i class="fa-solid <%= mode === 'create' ? 'fa-plus' : 'fa-pen' %>"></i></div>
+    <%= mode === 'create' ? 'New Employee' : 'Edit Employee' %>
+  </h1>
+
+  <% if (errors && errors.length) { %>
+    <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 px-4 py-2.5 text-sm space-y-1">
+      <% errors.forEach(function(e) { %><div class="flex items-center gap-2"><i class="fa-solid fa-circle-exclamation"></i><%= e %></div><% }); %>
+    </div>
+  <% } %>
+
+  <form action="<%= mode === 'create' ? '/employees' : '/employees/' + employeeRow.id %>" method="POST" class="space-y-4">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="card p-5 sm:p-6">
+      <h2 class="section-title"><i class="fa-solid fa-id-badge"></i>Basic Info</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="field-label" for="firstName">First name</label>
+          <input class="field-input" type="text" id="firstName" name="firstName" value="<%= val('firstName', 'first_name') %>" required autofocus>
+        </div>
+        <div>
+          <label class="field-label" for="lastName">Last name</label>
+          <input class="field-input" type="text" id="lastName" name="lastName" value="<%= val('lastName', 'last_name') %>" required>
+        </div>
+        <div>
+          <label class="field-label" for="jobTitle">Job Title</label>
+          <input class="field-input" type="text" id="jobTitle" name="jobTitle" value="<%= val('jobTitle', 'job_title') %>">
+        </div>
+        <div>
+          <label class="field-label" for="email">Email</label>
+          <input class="field-input" type="email" id="email" name="email" value="<%= val('email', 'email') %>">
+        </div>
+        <div>
+          <label class="field-label" for="phone">Phone</label>
+          <input class="field-input" type="text" id="phone" name="phone" value="<%= val('phone', 'phone') %>">
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-5 sm:p-6">
+      <h2 class="section-title"><i class="fa-solid fa-sack-dollar"></i>Salary</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="field-label" for="netSalary">Net Salary (MAD/month)</label>
+          <input class="field-input" type="number" step="0.01" min="0" id="netSalary" name="netSalary" value="<%= val('netSalary', 'net_salary') %>">
+        </div>
+        <div>
+          <label class="field-label" for="grossSalary">Gross Salary - Brut (MAD/month)</label>
+          <input class="field-input" type="number" step="0.01" min="0" id="grossSalary" name="grossSalary" value="<%= val('grossSalary', 'gross_salary') %>">
+        </div>
+      </div>
+      <p class="text-xs text-brand-gray2 mt-2">These are the default figures pre-filled each month on the Salaries page - editable per month there if a given month differs (bonus, deduction, partial month...).</p>
+    </div>
+
+    <div class="card p-5 sm:p-6">
+      <h2 class="section-title"><i class="fa-solid fa-building-columns"></i>Bank Account Information</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="field-label" for="bankName">Bank Name</label>
+          <input class="field-input" type="text" id="bankName" name="bankName" value="<%= val('bankName', 'bank_name') %>">
+        </div>
+        <div>
+          <label class="field-label" for="bankRib">RIB</label>
+          <input class="field-input" type="text" id="bankRib" name="bankRib" maxlength="24" value="<%= val('bankRib', 'bank_rib') %>">
+        </div>
+        <div>
+          <label class="field-label" for="bankIban">IBAN</label>
+          <input class="field-input" type="text" id="bankIban" name="bankIban" maxlength="34" value="<%= val('bankIban', 'bank_iban') %>">
+        </div>
+        <div>
+          <label class="field-label" for="bankSwift">SWIFT / BIC</label>
+          <input class="field-input" type="text" id="bankSwift" name="bankSwift" maxlength="11" value="<%= val('bankSwift', 'bank_swift') %>">
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn-primary w-full sm:w-auto">
+      <i class="fa-solid fa-check"></i><%= mode === 'create' ? 'Create Employee' : 'Save Changes' %>
+    </button>
+  </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

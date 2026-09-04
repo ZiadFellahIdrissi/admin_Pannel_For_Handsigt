@@ -1,0 +1,111 @@
+<% var today = new Date().toISOString().slice(0, 10); %>
+<%- include('../partials/head', { title: 'Salaries' }) %>
+<div class="flex min-h-screen">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('../partials/topbar', { title: 'Salaries' }) %>
+    <%- include('../partials/flash') %>
+    <div class="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
+  <h1 class="text-lg sm:text-xl font-bold mb-4 sm:mb-6 flex items-center gap-3">
+    <div class="icon-circle-accent"><i class="fa-solid fa-sack-dollar"></i></div>
+    Salaries
+  </h1>
+
+  <!-- Month navigation - same prev/input/next pattern as /invoices/clients,
+       minus "All Periods" (payroll is inherently a per-month checklist,
+       so there's always a concrete selected month). -->
+  <div class="card p-4 mb-6 flex items-center gap-2 flex-wrap">
+    <a href="/salaries?month=<%= prevMonth %>" class="btn-secondary !px-3" aria-label="Previous month">
+      <i class="fa-solid fa-chevron-left"></i>
+    </a>
+    <form action="/salaries" method="GET" class="flex items-center gap-2">
+      <input type="month" name="month" value="<%= month %>" class="field-input">
+      <button type="submit" class="btn-secondary">Go</button>
+    </form>
+    <a href="/salaries?month=<%= nextMonth %>" class="btn-secondary !px-3" aria-label="Next month">
+      <i class="fa-solid fa-chevron-right"></i>
+    </a>
+  </div>
+
+  <% if (rows.length === 0) { %>
+    <div class="card p-8 text-center">
+      <i class="fa-regular fa-folder-open text-2xl text-brand-gray2 mb-2"></i>
+      <p class="text-sm text-brand-gray2">No active employees. Add one from the <a href="/employees" class="text-brand-accent hover:underline">Employees</a> page.</p>
+    </div>
+  <% } else { %>
+    <div class="space-y-3">
+      <% rows.forEach(function(r) { %>
+        <div class="card-interactive p-4 flex items-center justify-between gap-3 flex-wrap">
+          <div class="min-w-0">
+            <div class="font-semibold truncate flex items-center gap-2">
+              <%= r.first_name %> <%= r.last_name %>
+              <% if (r.payment_id) { %>
+                <span class="badge-approved !py-0.5 !px-2">Paid</span>
+              <% } else { %>
+                <span class="badge-pending !py-0.5 !px-2">Not Recorded</span>
+              <% } %>
+            </div>
+            <div class="text-xs text-brand-gray2 mt-0.5"><%= r.job_title || '—' %></div>
+          </div>
+
+          <% if (r.payment_id) { %>
+            <div class="flex items-center gap-3 shrink-0">
+              <div class="text-right">
+                <div class="font-semibold"><%= formatCurrency(r.paid_net_salary) %></div>
+                <div class="text-xs text-brand-gray2">Net &middot; Paid <%= r.paid_date %></div>
+              </div>
+              <a href="/salaries/payment/<%= r.payment_id %>" class="btn-secondary text-sm">Details</a>
+            </div>
+          <% } else { %>
+            <button type="button" class="btn-primary text-sm shrink-0" data-dialog-open="record-payment-<%= r.employee_id %>">
+              <i class="fa-solid fa-check"></i>Record Payment
+            </button>
+          <% } %>
+        </div>
+
+        <% if (!r.payment_id) { %>
+          <dialog id="record-payment-<%= r.employee_id %>" class="dialog-panel">
+            <div class="p-5 sm:p-6">
+              <div class="flex items-center justify-between gap-3 mb-4">
+                <h3 class="font-bold">Record Payment - <%= r.first_name %> <%= r.last_name %></h3>
+                <button type="button" class="theme-toggle" data-dialog-close aria-label="Close">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+              <form action="/salaries/record" method="POST" enctype="multipart/form-data" class="space-y-3" data-prevent-double-submit>
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="employeeId" value="<%= r.employee_id %>">
+                <input type="hidden" name="month" value="<%= month %>">
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="field-label" for="netSalary-<%= r.employee_id %>">Net Salary</label>
+                    <input class="field-input" type="number" step="0.01" min="0" id="netSalary-<%= r.employee_id %>" name="netSalary" value="<%= r.default_net_salary || '' %>" required>
+                  </div>
+                  <div>
+                    <label class="field-label" for="grossSalary-<%= r.employee_id %>">Gross Salary</label>
+                    <input class="field-input" type="number" step="0.01" min="0" id="grossSalary-<%= r.employee_id %>" name="grossSalary" value="<%= r.default_gross_salary || '' %>" required>
+                  </div>
+                </div>
+                <div>
+                  <label class="field-label" for="paidDate-<%= r.employee_id %>">Paid on</label>
+                  <input class="field-input" type="date" id="paidDate-<%= r.employee_id %>" name="paidDate" value="<%= today %>">
+                </div>
+                <div>
+                  <label class="field-label" for="payslip-<%= r.employee_id %>">Payslip (optional - can add later too)</label>
+                  <input class="field-input" type="file" id="payslip-<%= r.employee_id %>" name="payslip" accept="application/pdf">
+                </div>
+                <button type="submit" class="btn-primary w-full">Record Payment</button>
+              </form>
+            </div>
+          </dialog>
+        <% } %>
+      <% }); %>
+    </div>
+  <% } %>
+    </div>
+  </div>
+</div>
+<script src="/js/dialog-toggle.js?v=<%= assetVersion %>" defer></script>
+<script src="/js/prevent-double-submit.js?v=<%= assetVersion %>" defer></script>
+
+<%- include('../partials/foot') %>

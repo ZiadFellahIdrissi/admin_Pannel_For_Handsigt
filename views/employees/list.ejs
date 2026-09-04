@@ -1,0 +1,62 @@
+<%- include('../partials/head', { title: 'Employees' }) %>
+<div class="flex min-h-screen">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('../partials/topbar', { title: 'Employees' }) %>
+    <%- include('../partials/flash') %>
+    <div class="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
+  <div class="flex items-center justify-between flex-wrap gap-3 mb-4 sm:mb-6">
+    <h1 class="text-lg sm:text-xl font-bold flex items-center gap-3">
+      <div class="icon-circle-accent"><i class="fa-solid fa-id-badge"></i></div>
+      Employees
+    </h1>
+    <a href="/employees/new" class="btn-primary">
+      <i class="fa-solid fa-plus"></i>New Employee
+    </a>
+  </div>
+
+  <div class="flex items-center gap-2 mb-4 text-sm">
+    <a href="/employees?active=1" class="btn-secondary <%= activeFilter === '1' ? '!border-brand-accent !text-brand-accent' : '' %>">Active</a>
+    <a href="/employees?active=0" class="btn-secondary <%= activeFilter === '0' ? '!border-brand-accent !text-brand-accent' : '' %>">Inactive</a>
+    <a href="/employees?active=all" class="btn-secondary <%= activeFilter === 'all' ? '!border-brand-accent !text-brand-accent' : '' %>">All</a>
+  </div>
+
+  <p class="text-xs text-brand-gray2 mb-4">An employee with salary payment history can only be deactivated, not deleted - this preserves that history.</p>
+
+  <% if (employees.length === 0) { %>
+    <div class="card p-8 text-center">
+      <i class="fa-regular fa-folder-open text-2xl text-brand-gray2 mb-2"></i>
+      <p class="text-sm text-brand-gray2">No employees found.</p>
+    </div>
+  <% } else { %>
+    <div class="space-y-3">
+      <% employees.forEach(function(emp) { %>
+        <div class="card-interactive p-4 flex items-center justify-between gap-3 flex-wrap">
+          <div class="min-w-0">
+            <a href="/employees/<%= emp.id %>" class="font-semibold hover:text-brand-accent"><%= emp.first_name %> <%= emp.last_name %></a>
+            <% if (emp.job_title) { %>
+              <div class="text-xs text-brand-gray2 mt-0.5"><%= emp.job_title %></div>
+            <% } %>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="<%= emp.active ? 'badge-approved' : 'badge-draft' %>"><%= emp.active ? 'Active' : 'Inactive' %></span>
+            <a href="/employees/<%= emp.id %>/edit" class="btn-secondary text-sm"><i class="fa-solid fa-pen"></i></a>
+            <form action="/employees/<%= emp.id %>/toggle-active" method="POST">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn-secondary text-sm"><%= emp.active ? 'Deactivate' : 'Activate' %></button>
+            </form>
+            <form action="/employees/<%= emp.id %>/delete" method="POST" data-confirm="Delete &quot;<%= emp.first_name %> <%= emp.last_name %>&quot;? This can't be undone.">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn-danger text-sm"><i class="fa-solid fa-trash"></i></button>
+            </form>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  <% } %>
+    </div>
+  </div>
+</div>
+<script src="/js/confirm-submit.js?v=<%= assetVersion %>" defer></script>
+
+<%- include('../partials/foot') %>

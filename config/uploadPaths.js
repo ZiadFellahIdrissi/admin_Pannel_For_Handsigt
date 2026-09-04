@@ -34,10 +34,16 @@ const COMPANY_LOGO_PUBLIC_BASE_URL = process.env.COMPANY_LOGO_PUBLIC_BASE_URL ||
 // a public URL), nested under admin-panel/ for the same reason CVs are.
 const INVOICE_DIR = path.join(UPLOAD_ROOT, 'admin-panel', 'invoices');
 
+// Employee payslips (Salaries section) - private like invoices/CVs, same
+// reasoning: a payslip is a financial document about a real person and
+// must never get a public URL.
+const PAYSLIP_DIR = path.join(UPLOAD_ROOT, 'admin-panel', 'payslips');
+
 fs.mkdirSync(CANDIDATE_CV_DIR, { recursive: true });
 fs.mkdirSync(CAREER_IMAGE_DIR, { recursive: true });
 fs.mkdirSync(COMPANY_LOGO_DIR, { recursive: true });
 fs.mkdirSync(INVOICE_DIR, { recursive: true });
+fs.mkdirSync(PAYSLIP_DIR, { recursive: true });
 
 module.exports = {
   UPLOAD_ROOT,
@@ -46,5 +52,6 @@ module.exports = {
   CAREER_IMAGE_PUBLIC_BASE_URL,
   COMPANY_LOGO_DIR,
   COMPANY_LOGO_PUBLIC_BASE_URL,
-  INVOICE_DIR
+  INVOICE_DIR,
+  PAYSLIP_DIR
 };

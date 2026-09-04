@@ -1,0 +1,95 @@
+<%- include('../partials/head', { title: payment.employee_name + ' - ' + monthLabel(payment.month) }) %>
+<div class="flex min-h-screen">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('../partials/topbar', { title: payment.employee_name + ' - ' + monthLabel(payment.month) }) %>
+    <%- include('../partials/flash') %>
+    <div class="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
+  <div class="flex items-center justify-between flex-wrap gap-3 mb-6">
+    <h1 class="text-lg sm:text-xl font-bold flex items-center gap-3">
+      <div class="icon-circle-accent"><i class="fa-solid fa-sack-dollar"></i></div>
+      <%= payment.employee_name %> &middot; <%= monthLabel(payment.month) %>
+    </h1>
+    <div class="flex items-center gap-2">
+      <a href="/salaries" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i>Back</a>
+      <button type="button" class="btn-secondary" data-dialog-open="upload-payslip">
+        <i class="fa-solid fa-upload"></i><%= payment.payslip_path ? 'Replace Payslip' : 'Upload Payslip' %>
+      </button>
+      <form action="/salaries/payment/<%= payment.id %>/delete" method="POST" data-confirm="Delete this payment record? This can't be undone.">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn-danger"><i class="fa-solid fa-trash"></i>Delete</button>
+      </form>
+    </div>
+  </div>
+
+  <% if (!payment.payslip_path) { %>
+    <div class="mb-6 rounded-lg bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 px-4 py-3 text-sm flex items-start gap-3">
+      <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
+      <div><strong>No payslip on file yet.</strong> Upload it once you have it.</div>
+    </div>
+  <% } %>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 items-start">
+    <div class="card p-5 sm:p-6">
+      <div class="space-y-4 text-sm">
+        <div>
+          <h2 class="section-title"><i class="fa-solid fa-circle-info"></i>Payment</h2>
+          <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+            <div><span class="text-brand-gray2">Employee</span><br><a href="/employees/<%= payment.employee_id %>" class="hover:text-brand-accent"><%= payment.employee_name %></a></div>
+            <div><span class="text-brand-gray2">Job Title</span><br><%= payment.job_title || '—' %></div>
+            <div><span class="text-brand-gray2">Month</span><br><%= monthLabel(payment.month) %></div>
+            <div><span class="text-brand-gray2">Paid on</span><br><%= payment.paid_date %></div>
+          </div>
+        </div>
+
+        <div>
+          <h2 class="section-title"><i class="fa-solid fa-sack-dollar"></i>Salary</h2>
+          <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+            <div><span class="text-brand-gray2">Net Salary</span><br><span class="font-semibold text-base"><%= formatCurrency(payment.net_salary) %></span></div>
+            <div><span class="text-brand-gray2">Gross Salary (Brut)</span><br><span class="font-semibold text-base"><%= formatCurrency(payment.gross_salary) %></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: payslip preview -->
+    <div class="card p-5 sm:p-6 lg:sticky lg:top-6">
+      <h2 class="section-title"><i class="fa-solid fa-file-pdf"></i>Payslip</h2>
+      <% if (payment.payslip_path) { %>
+        <iframe src="/salaries/payment/<%= payment.id %>/pdf" class="w-full rounded-lg border border-brand-borderLight" style="height: 70vh;" title="Payslip"></iframe>
+        <a href="/salaries/payment/<%= payment.id %>/pdf?download=1" class="btn-secondary w-full mt-3"><i class="fa-solid fa-download"></i>Download</a>
+      <% } else { %>
+        <p class="text-sm text-brand-gray2">No payslip uploaded yet.</p>
+      <% } %>
+    </div>
+  </div>
+
+  <dialog id="upload-payslip" class="dialog-panel">
+    <div class="p-5 sm:p-6">
+      <div class="flex items-center justify-between gap-3 mb-4">
+        <h3 class="font-bold"><%= payment.payslip_path ? 'Replace Payslip' : 'Upload Payslip' %></h3>
+        <button type="button" class="theme-toggle" data-dialog-close aria-label="Close">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <% if (payment.payslip_path) { %>
+        <p class="text-sm text-brand-gray2 mb-4">Replaces the current payslip on file. This can't be undone.</p>
+      <% } %>
+      <form action="/salaries/payment/<%= payment.id %>/upload-payslip" method="POST" enctype="multipart/form-data" class="space-y-3" data-prevent-double-submit>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div>
+          <label class="field-label" for="payslip">PDF file</label>
+          <input class="field-input" type="file" id="payslip" name="payslip" accept="application/pdf" required>
+        </div>
+        <button type="submit" class="btn-primary w-full">Upload</button>
+      </form>
+    </div>
+  </dialog>
+    </div>
+  </div>
+</div>
+<script src="/js/dialog-toggle.js?v=<%= assetVersion %>" defer></script>
+<script src="/js/confirm-submit.js?v=<%= assetVersion %>" defer></script>
+<script src="/js/prevent-double-submit.js?v=<%= assetVersion %>" defer></script>
+
+<%- include('../partials/foot') %>

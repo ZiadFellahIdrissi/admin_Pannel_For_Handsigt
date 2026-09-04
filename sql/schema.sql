@@ -297,17 +297,63 @@ ALTER TABLE invoices
 -- ---------------------------------------------------------------------
 -- MIGRATION - run once in phpMyAdmin's SQL tab.
 --
--- paid_at tracks money actually changing hands, which is a separate
--- concept from anything else on the invoices table - and means something
--- different depending on invoice type:
---   - Client invoices: manually toggled (controllers/invoicesController.js's
---     handleTogglePaid) once the client has actually paid Handsight.
---     Nothing else drives it.
---   - Supplier invoices: NEVER toggled directly - this column stays NULL
---     for them. "Paid" for a supplier invoice is derived entirely from
---     is_simulation instead (real invoice uploaded = Handsight paid the
---     supplier = done), computed in the view rather than stored, since
---     it's just a restatement of a flag that already exists.
+-- paid_at tracks money actually changing hands, manually toggled either
+-- way (controllers/invoicesController.js's handleTogglePaid) and
+-- independent of everything else on the row:
+--   - Client invoices: the client has actually paid Handsight.
+--   - Supplier invoices: Handsight has actually paid the supplier - only
+--     togglable once the real invoice is on file (is_simulation = 0),
+--     since uploading that document and actually sending the money are
+--     two separate moments.
 -- ---------------------------------------------------------------------
 ALTER TABLE invoices
   ADD COLUMN paid_at TIMESTAMP DEFAULT NULL;
+
+-- ---------------------------------------------------------------------
+-- MIGRATION - run once in phpMyAdmin's SQL tab.
+--
+-- Payroll (Salaries section) - Handsight's own employees, paid a fixed
+-- monthly salary rather than a per-day TJM. Deliberately NOT modeled on
+-- consultants/month_submissions: there's no client to bill, no approval
+-- workflow, and no invoice - just "did this employee get paid this
+-- month, and here's their payslip." net_salary/gross_salary on employees
+-- are the current/default figures shown when filling in a new month's
+-- payment; salary_payments.net_salary/gross_salary are a frozen snapshot
+-- of what was actually paid that month (same "freeze at the moment of
+-- payment" idea as month_submissions' frozen TJM columns), so a later
+-- raise doesn't retroactively rewrite past months.
+-- ---------------------------------------------------------------------
+CREATE TABLE employees (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  first_name VARCHAR(100) NOT NULL,
+  last_name VARCHAR(100) NOT NULL,
+  email VARCHAR(255) DEFAULT NULL,
+  phone VARCHAR(50) DEFAULT NULL,
+  job_title VARCHAR(255) DEFAULT NULL,
+  net_salary DECIMAL(10,2) DEFAULT NULL,
+  gross_salary DECIMAL(10,2) DEFAULT NULL,
+  bank_name VARCHAR(255) DEFAULT NULL,
+  bank_rib VARCHAR(24) DEFAULT NULL,
+  bank_iban VARCHAR(34) DEFAULT NULL,
+  bank_swift VARCHAR(11) DEFAULT NULL,
+  active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- One row per employee per month they were actually paid - a missing row
+-- for a given employee+month simply means that month hasn't been
+-- recorded yet (no separate "unpaid" state to track). The UNIQUE
+-- constraint is the same "rely on the DB, handle ER_DUP_ENTRY in the
+-- controller" safety net already used for invoices.invoice_number.
+CREATE TABLE salary_payments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  employee_id INT NOT NULL,
+  month VARCHAR(7) NOT NULL,
+  net_salary DECIMAL(10,2) NOT NULL,
+  gross_salary DECIMAL(10,2) NOT NULL,
+  paid_date DATE NOT NULL,
+  payslip_path VARCHAR(255) DEFAULT NULL,
+  payslip_original_name VARCHAR(255) DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY employee_month (employee_id, month)
+);

@@ -14,6 +14,8 @@
   var isHistory = currentPath.indexOf('/history') === 0;
   var isInvoiceClients = currentPath.indexOf('/invoices/clients') === 0;
   var isInvoiceSuppliers = currentPath.indexOf('/invoices/suppliers') === 0;
+  var isEmployees = currentPath === '/employees' || currentPath.indexOf('/employees/') === 0;
+  var isSalaries = currentPath.indexOf('/salaries') === 0;
   var isConsultantLogins = currentPath.indexOf('/login-attempts/consultants') === 0;
   var isAdminLogins = currentPath.indexOf('/login-attempts/admin') === 0;
   var isLoginAnalysis = currentPath.indexOf('/login-attempts/analysis') === 0;
@@ -100,6 +102,16 @@
       </a>
       <a href="/invoices/suppliers" class="<%= isInvoiceSuppliers ? 'sidebar-link-active' : 'sidebar-link' %>">
         <i class="fa-solid fa-file-invoice w-4 text-center"></i>Supplier Invoices
+      </a>
+    </div>
+
+    <div class="sidebar-section-title">Payroll</div>
+    <div class="space-y-1">
+      <a href="/employees" class="<%= isEmployees ? 'sidebar-link-active' : 'sidebar-link' %>">
+        <i class="fa-solid fa-id-badge w-4 text-center"></i>Employees
+      </a>
+      <a href="/salaries" class="<%= isSalaries ? 'sidebar-link-active' : 'sidebar-link' %>">
+        <i class="fa-solid fa-sack-dollar w-4 text-center"></i>Salaries
       </a>
     </div>
 
