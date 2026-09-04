@@ -391,12 +391,22 @@ INSERT INTO charge_categories (name) VALUES
 -- invoice_path is optional - a charge can be recorded before the
 -- purchase invoice/receipt is in hand, and attached later (see
 -- chargesController.handleUploadInvoice), same "optional at creation,
--- addable later" idea as salary_payments.payslip_path.
+-- addable later" idea as salary_payments.payslip_path. amount_ht/
+-- amount_tva/amount_ttc are all explicit, independently-entered fields
+-- (not derived from a fixed VAT rate the way invoice totals are) - a
+-- purchase receipt already prints all three, and VAT treatment varies
+-- enough across real-world charges (some 20%, some 0%, some already
+-- TTC-only) that the form just transcribes what's on the document rather
+-- than assuming one formula. The form's public/js/charge-vat-calc.js
+-- pre-fills TVA/TTC from HT at the usual 20% as a convenience default,
+-- but every field stays freely editable.
 CREATE TABLE charges (
   id INT AUTO_INCREMENT PRIMARY KEY,
   category_id INT NOT NULL,
   label VARCHAR(255) DEFAULT NULL,
-  amount DECIMAL(10,2) NOT NULL,
+  amount_ht DECIMAL(10,2) NOT NULL,
+  amount_tva DECIMAL(10,2) NOT NULL,
+  amount_ttc DECIMAL(10,2) NOT NULL,
   charge_date DATE NOT NULL,
   invoice_path VARCHAR(255) DEFAULT NULL,
   invoice_original_name VARCHAR(255) DEFAULT NULL,

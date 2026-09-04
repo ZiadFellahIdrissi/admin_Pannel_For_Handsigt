@@ -27,14 +27,22 @@ function extractFields(body) {
   const label = (body.label || '').trim();
   return {
     label: label || null,
-    amount: body.amount ? Number(body.amount) : NaN,
+    amountHt: body.amountHt ? Number(body.amountHt) : NaN,
+    amountTva: body.amountTva ? Number(body.amountTva) : NaN,
+    amountTtc: body.amountTtc ? Number(body.amountTtc) : NaN,
     chargeDate: (body.chargeDate || '').trim()
   };
 }
 
 function validateFields(fields, errors) {
-  if (!Number.isFinite(fields.amount) || fields.amount < 0) {
-    errors.push('Amount must be a non-negative number.');
+  if (!Number.isFinite(fields.amountHt) || fields.amountHt < 0) {
+    errors.push('Amount HT must be a non-negative number.');
+  }
+  if (!Number.isFinite(fields.amountTva) || fields.amountTva < 0) {
+    errors.push('TVA must be a non-negative number.');
+  }
+  if (!Number.isFinite(fields.amountTtc) || fields.amountTtc < 0) {
+    errors.push('Amount TTC must be a non-negative number.');
   }
   if (!fields.chargeDate) {
     errors.push('Date is required.');
@@ -77,7 +85,9 @@ async function handleCreate(req, res) {
   const id = await chargeModel.create({
     categoryId,
     label: fields.label,
-    amount: fields.amount,
+    amountHt: fields.amountHt,
+    amountTva: fields.amountTva,
+    amountTtc: fields.amountTtc,
     chargeDate: fields.chargeDate,
     invoicePath: req.file ? req.file.filename : null,
     invoiceOriginalName: req.file ? req.file.originalname : null
@@ -127,7 +137,14 @@ async function handleUpdate(req, res) {
     });
   }
 
-  await chargeModel.update(charge.id, { categoryId, label: fields.label, amount: fields.amount, chargeDate: fields.chargeDate });
+  await chargeModel.update(charge.id, {
+    categoryId,
+    label: fields.label,
+    amountHt: fields.amountHt,
+    amountTva: fields.amountTva,
+    amountTtc: fields.amountTtc,
+    chargeDate: fields.chargeDate
+  });
   req.flash('success', 'Charge updated.');
   res.redirect(`/charges/${charge.id}`);
 }

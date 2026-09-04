@@ -34,19 +34,19 @@ async function findById(id) {
   return rows[0] || null;
 }
 
-async function create({ categoryId, label, amount, chargeDate, invoicePath, invoiceOriginalName }) {
+async function create({ categoryId, label, amountHt, amountTva, amountTtc, chargeDate, invoicePath, invoiceOriginalName }) {
   const [result] = await pool.query(
-    `INSERT INTO charges (category_id, label, amount, charge_date, invoice_path, invoice_original_name)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [categoryId, label || null, amount, chargeDate, invoicePath || null, invoiceOriginalName || null]
+    `INSERT INTO charges (category_id, label, amount_ht, amount_tva, amount_ttc, charge_date, invoice_path, invoice_original_name)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [categoryId, label || null, amountHt, amountTva, amountTtc, chargeDate, invoicePath || null, invoiceOriginalName || null]
   );
   return result.insertId;
 }
 
-async function update(id, { categoryId, label, amount, chargeDate }) {
+async function update(id, { categoryId, label, amountHt, amountTva, amountTtc, chargeDate }) {
   await pool.query(
-    'UPDATE charges SET category_id = ?, label = ?, amount = ?, charge_date = ? WHERE id = ?',
-    [categoryId, label || null, amount, chargeDate, id]
+    'UPDATE charges SET category_id = ?, label = ?, amount_ht = ?, amount_tva = ?, amount_ttc = ?, charge_date = ? WHERE id = ?',
+    [categoryId, label || null, amountHt, amountTva, amountTtc, chargeDate, id]
   );
 }
 
