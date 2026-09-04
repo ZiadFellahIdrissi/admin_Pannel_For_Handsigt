@@ -143,12 +143,14 @@ async function replacePdf(id, { pdfPath, isSimulation, invoiceNumber, supplierId
   );
 }
 
-// Client-invoice-only concept - "Handsight has actually been paid by this
-// client", manually toggled, unrelated to anything else on the row (see
-// the paid_at migration comment in sql/schema.sql). The controller is
-// responsible for only ever calling this on type = 'client' invoices;
-// supplier invoices derive their paid/unpaid state from is_simulation
-// instead and never touch this column.
+// "Money has actually changed hands" for this invoice - manually
+// toggled, independent of everything else on the row. For a client
+// invoice that means the client paid Handsight; for a supplier invoice
+// it means Handsight paid the supplier. The controller only allows
+// toggling a supplier invoice once its real document is on file
+// (is_simulation = 0) - uploading the real invoice and actually paying
+// it are two separate moments, so this never gets set implicitly from
+// is_simulation the way it briefly did.
 async function setPaid(id, paid) {
   await pool.query('UPDATE invoices SET paid_at = ? WHERE id = ?', [paid ? new Date() : null, id]);
 }

@@ -329,19 +329,28 @@ async function showClientDetail(req, res) {
   res.render('invoices/detail', { invoice, type: 'client', lineItems: [], suppliers: [] });
 }
 
-// Client-invoice-only - marks whether the client has actually sent
-// Handsight the money. Purely manual (see invoiceModel.setPaid); there's
-// no equivalent for supplier invoices, whose paid/unpaid state is
-// derived from is_simulation instead (see showSupplierDetail/the
-// invoices/detail and invoices/list views).
+// Marks whether money has actually changed hands - client paid Handsight
+// (client invoices) or Handsight paid the supplier (supplier invoices).
+// Manual either way (see invoiceModel.setPaid). For a supplier invoice
+// this is only meaningful once the real document is on file - uploading
+// it and actually sending the money are two separate moments, so a
+// still-simulated invoice can't be toggled (there's nothing real to have
+// paid yet).
 async function handleTogglePaid(req, res) {
   const invoice = await invoiceModel.findById(req.params.id);
-  if (!invoice || invoice.type !== 'client') {
+  if (!invoice) {
     return res.status(404).render('error', { message: 'Invoice not found.' });
   }
+  const redirectPath = invoice.type === 'client' ? `/invoices/clients/${invoice.id}` : `/invoices/suppliers/${invoice.id}`;
+
+  if (invoice.type === 'supplier' && invoice.is_simulation) {
+    req.flash('error', 'Upload the real invoice before marking this as paid.');
+    return res.redirect(redirectPath);
+  }
+
   await invoiceModel.setPaid(invoice.id, !invoice.paid_at);
   req.flash('success', invoice.paid_at ? 'Invoice marked as unpaid.' : 'Invoice marked as paid.');
-  res.redirect(`/invoices/clients/${invoice.id}`);
+  res.redirect(redirectPath);
 }
 
 // lineItems is non-empty only for a combined supplier invoice (see
