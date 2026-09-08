@@ -13,6 +13,8 @@
   <%- include('../partials/financeNav', { active: 'pnl' }) %>
   <%- include('../partials/monthRangeFilter', { actionPath: '/finance/pnl', from, to }) %>
 
+  <p class="text-xs text-brand-gray2 mb-4"><i class="fa-solid fa-circle-info mr-1"></i>Cash-basis: revenue and supplier cost only count invoices actually marked <strong>Paid</strong>, not merely billed.</p>
+
   <div class="card p-5 sm:p-6 mb-6">
     <h2 class="section-title"><i class="fa-solid fa-calculator"></i>Compte de R&eacute;sultat (HT)</h2>
     <div class="space-y-2 text-sm">

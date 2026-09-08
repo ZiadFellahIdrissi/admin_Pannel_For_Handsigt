@@ -47,6 +47,7 @@ async function exportTvaExcel(req, res) {
   summary.columns = [{ header: '', key: 'label', width: 28 }, { header: '', key: 'value', width: 18 }];
   summary.addRows([
     { label: 'Period', value: from === to ? monthLabel(from) : `${monthLabel(from)} - ${monthLabel(to)}` },
+    { label: 'Basis', value: 'Cash (paid invoices only - TVA sur encaissements)' },
     { label: 'TVA Collectée', value: Number(tva.collected.toFixed(2)) },
     { label: 'TVA Déductible (Suppliers)', value: Number(tva.deductibleSuppliers.toFixed(2)) },
     { label: 'TVA Déductible (Charges)', value: Number(tva.deductibleCharges.toFixed(2)) },
@@ -54,8 +55,8 @@ async function exportTvaExcel(req, res) {
     { label: 'TVA Nette', value: Number(tva.net.toFixed(2)) }
   ]);
   // Row 1 is the (blank) header row, so data starts at row 2 - "TVA
-  // Nette" is the 6th data row added above, landing on row 7.
-  summary.getRow(7).font = { bold: true };
+  // Nette" is the 7th data row added above, landing on row 8.
+  summary.getRow(8).font = { bold: true };
 
   const clientSheet = workbook.addWorksheet('Client Invoices (Collectée)');
   clientSheet.columns = [

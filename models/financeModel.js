@@ -37,6 +37,14 @@ function buildMonthRange(fromMonth, toMonth) {
   return months;
 }
 
+// Cash-basis, deliberately: only invoices actually marked paid
+// (invoicesController.handleTogglePaid) count as revenue/cost/TVA here.
+// Two reasons, not just one: "how much did we gain" means cash actually
+// received, not merely billed - and Moroccan TVA on services is due on
+// encaissement (payment received), not on invoicing, so an unpaid
+// invoice's TVA isn't collectible/deductible yet either. An invoiced-but-
+// unpaid amount lives on the Receivables/Payables pages instead, not here.
+//
 // Client invoices are never combined (unlike supplier ones - see
 // invoicesController.js's comment on handleGenerateCombinedSupplier), so
 // a plain query against `invoices` already gives one row per real unit
@@ -45,18 +53,22 @@ async function getClientLedger(fromMonth, toMonth) {
   const [rows] = await pool.query(
     `SELECT id AS invoice_id, invoice_number, client_id, consultant_id, month, total_ht, total_tva, total_ttc
        FROM invoices
-      WHERE type = 'client' AND month >= ? AND month <= ?`,
+      WHERE type = 'client' AND paid_at IS NOT NULL AND month >= ? AND month <= ?`,
     [fromMonth, toMonth]
   );
   return rows;
 }
 
-// One row per actual unit of supplier cost. A single-submission supplier
-// invoice contributes its own row directly; a combined (consolidated)
-// supplier invoice's parent row has no single client_id/consultant_id/
-// month to attribute the cost to (see invoiceModel.createCombined), so
-// it contributes one row per invoice_line_items row instead - each
-// already carrying its own client_id/consultant_id/month/total_ht.
+// One row per actual unit of supplier cost, paid ones only (see the
+// cash-basis comment above getClientLedger). A single-submission
+// supplier invoice contributes its own row directly, gated on its own
+// paid_at; a combined (consolidated) supplier invoice's parent row has
+// no single client_id/consultant_id/month to attribute the cost to (see
+// invoiceModel.createCombined), so it contributes one row per
+// invoice_line_items row instead - each already carrying its own
+// client_id/consultant_id/month/total_ht, gated on the *parent* row's
+// paid_at (payment is recorded once per combined invoice, never per
+// line item - there's no invoice_line_items.paid_at to read).
 // total_tva/total_ttc are recomputed as total_ht * 0.2 / * 1.2 rather
 // than read from a stored column, because invoice_line_items only ever
 // stores total_ht - but that recomputation is exact, not an estimate:
@@ -71,14 +83,14 @@ async function getSupplierLedger(fromMonth, toMonth) {
     `SELECT i.id AS invoice_id, i.invoice_number, i.client_id, i.consultant_id, i.month,
             i.total_ht, i.total_tva, i.total_ttc
        FROM invoices i
-      WHERE i.type = 'supplier' AND i.submission_id IS NOT NULL
+      WHERE i.type = 'supplier' AND i.submission_id IS NOT NULL AND i.paid_at IS NOT NULL
         AND i.month >= ? AND i.month <= ?
      UNION ALL
      SELECT i.id AS invoice_id, i.invoice_number, ili.client_id, ili.consultant_id, ili.month,
             ili.total_ht, ROUND(ili.total_ht * 0.2, 2) AS total_tva, ROUND(ili.total_ht * 1.2, 2) AS total_ttc
        FROM invoice_line_items ili
        JOIN invoices i ON i.id = ili.invoice_id
-      WHERE i.type = 'supplier' AND ili.month >= ? AND ili.month <= ?`,
+      WHERE i.type = 'supplier' AND i.paid_at IS NOT NULL AND ili.month >= ? AND ili.month <= ?`,
     [fromMonth, toMonth, fromMonth, toMonth]
   );
   return rows;
