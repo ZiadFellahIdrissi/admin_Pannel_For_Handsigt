@@ -1,0 +1,16 @@
+<%
+  // actionPath/from/to are passed in by the including page. A same-month
+  // from/to covers a monthly TVA filer; a 3-month span covers a
+  // quarterly one - see financeController.js's monthRangeLocals.
+%>
+<form action="<%= actionPath %>" method="GET" class="card p-4 mb-6 flex items-end gap-3 flex-wrap">
+  <div>
+    <label class="field-label" for="from">From</label>
+    <input type="month" name="from" id="from" value="<%= from %>" class="field-input">
+  </div>
+  <div>
+    <label class="field-label" for="to">To</label>
+    <input type="month" name="to" id="to" value="<%= to %>" class="field-input">
+  </div>
+  <button type="submit" class="btn-secondary"><i class="fa-solid fa-filter"></i>Apply</button>
+</form>

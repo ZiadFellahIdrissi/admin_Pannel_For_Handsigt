@@ -1,0 +1,65 @@
+<%- include('../partials/head', { title: 'Profit & Loss' }) %>
+<div class="flex min-h-screen">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('../partials/topbar', { title: 'Profit & Loss' }) %>
+    <%- include('../partials/flash') %>
+    <div class="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
+  <h1 class="text-lg sm:text-xl font-bold mb-4 sm:mb-6 flex items-center gap-3">
+    <div class="icon-circle-accent"><i class="fa-solid fa-chart-line"></i></div>
+    Profit &amp; Loss
+  </h1>
+
+  <%- include('../partials/financeNav', { active: 'pnl' }) %>
+  <%- include('../partials/monthRangeFilter', { actionPath: '/finance/pnl', from, to }) %>
+
+  <div class="card p-5 sm:p-6 mb-6">
+    <h2 class="section-title"><i class="fa-solid fa-calculator"></i>Compte de R&eacute;sultat (HT)</h2>
+    <div class="space-y-2 text-sm">
+      <div class="flex items-center justify-between"><span>Revenue (client invoices)</span><span class="font-semibold"><%= formatCurrency(pnl.revenueHt) %></span></div>
+      <div class="flex items-center justify-between text-brand-gray2"><span>&minus; Supplier cost</span><span><%= formatCurrency(pnl.supplierCostHt) %></span></div>
+      <div class="flex items-center justify-between pt-2 border-t border-brand-borderLight font-semibold"><span>= Gross Margin</span><span><%= formatCurrency(pnl.grossMargin) %></span></div>
+      <div class="flex items-center justify-between text-brand-gray2 pt-2"><span>&minus; Salaries (gross)</span><span><%= formatCurrency(pnl.salariesGross) %></span></div>
+      <div class="flex items-center justify-between text-brand-gray2"><span>&minus; Charges</span><span><%= formatCurrency(pnl.chargesHt) %></span></div>
+      <div class="flex items-center justify-between pt-2 border-t border-brand-borderLight font-semibold text-base"><span>= Net Result</span><span class="<%= pnl.netResult >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' %>"><%= formatCurrency(pnl.netResult) %></span></div>
+    </div>
+  </div>
+
+  <div class="card p-5 sm:p-6">
+    <h2 class="section-title"><i class="fa-solid fa-calendar-days"></i>Monthly Breakdown</h2>
+    <% if (pnl.monthlyBreakdown.length === 0) { %>
+      <p class="text-sm text-brand-gray2">No data in this period.</p>
+    <% } else { %>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-brand-gray2 border-b border-brand-borderLight">
+            <th class="py-2 pr-3">Month</th>
+            <th class="py-2 pr-3 text-right">Revenue</th>
+            <th class="py-2 pr-3 text-right">Supplier Cost</th>
+            <th class="py-2 pr-3 text-right">Gross Margin</th>
+            <th class="py-2 pr-3 text-right">Salaries</th>
+            <th class="py-2 pr-3 text-right">Charges</th>
+            <th class="py-2 text-right">Net Result</th>
+          </tr></thead>
+          <tbody>
+            <% pnl.monthlyBreakdown.forEach(function(m) { %>
+              <tr class="border-b border-brand-borderLight last:border-0">
+                <td class="py-2 pr-3 font-medium"><%= monthLabel(m.month) %></td>
+                <td class="py-2 pr-3 text-right"><%= formatCurrency(m.revenueHt) %></td>
+                <td class="py-2 pr-3 text-right"><%= formatCurrency(m.supplierCostHt) %></td>
+                <td class="py-2 pr-3 text-right"><%= formatCurrency(m.grossMargin) %></td>
+                <td class="py-2 pr-3 text-right"><%= formatCurrency(m.salariesGross) %></td>
+                <td class="py-2 pr-3 text-right"><%= formatCurrency(m.chargesHt) %></td>
+                <td class="py-2 text-right font-medium <%= m.netResult >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' %>"><%= formatCurrency(m.netResult) %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

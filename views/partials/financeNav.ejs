@@ -1,0 +1,19 @@
+<%
+  // `active` is passed in by each finance/*.ejs page - one of
+  // 'dashboard' | 'tva' | 'pnl' | 'margins' | 'receivables' | 'payables'.
+  var tabs = [
+    { key: 'dashboard', href: '/finance', label: 'Dashboard', icon: 'fa-gauge' },
+    { key: 'tva', href: '/finance/tva', label: 'TVA Report', icon: 'fa-percent' },
+    { key: 'pnl', href: '/finance/pnl', label: 'P&L', icon: 'fa-chart-line' },
+    { key: 'margins', href: '/finance/margins', label: 'Margins', icon: 'fa-scale-balanced' },
+    { key: 'receivables', href: '/finance/receivables', label: 'Receivables', icon: 'fa-hand-holding-dollar' },
+    { key: 'payables', href: '/finance/payables', label: 'Payables', icon: 'fa-money-bill-transfer' }
+  ];
+%>
+<div class="flex items-center gap-2 mb-6 flex-wrap">
+  <% tabs.forEach(function(tab) { %>
+    <a href="<%= tab.href %>" class="btn-secondary text-sm <%= active === tab.key ? '!border-brand-accent !text-brand-accent' : '' %>">
+      <i class="fa-solid <%= tab.icon %>"></i><%= tab.label %>
+    </a>
+  <% }); %>
+</div>

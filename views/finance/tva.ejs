@@ -1,0 +1,129 @@
+<%- include('../partials/head', { title: 'TVA Report' }) %>
+<div class="flex min-h-screen">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('../partials/topbar', { title: 'TVA Report' }) %>
+    <%- include('../partials/flash') %>
+    <div class="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
+  <div class="flex items-center justify-between flex-wrap gap-3 mb-4 sm:mb-6">
+    <h1 class="text-lg sm:text-xl font-bold flex items-center gap-3">
+      <div class="icon-circle-accent"><i class="fa-solid fa-percent"></i></div>
+      TVA Report
+    </h1>
+    <a href="/finance/tva/export?from=<%= from %>&to=<%= to %>" class="btn-primary">
+      <i class="fa-solid fa-file-excel"></i>Export to Excel
+    </a>
+  </div>
+
+  <%- include('../partials/financeNav', { active: 'tva' }) %>
+  <%- include('../partials/monthRangeFilter', { actionPath: '/finance/tva', from, to }) %>
+
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+    <div class="stat-tile">
+      <div class="icon-circle-emerald"><i class="fa-solid fa-arrow-down-to-bracket"></i></div>
+      <div>
+        <div class="stat-tile-value text-base sm:text-xl"><%= formatCurrency(tva.collected) %></div>
+        <div class="stat-tile-label">TVA Collectée</div>
+      </div>
+    </div>
+    <div class="stat-tile">
+      <div class="icon-circle-amber"><i class="fa-solid fa-arrow-up-from-bracket"></i></div>
+      <div>
+        <div class="stat-tile-value text-base sm:text-xl"><%= formatCurrency(tva.deductible) %></div>
+        <div class="stat-tile-label">TVA Déductible</div>
+      </div>
+    </div>
+    <div class="stat-tile">
+      <div class="<%= tva.net >= 0 ? 'icon-circle-amber' : 'icon-circle-emerald' %>"><i class="fa-solid fa-equals"></i></div>
+      <div>
+        <div class="stat-tile-value text-base sm:text-xl"><%= formatCurrency(tva.net) %></div>
+        <div class="stat-tile-label"><%= tva.net >= 0 ? 'TVA Nette (à payer)' : 'Crédit de TVA (reportable)' %></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p-5 sm:p-6 mb-6">
+    <h2 class="section-title"><i class="fa-solid fa-file-invoice-dollar"></i>Client Invoices (Collectée) &mdash; <%= formatCurrency(tva.collected) %></h2>
+    <% if (tva.clientLedger.length === 0) { %>
+      <p class="text-sm text-brand-gray2">No client invoices in this period.</p>
+    <% } else { %>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-brand-gray2 border-b border-brand-borderLight">
+            <th class="py-2 pr-3">Invoice</th><th class="py-2 pr-3">Month</th>
+            <th class="py-2 pr-3 text-right">HT</th><th class="py-2 pr-3 text-right">TVA</th><th class="py-2 text-right">TTC</th>
+          </tr></thead>
+          <tbody>
+            <% tva.clientLedger.forEach(function(r) { %>
+              <tr class="border-b border-brand-borderLight last:border-0">
+                <td class="py-2 pr-3"><a href="/invoices/clients/<%= r.invoice_id %>" class="hover:text-brand-accent"><%= r.invoice_number %></a></td>
+                <td class="py-2 pr-3"><%= monthLabel(r.month) %></td>
+                <td class="py-2 pr-3 text-right"><%= formatCurrency(r.total_ht) %></td>
+                <td class="py-2 pr-3 text-right"><%= formatCurrency(r.total_tva) %></td>
+                <td class="py-2 text-right"><%= formatCurrency(r.total_ttc) %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+
+  <div class="card p-5 sm:p-6 mb-6">
+    <h2 class="section-title"><i class="fa-solid fa-file-invoice"></i>Supplier Invoices (Déductible) &mdash; <%= formatCurrency(tva.deductibleSuppliers) %></h2>
+    <% if (tva.supplierLedger.length === 0) { %>
+      <p class="text-sm text-brand-gray2">No supplier invoices in this period.</p>
+    <% } else { %>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-brand-gray2 border-b border-brand-borderLight">
+            <th class="py-2 pr-3">Invoice</th><th class="py-2 pr-3">Month</th>
+            <th class="py-2 pr-3 text-right">HT</th><th class="py-2 pr-3 text-right">TVA</th><th class="py-2 text-right">TTC</th>
+          </tr></thead>
+          <tbody>
+            <% tva.supplierLedger.forEach(function(r) { %>
+              <tr class="border-b border-brand-borderLight last:border-0">
+                <td class="py-2 pr-3"><a href="/invoices/suppliers/<%= r.invoice_id %>" class="hover:text-brand-accent"><%= r.invoice_number %></a></td>
+                <td class="py-2 pr-3"><%= monthLabel(r.month) %></td>
+                <td class="py-2 pr-3 text-right"><%= formatCurrency(r.total_ht) %></td>
+                <td class="py-2 pr-3 text-right"><%= formatCurrency(r.total_tva) %></td>
+                <td class="py-2 text-right"><%= formatCurrency(r.total_ttc) %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+
+  <div class="card p-5 sm:p-6">
+    <h2 class="section-title"><i class="fa-solid fa-receipt"></i>Charges (Déductible) &mdash; <%= formatCurrency(tva.deductibleCharges) %></h2>
+    <% if (tva.charges.length === 0) { %>
+      <p class="text-sm text-brand-gray2">No charges in this period.</p>
+    <% } else { %>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-brand-gray2 border-b border-brand-borderLight">
+            <th class="py-2 pr-3">Category</th><th class="py-2 pr-3">Date</th>
+            <th class="py-2 pr-3 text-right">HT</th><th class="py-2 pr-3 text-right">TVA</th><th class="py-2 text-right">TTC</th>
+          </tr></thead>
+          <tbody>
+            <% tva.charges.forEach(function(r) { %>
+              <tr class="border-b border-brand-borderLight last:border-0">
+                <td class="py-2 pr-3"><a href="/charges/<%= r.id %>" class="hover:text-brand-accent"><%= r.category_name %></a><% if (r.label) { %> <span class="text-brand-gray2">&middot; <%= r.label %></span><% } %></td>
+                <td class="py-2 pr-3"><%= r.charge_date %></td>
+                <td class="py-2 pr-3 text-right"><%= formatCurrency(r.amount_ht) %></td>
+                <td class="py-2 pr-3 text-right"><%= formatCurrency(r.amount_tva) %></td>
+                <td class="py-2 text-right"><%= formatCurrency(r.amount_ttc) %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

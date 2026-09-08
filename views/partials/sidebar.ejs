@@ -17,6 +17,7 @@
   var isEmployees = currentPath === '/employees' || currentPath.indexOf('/employees/') === 0;
   var isSalaries = currentPath.indexOf('/salaries') === 0;
   var isCharges = currentPath === '/charges' || currentPath.indexOf('/charges/') === 0;
+  var isFinance = currentPath.indexOf('/finance') === 0;
   var isConsultantLogins = currentPath.indexOf('/login-attempts/consultants') === 0;
   var isAdminLogins = currentPath.indexOf('/login-attempts/admin') === 0;
   var isLoginAnalysis = currentPath.indexOf('/login-attempts/analysis') === 0;
@@ -120,6 +121,13 @@
     <div class="space-y-1">
       <a href="/charges" class="<%= isCharges ? 'sidebar-link-active' : 'sidebar-link' %>">
         <i class="fa-solid fa-receipt w-4 text-center"></i>Charges
+      </a>
+    </div>
+
+    <div class="sidebar-section-title">Finance</div>
+    <div class="space-y-1">
+      <a href="/finance" class="<%= isFinance ? 'sidebar-link-active' : 'sidebar-link' %>">
+        <i class="fa-solid fa-coins w-4 text-center"></i>Finance
       </a>
     </div>
 

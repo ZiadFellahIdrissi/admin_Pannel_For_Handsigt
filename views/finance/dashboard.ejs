@@ -1,0 +1,69 @@
+<%- include('../partials/head', { title: 'Finance' }) %>
+<div class="flex min-h-screen">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('../partials/topbar', { title: 'Finance' }) %>
+    <%- include('../partials/flash') %>
+    <div class="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
+  <h1 class="text-lg sm:text-xl font-bold mb-4 sm:mb-6 flex items-center gap-3">
+    <div class="icon-circle-accent"><i class="fa-solid fa-coins"></i></div>
+    Finance
+  </h1>
+
+  <%- include('../partials/financeNav', { active: 'dashboard' }) %>
+  <%- include('../partials/monthRangeFilter', { actionPath: '/finance', from, to }) %>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+    <div class="stat-tile">
+      <div class="icon-circle-emerald"><i class="fa-solid fa-sack-dollar"></i></div>
+      <div>
+        <div class="stat-tile-value text-base sm:text-xl"><%= formatCurrency(pnl.revenueHt) %></div>
+        <div class="stat-tile-label">Revenue (HT)</div>
+      </div>
+    </div>
+    <div class="stat-tile">
+      <div class="icon-circle-amber"><i class="fa-solid fa-truck-fast"></i></div>
+      <div>
+        <div class="stat-tile-value text-base sm:text-xl"><%= formatCurrency(pnl.supplierCostHt) %></div>
+        <div class="stat-tile-label">Supplier Cost (HT)</div>
+      </div>
+    </div>
+    <div class="stat-tile">
+      <div class="<%= pnl.netResult >= 0 ? 'icon-circle-emerald' : 'icon-circle-amber' %>"><i class="fa-solid fa-scale-balanced"></i></div>
+      <div>
+        <div class="stat-tile-value text-base sm:text-xl"><%= formatCurrency(pnl.netResult) %></div>
+        <div class="stat-tile-label">Net Result</div>
+      </div>
+    </div>
+    <div class="stat-tile">
+      <div class="icon-circle-slate"><i class="fa-solid fa-percent"></i></div>
+      <div>
+        <div class="stat-tile-value text-base sm:text-xl"><%= formatCurrency(tva.net) %></div>
+        <div class="stat-tile-label">TVA Nette (due)</div>
+      </div>
+    </div>
+    <div class="stat-tile">
+      <div class="icon-circle-amber"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+      <div>
+        <div class="stat-tile-value text-base sm:text-xl"><%= formatCurrency(receivables.total) %></div>
+        <div class="stat-tile-label">Receivable (unpaid client invoices)</div>
+      </div>
+    </div>
+    <div class="stat-tile">
+      <div class="icon-circle-amber"><i class="fa-solid fa-money-bill-transfer"></i></div>
+      <div>
+        <div class="stat-tile-value text-base sm:text-xl"><%= formatCurrency(payables.total) %></div>
+        <div class="stat-tile-label">Payable (unpaid supplier invoices)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p-5 sm:p-6">
+    <h2 class="section-title"><i class="fa-solid fa-circle-info"></i>Period</h2>
+    <p class="text-sm text-brand-gray2">Showing <%= from === to ? monthLabel(from) : monthLabel(from) + ' — ' + monthLabel(to) %>. Receivables and Payables are always a live snapshot of what's currently unpaid, independent of this period. Use the tabs above for the full TVA report, P&amp;L breakdown, and per-client/per-consultant margins.</p>
+  </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>
