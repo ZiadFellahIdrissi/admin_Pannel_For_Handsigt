@@ -7,23 +7,36 @@ const careerOfferModel = require('../models/careerOfferModel');
 const monthSubmissionModel = require('../models/monthSubmissionModel');
 const salaryPaymentModel = require('../models/salaryPaymentModel');
 const financeModel = require('../models/financeModel');
-const { currentMonthKey } = require('../utils/format');
+const { currentMonthKey, shiftMonth, currentQuarterRange, monthLabel } = require('../utils/format');
 
 // One landing page pulling a headline number from every module built
 // this far - deliberately all read-only aggregate queries (list/count),
-// nothing here mutates anything. Finance figures reuse financeModel's
-// existing cash-basis logic (see financeModel.js) for a single month
-// (today's), same rule as the full Finance section: only invoices
-// actually marked paid count as revenue/cost/TVA.
+// nothing here mutates anything.
 async function show(req, res) {
   const month = currentMonthKey();
+
+  // Salaries are paid at the END of the month they cover, so mid-month
+  // (or even on the last day) the current month's payment round simply
+  // hasn't happened yet - checking "is everyone paid for September" on
+  // September 15th would always show a wall of false positives. The
+  // meaningful question is always about the most recently *completed*
+  // month, i.e. last month.
+  const payrollMonth = shiftMonth(month, -1);
+
+  // The finance snapshot uses the current quarter rather than
+  // month-to-date - a steadier, more typical accounting window than
+  // "so far this month," which is misleadingly small right after a
+  // month/quarter starts. Same cash-basis rule as the full Finance
+  // section either way (see financeModel.js): only invoices actually
+  // marked paid count as revenue/cost/TVA.
+  const quarter = currentQuarterRange();
 
   const [
     activeConsultants, activeClients, activeSuppliers, activeEmployees,
     approvedThisMonth, recentActivity,
     candidatesTotal, candidatesAddedThisMonth, candidatesHiredThisMonth,
     publishedOffers,
-    salaryRowsThisMonth,
+    salaryRowsForPayrollMonth,
     pnl, tva, receivables, payables
   ] = await Promise.all([
     userModel.list(1),
@@ -36,18 +49,21 @@ async function show(req, res) {
     candidateModel.countAddedThisMonth(),
     candidateModel.countHiredThisMonth(),
     careerOfferModel.list({ status: 'published' }),
-    salaryPaymentModel.listForMonth(month),
-    financeModel.getProfitLoss(month, month),
-    financeModel.getTvaReport(month, month),
+    salaryPaymentModel.listForMonth(payrollMonth),
+    financeModel.getProfitLoss(quarter.from, quarter.to),
+    financeModel.getTvaReport(quarter.from, quarter.to),
     financeModel.getReceivables(),
     financeModel.getPayables()
   ]);
 
   const approvedPayoutThisMonth = approvedThisMonth.reduce((sum, s) => sum + Number(s.total_payout), 0);
-  const employeesPaidThisMonth = salaryRowsThisMonth.filter((r) => r.payment_id).length;
+  const employeesPaidForPayrollMonth = salaryRowsForPayrollMonth.filter((r) => r.payment_id).length;
 
   res.render('dashboard', {
     month,
+    payrollMonth,
+    payrollMonthLabel: monthLabel(payrollMonth),
+    quarterLabel: quarter.label,
     activeConsultantsCount: activeConsultants.length,
     activeClientsCount: activeClients.length,
     activeSuppliersCount: activeSuppliers.length,
@@ -62,8 +78,8 @@ async function show(req, res) {
     candidatesAddedThisMonth,
     candidatesHiredThisMonth,
     publishedOffersCount: publishedOffers.length,
-    employeesPaidThisMonth,
-    employeesNotPaidThisMonth: activeEmployees.length - employeesPaidThisMonth,
+    employeesPaidForPayrollMonth,
+    employeesNotPaidForPayrollMonth: activeEmployees.length - employeesPaidForPayrollMonth,
     pnl,
     tva,
     receivables,

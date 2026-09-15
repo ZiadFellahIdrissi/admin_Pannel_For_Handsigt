@@ -48,6 +48,25 @@ function shiftMonth(month, delta) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
+// Today's calendar quarter as a { from, to } 'YYYY-MM' pair, e.g.
+// September 2026 (Q3) -> { from: '2026-07', to: '2026-09' }, plus a
+// display label ('Q3 2026') - used by the main Dashboard's finance
+// snapshot instead of a single month, since a quarter is a steadier,
+// more typical accounting window than "so far this month."
+function currentQuarterRange() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1; // 1-12
+  const quarter = Math.ceil(month / 3);
+  const startMonth = (quarter - 1) * 3 + 1;
+  const pad = (n) => String(n).padStart(2, '0');
+  return {
+    from: `${year}-${pad(startMonth)}`,
+    to: `${year}-${pad(startMonth + 2)}`,
+    label: `Q${quarter} ${year}`
+  };
+}
+
 // 'jean-pierre o'brien' -> "Jean-Pierre O'Brien" - capitalizes the first
 // letter after the start of the string and after any space/hyphen/
 // apostrophe. Used to normalize first/last names on save (form and Excel
@@ -59,4 +78,4 @@ function toTitleCase(str) {
     .replace(/(^|[\s'-])([a-zà-ÿ])/g, (match, sep, letter) => sep + letter.toUpperCase());
 }
 
-module.exports = { formatCurrency, monthLabel, yearsSince, toTitleCase, currentMonthKey, shiftMonth };
+module.exports = { formatCurrency, monthLabel, yearsSince, toTitleCase, currentMonthKey, shiftMonth, currentQuarterRange };

@@ -35,18 +35,19 @@
           </div>
         </a>
         <a href="/salaries" class="stat-tile">
-          <div class="<%= employeesNotPaidThisMonth > 0 ? 'icon-circle-amber' : 'icon-circle-emerald' %>"><i class="fa-solid fa-sack-dollar"></i></div>
+          <div class="<%= employeesNotPaidForPayrollMonth > 0 ? 'icon-circle-amber' : 'icon-circle-emerald' %>"><i class="fa-solid fa-sack-dollar"></i></div>
           <div>
-            <div class="stat-tile-value"><%= employeesNotPaidThisMonth %></div>
-            <div class="stat-tile-label">Employees Not Yet Paid</div>
+            <div class="stat-tile-value"><%= employeesNotPaidForPayrollMonth %></div>
+            <div class="stat-tile-label">Not Yet Paid for <%= payrollMonthLabel %></div>
           </div>
         </a>
       </div>
 
-      <!-- This month's cash-basis finance snapshot - same rules as the
-           full Finance section (see financeModel.js): only paid invoices
-           count. -->
-      <h2 class="section-title"><i class="fa-solid fa-coins"></i>This Month (<%= monthLabel(month) %>)</h2>
+      <!-- Cash-basis finance snapshot for the current quarter, not just
+           month-to-date - see dashboardController.js for why. Same
+           cash-basis rule as the full Finance section either way (see
+           financeModel.js): only paid invoices count. -->
+      <h2 class="section-title"><i class="fa-solid fa-coins"></i>This Quarter (<%= quarterLabel %>)</h2>
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
         <a href="/finance/pnl" class="stat-tile">
           <div class="icon-circle-emerald"><i class="fa-solid fa-arrow-trend-up"></i></div>
@@ -113,7 +114,7 @@
           <div class="flex items-center gap-2 mb-3"><div class="icon-circle-accent"><i class="fa-solid fa-id-badge"></i></div><span class="font-semibold">Payroll</span></div>
           <div class="grid grid-cols-2 gap-2 text-sm">
             <div><div class="font-semibold text-base"><%= activeEmployeesCount %></div><div class="text-brand-gray2 text-xs">Active Employees</div></div>
-            <div><div class="font-semibold text-base"><%= employeesPaidThisMonth %> / <%= activeEmployeesCount %></div><div class="text-brand-gray2 text-xs">Paid This Month</div></div>
+            <div><div class="font-semibold text-base"><%= employeesPaidForPayrollMonth %> / <%= activeEmployeesCount %></div><div class="text-brand-gray2 text-xs">Paid for <%= payrollMonthLabel %></div></div>
           </div>
         </a>
 
