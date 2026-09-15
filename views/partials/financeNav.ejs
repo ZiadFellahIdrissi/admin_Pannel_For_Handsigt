@@ -1,11 +1,17 @@
 <%
   // `active` is passed in by each finance/*.ejs page - one of
   // 'dashboard' | 'tva' | 'pnl' | 'margins' | 'receivables' | 'payables'.
+  // `from`/`to` are also passed in (undefined on Receivables/Payables,
+  // which aren't range-scoped) - carrying them onto the range-scoped tab
+  // links means clicking between tabs keeps the same period explicitly
+  // in the URL, on top of the session-side persistence in
+  // financeController.js's monthRangeLocals.
+  var rangeQuery = (typeof from !== 'undefined' && from) ? `?from=${from}&to=${to}` : '';
   var tabs = [
-    { key: 'dashboard', href: '/finance', label: 'Dashboard', icon: 'fa-gauge' },
-    { key: 'tva', href: '/finance/tva', label: 'TVA Report', icon: 'fa-percent' },
-    { key: 'pnl', href: '/finance/pnl', label: 'P&L', icon: 'fa-chart-line' },
-    { key: 'margins', href: '/finance/margins', label: 'Margins', icon: 'fa-scale-balanced' },
+    { key: 'dashboard', href: '/finance' + rangeQuery, label: 'Dashboard', icon: 'fa-gauge' },
+    { key: 'tva', href: '/finance/tva' + rangeQuery, label: 'TVA Report', icon: 'fa-percent' },
+    { key: 'pnl', href: '/finance/pnl' + rangeQuery, label: 'P&L', icon: 'fa-chart-line' },
+    { key: 'margins', href: '/finance/margins' + rangeQuery, label: 'Margins', icon: 'fa-scale-balanced' },
     { key: 'receivables', href: '/finance/receivables', label: 'Receivables', icon: 'fa-hand-holding-dollar' },
     { key: 'payables', href: '/finance/payables', label: 'Payables', icon: 'fa-money-bill-transfer' }
   ];

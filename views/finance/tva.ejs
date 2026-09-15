@@ -15,7 +15,7 @@
     </a>
   </div>
 
-  <%- include('../partials/financeNav', { active: 'tva' }) %>
+  <%- include('../partials/financeNav', { active: 'tva', from, to }) %>
   <%- include('../partials/monthRangeFilter', { actionPath: '/finance/tva', from, to }) %>
 
   <p class="text-xs text-brand-gray2 mb-4"><i class="fa-solid fa-circle-info mr-1"></i>Cash-basis: only invoices actually marked <strong>Paid</strong> are counted here (TVA sur encaissements) - an invoiced-but-unpaid amount shows on <a href="/finance/receivables" class="text-brand-accent hover:underline">Receivables</a> / <a href="/finance/payables" class="text-brand-accent hover:underline">Payables</a> instead.</p>

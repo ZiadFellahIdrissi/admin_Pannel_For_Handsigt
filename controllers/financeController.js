@@ -6,17 +6,41 @@ const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 // Shared from/to month-range resolution for every Finance page except
 // Receivables/Payables (those are a live snapshot, not period-scoped).
-// Defaults both ends to the current month; swaps them if entered
-// backwards rather than erroring, since that's an easy mistake to make
-// typing two separate <input type="month"> fields.
+// Swaps the ends if entered backwards rather than erroring, since that's
+// an easy mistake to make typing two separate <input type="month">
+// fields or building a preset.
+//
+// Persisted in the session (req.session.financeRange) so the range
+// "sticks" across the whole Finance section - picking a quarter on the
+// TVA page and then clicking into P&L via the nav tabs, the sidebar, or
+// a fresh tab all land on the same range, not a reset to "this month".
+// A valid ?from=&to= in the URL always wins and becomes the new stored
+// range (this is how the filter form, the quick presets, and the nav
+// tabs - which carry the current range forward, see financeNav.ejs -
+// all actually change it); with neither valid, fall back to the stored
+// range, and only default to the current month when nothing has been
+// picked yet this session.
 function monthRangeLocals(req) {
   const fromParam = (req.query.from || '').trim();
   const toParam = (req.query.to || '').trim();
-  let from = MONTH_RE.test(fromParam) ? fromParam : currentMonthKey();
-  let to = MONTH_RE.test(toParam) ? toParam : currentMonthKey();
+
+  let from;
+  let to;
+  if (MONTH_RE.test(fromParam) && MONTH_RE.test(toParam)) {
+    from = fromParam;
+    to = toParam;
+  } else if (req.session.financeRange) {
+    ({ from, to } = req.session.financeRange);
+  } else {
+    from = currentMonthKey();
+    to = currentMonthKey();
+  }
+
   if (from > to) {
     [from, to] = [to, from];
   }
+
+  req.session.financeRange = { from, to };
   return { from, to };
 }
 
