@@ -10,21 +10,9 @@
         Dashboard
       </h1>
 
+      <!-- Needs Attention - action-oriented, not just vanity counts -->
+      <h2 class="section-title"><i class="fa-solid fa-triangle-exclamation"></i>Needs Attention</h2>
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        <a href="/consultants?active=1" class="stat-tile">
-          <div class="icon-circle-accent"><i class="fa-solid fa-users"></i></div>
-          <div>
-            <div class="stat-tile-value"><%= activeConsultantsCount %></div>
-            <div class="stat-tile-label">Active Consultants</div>
-          </div>
-        </a>
-        <a href="/clients?active=1" class="stat-tile">
-          <div class="icon-circle-accent"><i class="fa-solid fa-building"></i></div>
-          <div>
-            <div class="stat-tile-value"><%= activeClientsCount %></div>
-            <div class="stat-tile-label">Active Clients</div>
-          </div>
-        </a>
         <a href="/approvals" class="stat-tile">
           <div class="icon-circle-amber"><i class="fa-solid fa-hourglass-half"></i></div>
           <div>
@@ -32,17 +20,111 @@
             <div class="stat-tile-label">Pending Submissions</div>
           </div>
         </a>
-        <a href="/history?status=approved&month=<%= currentMonth %>" class="stat-tile col-span-2 sm:col-span-1">
-          <div class="icon-circle-emerald"><i class="fa-solid fa-sack-dollar"></i></div>
+        <a href="/finance/receivables" class="stat-tile">
+          <div class="icon-circle-amber"><i class="fa-solid fa-hand-holding-dollar"></i></div>
           <div>
-            <div class="stat-tile-value text-base sm:text-xl"><%= formatCurrency(approvedPayoutThisMonth) %></div>
-            <div class="stat-tile-label">Approved This Month</div>
+            <div class="stat-tile-value text-base sm:text-xl"><%= formatCurrency(receivables.total) %></div>
+            <div class="stat-tile-label"><%= receivables.rows.length %> unpaid client invoice<%= receivables.rows.length === 1 ? '' : 's' %></div>
+          </div>
+        </a>
+        <a href="/finance/payables" class="stat-tile">
+          <div class="icon-circle-amber"><i class="fa-solid fa-money-bill-transfer"></i></div>
+          <div>
+            <div class="stat-tile-value text-base sm:text-xl"><%= formatCurrency(payables.total) %></div>
+            <div class="stat-tile-label"><%= payables.rows.length %> unpaid supplier invoice<%= payables.rows.length === 1 ? '' : 's' %></div>
+          </div>
+        </a>
+        <a href="/salaries" class="stat-tile">
+          <div class="<%= employeesNotPaidThisMonth > 0 ? 'icon-circle-amber' : 'icon-circle-emerald' %>"><i class="fa-solid fa-sack-dollar"></i></div>
+          <div>
+            <div class="stat-tile-value"><%= employeesNotPaidThisMonth %></div>
+            <div class="stat-tile-label">Employees Not Yet Paid</div>
           </div>
         </a>
       </div>
 
+      <!-- This month's cash-basis finance snapshot - same rules as the
+           full Finance section (see financeModel.js): only paid invoices
+           count. -->
+      <h2 class="section-title"><i class="fa-solid fa-coins"></i>This Month (<%= monthLabel(month) %>)</h2>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+        <a href="/finance/pnl" class="stat-tile">
+          <div class="icon-circle-emerald"><i class="fa-solid fa-arrow-trend-up"></i></div>
+          <div>
+            <div class="stat-tile-value text-base sm:text-xl"><%= formatCurrency(pnl.revenueHt) %></div>
+            <div class="stat-tile-label">Revenue (HT)</div>
+          </div>
+        </a>
+        <a href="/finance/pnl" class="stat-tile">
+          <div class="<%= pnl.netResult >= 0 ? 'icon-circle-emerald' : 'icon-circle-amber' %>"><i class="fa-solid fa-scale-balanced"></i></div>
+          <div>
+            <div class="stat-tile-value text-base sm:text-xl"><%= formatCurrency(pnl.netResult) %></div>
+            <div class="stat-tile-label">Net Result</div>
+          </div>
+        </a>
+        <a href="/finance/tva" class="stat-tile col-span-2 sm:col-span-1">
+          <div class="icon-circle-slate"><i class="fa-solid fa-percent"></i></div>
+          <div>
+            <div class="stat-tile-value text-base sm:text-xl"><%= formatCurrency(tva.net) %></div>
+            <div class="stat-tile-label">TVA Nette</div>
+          </div>
+        </a>
+      </div>
+
+      <!-- Module overview - one card per section, each with its own
+           headline numbers and a direct link into that module. -->
+      <h2 class="section-title"><i class="fa-solid fa-table-cells-large"></i>Overview</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+        <a href="/consultants" class="card-interactive p-4">
+          <div class="flex items-center gap-2 mb-3"><div class="icon-circle-accent"><i class="fa-solid fa-users"></i></div><span class="font-semibold">Consultants &amp; CRA</span></div>
+          <div class="grid grid-cols-2 gap-2 text-sm">
+            <div><div class="font-semibold text-base"><%= activeConsultantsCount %></div><div class="text-brand-gray2 text-xs">Active Consultants</div></div>
+            <div><div class="font-semibold text-base"><%= formatCurrency(approvedPayoutThisMonth) %></div><div class="text-brand-gray2 text-xs">Approved This Month</div></div>
+          </div>
+        </a>
+
+        <a href="/clients" class="card-interactive p-4">
+          <div class="flex items-center gap-2 mb-3"><div class="icon-circle-accent"><i class="fa-solid fa-building"></i></div><span class="font-semibold">Clients &amp; Suppliers</span></div>
+          <div class="grid grid-cols-2 gap-2 text-sm">
+            <div><div class="font-semibold text-base"><%= activeClientsCount %></div><div class="text-brand-gray2 text-xs">Active Clients</div></div>
+            <div><div class="font-semibold text-base"><%= activeSuppliersCount %></div><div class="text-brand-gray2 text-xs">Active Suppliers</div></div>
+          </div>
+        </a>
+
+        <a href="/candidates" class="card-interactive p-4">
+          <div class="flex items-center gap-2 mb-3"><div class="icon-circle-accent"><i class="fa-solid fa-address-card"></i></div><span class="font-semibold">Recruiting</span></div>
+          <div class="grid grid-cols-2 gap-2 text-sm">
+            <div><div class="font-semibold text-base"><%= candidatesTotal %></div><div class="text-brand-gray2 text-xs">Total Candidates</div></div>
+            <div><div class="font-semibold text-base"><%= candidatesAddedThisMonth %></div><div class="text-brand-gray2 text-xs">Added This Month</div></div>
+            <div><div class="font-semibold text-base"><%= candidatesHiredThisMonth %></div><div class="text-brand-gray2 text-xs">Hired This Month</div></div>
+            <div><div class="font-semibold text-base"><%= publishedOffersCount %></div><div class="text-brand-gray2 text-xs">Published Job Offers</div></div>
+          </div>
+        </a>
+
+        <a href="/finance" class="card-interactive p-4">
+          <div class="flex items-center gap-2 mb-3"><div class="icon-circle-accent"><i class="fa-solid fa-coins"></i></div><span class="font-semibold">Finance &amp; Accounting</span></div>
+          <div class="grid grid-cols-2 gap-2 text-sm">
+            <div><div class="font-semibold text-base"><%= formatCurrency(pnl.supplierCostHt) %></div><div class="text-brand-gray2 text-xs">Supplier Cost (HT)</div></div>
+            <div><div class="font-semibold text-base"><%= formatCurrency(pnl.chargesHt) %></div><div class="text-brand-gray2 text-xs">Charges (HT)</div></div>
+          </div>
+        </a>
+
+        <a href="/employees" class="card-interactive p-4">
+          <div class="flex items-center gap-2 mb-3"><div class="icon-circle-accent"><i class="fa-solid fa-id-badge"></i></div><span class="font-semibold">Payroll</span></div>
+          <div class="grid grid-cols-2 gap-2 text-sm">
+            <div><div class="font-semibold text-base"><%= activeEmployeesCount %></div><div class="text-brand-gray2 text-xs">Active Employees</div></div>
+            <div><div class="font-semibold text-base"><%= employeesPaidThisMonth %> / <%= activeEmployeesCount %></div><div class="text-brand-gray2 text-xs">Paid This Month</div></div>
+          </div>
+        </a>
+
+        <a href="/login-attempts/analysis" class="card-interactive p-4">
+          <div class="flex items-center gap-2 mb-3"><div class="icon-circle-accent"><i class="fa-solid fa-shield-halved"></i></div><span class="font-semibold">Security</span></div>
+          <div class="text-sm text-brand-gray2">Consultant &amp; admin login activity, analysis</div>
+        </a>
+      </div>
+
       <div class="card p-5 sm:p-6">
-        <h2 class="section-title"><i class="fa-solid fa-clock-rotate-left"></i>Recent Activity</h2>
+        <h2 class="section-title"><i class="fa-solid fa-clock-rotate-left"></i>Recent Submissions</h2>
 
         <% if (recentActivity.length === 0) { %>
           <p class="text-sm text-brand-gray2">Nothing has happened yet.</p>
