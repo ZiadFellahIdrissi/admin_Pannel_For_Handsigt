@@ -71,76 +71,84 @@
       </a>
     </div>
 
-    <div class="sidebar-section-title">Candidate Management</div>
+    <div class="sidebar-section-title">Recruiting</div>
     <div class="space-y-1">
-      <a href="/candidates" class="<%= isCandidates ? 'sidebar-link-active' : 'sidebar-link' %>">
-        <i class="fa-solid fa-address-card w-4 text-center"></i>Candidates
-      </a>
-      <a href="/candidates/new" class="<%= isAddCandidate ? 'sidebar-link-active' : 'sidebar-link' %>">
-        <i class="fa-solid fa-user-plus w-4 text-center"></i>Add Candidate
-      </a>
-      <a href="/candidates/analytics" class="<%= isCandidatesAnalytics ? 'sidebar-link-active' : 'sidebar-link' %>">
-        <i class="fa-solid fa-chart-line w-4 text-center"></i>Analytics
-      </a>
-      <a href="/candidates/import-export" class="<%= isCandidatesImportExport ? 'sidebar-link-active' : 'sidebar-link' %>">
-        <i class="fa-solid fa-file-excel w-4 text-center"></i>Import / Export
-      </a>
+      <details <%= (isCandidates || isAddCandidate || isCandidatesAnalytics || isCandidatesImportExport) ? 'open' : '' %>>
+        <summary class="sidebar-sublabel-toggle list-none">
+          <i class="fa-solid fa-address-card w-4 text-center"></i>Candidates
+          <i class="fa-solid fa-chevron-down sidebar-sublabel-chevron"></i>
+        </summary>
+        <div class="space-y-1 mt-1 pl-4">
+          <a href="/candidates" class="<%= isCandidates ? 'sidebar-link-active' : 'sidebar-link' %>">
+            <i class="fa-solid fa-address-card w-4 text-center"></i>Candidates
+          </a>
+          <a href="/candidates/new" class="<%= isAddCandidate ? 'sidebar-link-active' : 'sidebar-link' %>">
+            <i class="fa-solid fa-user-plus w-4 text-center"></i>Add Candidate
+          </a>
+          <a href="/candidates/analytics" class="<%= isCandidatesAnalytics ? 'sidebar-link-active' : 'sidebar-link' %>">
+            <i class="fa-solid fa-chart-line w-4 text-center"></i>Analytics
+          </a>
+          <a href="/candidates/import-export" class="<%= isCandidatesImportExport ? 'sidebar-link-active' : 'sidebar-link' %>">
+            <i class="fa-solid fa-file-excel w-4 text-center"></i>Import / Export
+          </a>
+        </div>
+      </details>
+
+      <details <%= (isCareerOffers || isPostOffer) ? 'open' : '' %>>
+        <summary class="sidebar-sublabel-toggle list-none">
+          <i class="fa-solid fa-briefcase w-4 text-center"></i>Career
+          <i class="fa-solid fa-chevron-down sidebar-sublabel-chevron"></i>
+        </summary>
+        <div class="space-y-1 mt-1 pl-4">
+          <a href="/career-offers" class="<%= isCareerOffers ? 'sidebar-link-active' : 'sidebar-link' %>">
+            <i class="fa-solid fa-briefcase w-4 text-center"></i>Job Offers
+          </a>
+          <a href="/career-offers/new" class="<%= isPostOffer ? 'sidebar-link-active' : 'sidebar-link' %>">
+            <i class="fa-solid fa-plus w-4 text-center"></i>Post Offer
+          </a>
+        </div>
+      </details>
     </div>
 
-    <div class="sidebar-section-title">Career</div>
-    <div class="space-y-1">
-      <a href="/career-offers" class="<%= isCareerOffers ? 'sidebar-link-active' : 'sidebar-link' %>">
-        <i class="fa-solid fa-briefcase w-4 text-center"></i>Job Offers
-      </a>
-      <a href="/career-offers/new" class="<%= isPostOffer ? 'sidebar-link-active' : 'sidebar-link' %>">
-        <i class="fa-solid fa-plus w-4 text-center"></i>Post Offer
-      </a>
-    </div>
-
-    <div class="sidebar-section-title">Billing</div>
-    <div class="space-y-1">
-      <a href="/invoices/clients" class="<%= isInvoiceClients ? 'sidebar-link-active' : 'sidebar-link' %>">
-        <i class="fa-solid fa-file-invoice-dollar w-4 text-center"></i>Client Invoices
-      </a>
-      <a href="/invoices/suppliers" class="<%= isInvoiceSuppliers ? 'sidebar-link-active' : 'sidebar-link' %>">
-        <i class="fa-solid fa-file-invoice w-4 text-center"></i>Supplier Invoices
-      </a>
-    </div>
-
-    <div class="sidebar-section-title">Payroll</div>
-    <div class="space-y-1">
-      <a href="/employees" class="<%= isEmployees ? 'sidebar-link-active' : 'sidebar-link' %>">
-        <i class="fa-solid fa-id-badge w-4 text-center"></i>Employees
-      </a>
-      <a href="/salaries" class="<%= isSalaries ? 'sidebar-link-active' : 'sidebar-link' %>">
-        <i class="fa-solid fa-sack-dollar w-4 text-center"></i>Salaries
-      </a>
-    </div>
-
-    <div class="sidebar-section-title">Charges</div>
-    <div class="space-y-1">
-      <a href="/charges" class="<%= isCharges ? 'sidebar-link-active' : 'sidebar-link' %>">
-        <i class="fa-solid fa-receipt w-4 text-center"></i>Charges
-      </a>
-    </div>
-
-    <div class="sidebar-section-title">Finance</div>
+    <div class="sidebar-section-title">Finance &amp; Accounting</div>
     <div class="space-y-1">
       <a href="/finance" class="<%= isFinance ? 'sidebar-link-active' : 'sidebar-link' %>">
         <i class="fa-solid fa-coins w-4 text-center"></i>Finance
       </a>
-    </div>
 
-    <div class="sidebar-section-title">Treasury</div>
-    <div class="sidebar-link-disabled">
-      <i class="fa-solid fa-building-columns w-4 text-center"></i>Cash &amp; Accounts
-      <span class="badge-draft !py-0.5 !px-2 ml-auto">Soon</span>
-    </div>
+      <details <%= (isInvoiceClients || isInvoiceSuppliers) ? 'open' : '' %>>
+        <summary class="sidebar-sublabel-toggle list-none">
+          <i class="fa-solid fa-file-invoice-dollar w-4 text-center"></i>Billing
+          <i class="fa-solid fa-chevron-down sidebar-sublabel-chevron"></i>
+        </summary>
+        <div class="space-y-1 mt-1 pl-4">
+          <a href="/invoices/clients" class="<%= isInvoiceClients ? 'sidebar-link-active' : 'sidebar-link' %>">
+            <i class="fa-solid fa-file-invoice-dollar w-4 text-center"></i>Client Invoices
+          </a>
+          <a href="/invoices/suppliers" class="<%= isInvoiceSuppliers ? 'sidebar-link-active' : 'sidebar-link' %>">
+            <i class="fa-solid fa-file-invoice w-4 text-center"></i>Supplier Invoices
+          </a>
+        </div>
+      </details>
 
-    <div class="sidebar-section-title">Earnings Dashboard</div>
-    <div class="sidebar-link-disabled">
-      <i class="fa-solid fa-chart-line w-4 text-center"></i>Earnings &amp; Spending
-      <span class="badge-draft !py-0.5 !px-2 ml-auto">Soon</span>
+      <details <%= (isEmployees || isSalaries) ? 'open' : '' %>>
+        <summary class="sidebar-sublabel-toggle list-none">
+          <i class="fa-solid fa-id-badge w-4 text-center"></i>Payroll
+          <i class="fa-solid fa-chevron-down sidebar-sublabel-chevron"></i>
+        </summary>
+        <div class="space-y-1 mt-1 pl-4">
+          <a href="/employees" class="<%= isEmployees ? 'sidebar-link-active' : 'sidebar-link' %>">
+            <i class="fa-solid fa-id-badge w-4 text-center"></i>Employees
+          </a>
+          <a href="/salaries" class="<%= isSalaries ? 'sidebar-link-active' : 'sidebar-link' %>">
+            <i class="fa-solid fa-sack-dollar w-4 text-center"></i>Salaries
+          </a>
+        </div>
+      </details>
+
+      <a href="/charges" class="<%= isCharges ? 'sidebar-link-active' : 'sidebar-link' %>">
+        <i class="fa-solid fa-receipt w-4 text-center"></i>Charges
+      </a>
     </div>
 
     <div class="sidebar-section-title">Login Attempts</div>
