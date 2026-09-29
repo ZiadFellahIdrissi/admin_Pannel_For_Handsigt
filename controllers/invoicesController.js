@@ -14,25 +14,6 @@ const { INVOICE_DIR } = require('../config/uploadPaths');
 
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 
-// ============================================================================
-// TEMPORARY HOTFIX - remove this whole block, and the two spots below
-// marked "HOTFIX", once both re-issued invoices have been generated
-// through the normal Generate Invoice button.
-//
-// The July and August 2026 client invoices for consultant #3 (Ziad
-// Fellah Idrissi) were already sent to the client, but with the wrong
-// "raison sociale" printed on them. The admin deleted those two invoice
-// rows and corrected the client's legal_name. This forces the exact same
-// invoice number and original send date back onto the re-generated
-// invoices for just these two specific submissions, so the system's
-// record matches the real documents that were actually sent - every
-// other invoice generated through this same button is unaffected.
-// ============================================================================
-const CLIENT_INVOICE_REISSUE_HOTFIX = {
-  '3:2026-07': { invoiceNumber: 'HS-2026-09-001', createdAt: '2026-09-03 14:16:34' },
-  '3:2026-08': { invoiceNumber: 'HS-2026-09-002', createdAt: '2026-09-03 16:16:34' }
-};
-
 // 'Ziad' + 'Fellah' -> 'ZIFE' - first 2 letters of each name, uppercased.
 // Falls back to whatever's there if a name is shorter than 2 characters.
 function consultantInitials(firstName, lastName) {
@@ -122,17 +103,7 @@ async function handleGenerate(req, res) {
   const generatedNumbers = [];
 
   if (wantClient) {
-    // HOTFIX - see CLIENT_INVOICE_REISSUE_HOTFIX above. hotfixReissue is
-    // undefined for every submission except the two specific ones being
-    // re-issued, so this changes nothing for normal invoice generation.
-    const hotfixReissue = CLIENT_INVOICE_REISSUE_HOTFIX[`${submission.user_id}:${submission.month}`];
-
-    const clientInvoiceNumber = hotfixReissue
-      ? hotfixReissue.invoiceNumber
-      : await invoiceModel.nextInvoiceNumber('client');
-    const clientDateLabel = hotfixReissue
-      ? new Date(hotfixReissue.createdAt.replace(' ', 'T')).toLocaleDateString('fr-FR')
-      : dateLabel;
+    const clientInvoiceNumber = await invoiceModel.nextInvoiceNumber('client');
     const clientPdfFilename = `${crypto.randomUUID()}.pdf`;
     const clientParty = {
       name: client.legal_name || client.name,
@@ -146,7 +117,7 @@ async function handleGenerate(req, res) {
     await generateInvoicePdf({
       type: 'client',
       invoiceNumber: clientInvoiceNumber,
-      dateLabel: clientDateLabel,
+      dateLabel,
       monthLabel: monthLbl,
       company,
       party: clientParty,
@@ -156,7 +127,7 @@ async function handleGenerate(req, res) {
       totalTtc: clientTtc
     }, path.join(INVOICE_DIR, clientPdfFilename));
 
-    const clientInvoiceId = await invoiceModel.create({
+    await invoiceModel.create({
       invoiceNumber: clientInvoiceNumber,
       type: 'client',
       submissionId,
@@ -171,16 +142,6 @@ async function handleGenerate(req, res) {
       label,
       pdfPath: clientPdfFilename
     });
-
-    // HOTFIX - restores the real original send timestamp (invoiceModel.create
-    // always stamps created_at = NOW() otherwise). Only ever runs for the
-    // two submissions above.
-    if (hotfixReissue) {
-      await require('../config/db').query(
-        'UPDATE invoices SET created_at = ? WHERE id = ?',
-        [hotfixReissue.createdAt, clientInvoiceId]
-      );
-    }
 
     generatedNumbers.push(`${clientInvoiceNumber} (Client)`);
   }
