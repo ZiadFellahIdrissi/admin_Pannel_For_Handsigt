@@ -21,14 +21,19 @@
     <div class="-mt-4 mb-6"><a href="/bank-statements" class="text-xs text-brand-accent hover:underline">Clear filter - show all</a></div>
   <% } %>
 
-  <p class="text-xs text-brand-gray2 mb-4">Select several months (a quarter, a year...) to download them combined into a single PDF.</p>
-
   <% if (statements.length === 0) { %>
     <div class="card p-8 text-center">
       <i class="fa-regular fa-folder-open text-2xl text-brand-gray2 mb-2"></i>
       <p class="text-sm text-brand-gray2">No statements archived yet.</p>
     </div>
   <% } else { %>
+    <div class="flex items-center justify-between gap-3 flex-wrap mb-4">
+      <p class="text-xs text-brand-gray2">Select several months (a quarter, a year...) to download them combined into a single PDF.</p>
+      <button type="button" class="btn-secondary text-sm" data-bulk-select-all="statements-list">
+        <i class="fa-solid fa-check-double"></i><span data-bulk-select-all-label>Select all</span>
+      </button>
+    </div>
+
     <form id="statements-combine" action="/bank-statements/combine" method="POST">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     </form>

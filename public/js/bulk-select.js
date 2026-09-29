@@ -11,21 +11,45 @@
 // <input> handles that association instead), which matters wherever a
 // row also has its own independent per-row forms (Edit/Delete/etc.) that
 // can't be nested inside the bulk-select form.
+//
+// Optional: any button with data-bulk-select-all="<group name>" toggles
+// the whole group - checks everything, or unchecks everything if all are
+// already checked. Its [data-bulk-select-all-label] child is kept in sync
+// ("Select all" / "Unselect all") however the selection changes.
 (function () {
   document.querySelectorAll('[data-bulk-select-bar]').forEach(function (bar) {
     var groupName = bar.getAttribute('data-bulk-select-bar');
     var checkboxes = document.querySelectorAll('[data-bulk-select-item="' + groupName + '"]');
     var countEl = bar.querySelector('[data-bulk-select-count]');
+    var toggles = document.querySelectorAll('[data-bulk-select-all="' + groupName + '"]');
 
     function update() {
       var checked = Array.prototype.filter.call(checkboxes, function (cb) { return cb.checked; }).length;
       if (countEl) countEl.textContent = checked;
       bar.style.display = checked > 0 ? '' : 'none';
+
+      var allChecked = checkboxes.length > 0 && checked === checkboxes.length;
+      toggles.forEach(function (toggle) {
+        var label = toggle.querySelector('[data-bulk-select-all-label]');
+        if (label) label.textContent = allChecked ? 'Unselect all' : 'Select all';
+      });
     }
 
     checkboxes.forEach(function (cb) {
       cb.addEventListener('change', update);
     });
+
+    toggles.forEach(function (toggle) {
+      toggle.addEventListener('click', function () {
+        var target = !Array.prototype.every.call(checkboxes, function (cb) { return cb.checked; });
+        checkboxes.forEach(function (cb) {
+          if (cb.checked === target) return;
+          cb.checked = target;
+          cb.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+      });
+    });
+
     update();
   });
 })();
