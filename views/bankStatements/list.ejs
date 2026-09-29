@@ -1,0 +1,105 @@
+<% var currentMonthValue = new Date().toISOString().slice(0, 7); %>
+<%- include('../partials/head', { title: 'Bank Statements' }) %>
+<div class="flex min-h-screen">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('../partials/topbar', { title: 'Bank Statements' }) %>
+    <%- include('../partials/flash') %>
+    <div class="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full">
+  <div class="flex items-center justify-between flex-wrap gap-3 mb-4 sm:mb-6">
+    <h1 class="text-lg sm:text-xl font-bold flex items-center gap-3">
+      <div class="icon-circle-accent"><i class="fa-solid fa-building-columns"></i></div>
+      Bank Statements
+    </h1>
+    <button type="button" class="btn-primary" data-dialog-open="upload-statement">
+      <i class="fa-solid fa-upload"></i>Upload Statement
+    </button>
+  </div>
+
+  <form action="/bank-statements" method="GET" class="card p-4 mb-6 flex items-end gap-3 flex-wrap">
+    <div>
+      <label class="field-label" for="from">From</label>
+      <input type="month" name="from" id="from" value="<%= from %>" class="field-input">
+    </div>
+    <div>
+      <label class="field-label" for="to">To</label>
+      <input type="month" name="to" id="to" value="<%= to %>" class="field-input">
+    </div>
+    <button type="submit" class="btn-secondary"><i class="fa-solid fa-filter"></i>Apply</button>
+    <% if (from || to) { %>
+      <a href="/bank-statements" class="btn-secondary">Clear</a>
+    <% } %>
+  </form>
+
+  <p class="text-xs text-brand-gray2 mb-4">Select several months (a quarter, a year...) to download them combined into a single PDF.</p>
+
+  <% if (statements.length === 0) { %>
+    <div class="card p-8 text-center">
+      <i class="fa-regular fa-folder-open text-2xl text-brand-gray2 mb-2"></i>
+      <p class="text-sm text-brand-gray2">No statements archived yet.</p>
+    </div>
+  <% } else { %>
+    <form id="statements-combine" action="/bank-statements/combine" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    </form>
+
+    <div class="space-y-3 mb-20">
+      <% statements.forEach(function(st) { %>
+        <div class="card-interactive p-4 flex items-center gap-3 flex-wrap">
+          <input type="checkbox" name="statementIds" value="<%= st.id %>" form="statements-combine" data-bulk-select-item="statements-list" class="rounded w-4 h-4 accent-brand-accent shrink-0">
+          <div class="flex-1 min-w-0 flex items-center justify-between gap-3 flex-wrap">
+            <div class="min-w-0">
+              <div class="font-semibold truncate"><%= monthLabel(st.month) %></div>
+              <div class="text-xs text-brand-gray2 mt-0.5">Uploaded <%= st.uploaded_at %></div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <a href="/bank-statements/<%= st.id %>/pdf" target="_blank" class="btn-secondary text-sm"><i class="fa-solid fa-eye"></i></a>
+              <a href="/bank-statements/<%= st.id %>/pdf?download=1" class="btn-secondary text-sm"><i class="fa-solid fa-download"></i></a>
+              <form action="/bank-statements/<%= st.id %>/delete" method="POST" data-confirm="Delete the statement for <%= monthLabel(st.month) %>? This can't be undone.">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn-danger text-sm"><i class="fa-solid fa-trash"></i></button>
+              </form>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+
+    <div data-bulk-select-bar="statements-list" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 card px-4 py-3 shadow-xl flex items-center gap-3" style="display: none;">
+      <span class="text-sm font-medium"><span data-bulk-select-count>0</span> selected</span>
+      <button type="submit" form="statements-combine" class="btn-primary text-sm !px-3 !py-1.5"><i class="fa-solid fa-file-pdf"></i>Download Combined PDF</button>
+    </div>
+  <% } %>
+
+  <dialog id="upload-statement" class="dialog-panel">
+    <div class="p-5 sm:p-6">
+      <div class="flex items-center justify-between gap-3 mb-4">
+        <h3 class="font-bold">Upload Statement</h3>
+        <button type="button" class="theme-toggle" data-dialog-close aria-label="Close">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <p class="text-sm text-brand-gray2 mb-4">If a statement already exists for the chosen month, this replaces it.</p>
+      <form action="/bank-statements/upload" method="POST" enctype="multipart/form-data" class="space-y-3" data-prevent-double-submit>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div>
+          <label class="field-label" for="month">Month</label>
+          <input class="field-input" type="month" id="month" name="month" value="<%= currentMonthValue %>" required>
+        </div>
+        <div>
+          <label class="field-label" for="statement">PDF file</label>
+          <input class="field-input" type="file" id="statement" name="statement" accept="application/pdf" required>
+        </div>
+        <button type="submit" class="btn-primary w-full">Upload</button>
+      </form>
+    </div>
+  </dialog>
+    </div>
+  </div>
+</div>
+<script src="/js/dialog-toggle.js?v=<%= assetVersion %>" defer></script>
+<script src="/js/confirm-submit.js?v=<%= assetVersion %>" defer></script>
+<script src="/js/bulk-select.js?v=<%= assetVersion %>" defer></script>
+<script src="/js/prevent-double-submit.js?v=<%= assetVersion %>" defer></script>
+
+<%- include('../partials/foot') %>

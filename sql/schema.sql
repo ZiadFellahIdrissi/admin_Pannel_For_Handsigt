@@ -412,3 +412,25 @@ CREATE TABLE charges (
   invoice_original_name VARCHAR(255) DEFAULT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- ---------------------------------------------------------------------
+-- MIGRATION - run once in phpMyAdmin's SQL tab.
+--
+-- Bank Statements archive (Treasury section) - the bank only lets the
+-- admin download last month's statement, so this is a monthly manual
+-- upload habit: once a month ends, upload that month's statement PDF
+-- here to build a permanent archive. One statement per month (UNIQUE on
+-- month) - re-uploading for an already-archived month replaces the file
+-- (bankStatementModel.upsert), same "swap the file, delete the old one"
+-- pattern as every other document upload in this app. Combining several
+-- months into one PDF (e.g. a quarter) is done on demand at download
+-- time (bankStatementsController.handleCombine, via pdf-lib) - nothing
+-- about a combined PDF is ever stored, only the originals.
+-- ---------------------------------------------------------------------
+CREATE TABLE bank_statements (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  month VARCHAR(7) NOT NULL UNIQUE,
+  file_path VARCHAR(255) NOT NULL,
+  file_original_name VARCHAR(255) DEFAULT NULL,
+  uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
