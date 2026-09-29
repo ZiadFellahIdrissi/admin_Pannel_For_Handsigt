@@ -1,32 +1,3 @@
-// ============================================================================
-// ONE-TIME HOTFIX - delete this file once it has run successfully.
-//
-// Context: the July and August 2026 client invoices for consultant #3
-// (Ziad Fellah Idrissi) were already sent to the client, but with the
-// wrong "raison sociale" printed on them. The admin deleted those two
-// invoice rows from the system and corrected the client's legal_name.
-// This script re-creates the exact same two invoices - same invoice
-// numbers, same original send timestamps - so the system's record
-// matches the real documents that were actually sent, now printed with
-// the corrected company name (read fresh from the already-fixed
-// `clients` row). Every financial figure is recomputed from the
-// underlying month_submissions row (which was never touched/deleted),
-// so it reproduces the original amounts exactly - nothing here
-// hardcodes an amount.
-//
-// This is a standalone script, not wired into any route or controller -
-// it can only ever run when someone explicitly executes it by hand, and
-// touches only the two invoices listed in REISSUES below. It does not
-// change how normal invoice generation behaves for anything else.
-//
-// Usage (from the project root, on the actual server where this app's
-// .env/DB/uploads live - not from a fresh clone):
-//   node scripts/hotfix-reissue-july-august-invoices.js --dry-run   (prints what it would do, writes nothing)
-//   node scripts/hotfix-reissue-july-august-invoices.js             (actually creates the invoices + PDFs)
-//
-// Delete this file once you've confirmed both invoices look right.
-// ============================================================================
-
 require('dotenv').config();
 const path = require('path');
 const crypto = require('crypto');
