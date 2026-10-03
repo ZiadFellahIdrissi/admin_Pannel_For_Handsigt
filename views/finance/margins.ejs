@@ -12,8 +12,9 @@
 
   <%- include('../partials/financeNav', { active: 'margins', from, to }) %>
   <%- include('../partials/monthRangeFilter', { actionPath: '/finance/margins', from, to }) %>
+  <%- include('../partials/undatedInvoicesWarning', { undatedInvoices }) %>
 
-  <p class="text-xs text-brand-gray2 mb-4"><i class="fa-solid fa-circle-info mr-1"></i>Cash-basis: only invoices actually marked <strong>Paid</strong> are counted.</p>
+  <p class="text-xs text-brand-gray2 mb-4"><i class="fa-solid fa-circle-info mr-1"></i>Only invoices actually marked <strong>Paid</strong> are counted, each in the month of its <strong>invoice date</strong>.</p>
 
   <div class="card p-5 sm:p-6 mb-6">
     <h2 class="section-title"><i class="fa-solid fa-building"></i>By Client</h2>

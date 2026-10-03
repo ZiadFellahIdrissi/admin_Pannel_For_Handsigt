@@ -40,6 +40,14 @@ function currentMonthKey() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
+// Date -> 'YYYY-MM-DD' in server-local time - the same calendar day
+// toLocaleDateString() prints for that Date, so a DATE column stored
+// from it always matches the date printed on a PDF generated from it.
+function dateKey(date) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
 // 'YYYY-MM' + a +/-1 delta -> the adjacent month's 'YYYY-MM' - powers the
 // prev/next arrows next to a month-navigator's <input type="month">.
 function shiftMonth(month, delta) {
@@ -78,4 +86,4 @@ function toTitleCase(str) {
     .replace(/(^|[\s'-])([a-zà-ÿ])/g, (match, sep, letter) => sep + letter.toUpperCase());
 }
 
-module.exports = { formatCurrency, monthLabel, yearsSince, toTitleCase, currentMonthKey, shiftMonth, currentQuarterRange };
+module.exports = { formatCurrency, monthLabel, yearsSince, toTitleCase, currentMonthKey, dateKey, shiftMonth, currentQuarterRange };

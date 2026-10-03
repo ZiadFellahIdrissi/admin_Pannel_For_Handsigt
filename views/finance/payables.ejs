@@ -32,7 +32,11 @@
           </div>
           <div class="text-right shrink-0">
             <div class="font-semibold"><%= formatCurrency(inv.total_ttc) %></div>
-            <div class="text-xs text-brand-gray2">Since <%= inv.created_at %></div>
+            <% if (inv.invoice_date) { %>
+              <div class="text-xs text-brand-gray2">Since <%= inv.invoice_date %></div>
+            <% } else { %>
+              <div class="text-xs text-amber-600 dark:text-amber-400">Invoice date not set</div>
+            <% } %>
           </div>
         </a>
       <% }); %>

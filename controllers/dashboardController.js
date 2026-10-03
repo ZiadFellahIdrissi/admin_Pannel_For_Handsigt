@@ -37,7 +37,7 @@ async function show(req, res) {
     candidatesTotal, candidatesAddedThisMonth, candidatesHiredThisMonth,
     publishedOffers,
     salaryRowsForPayrollMonth,
-    pnl, tva, receivables, payables
+    pnl, tva, receivables, payables, undatedInvoices
   ] = await Promise.all([
     userModel.list(1),
     clientModel.list(1),
@@ -53,7 +53,8 @@ async function show(req, res) {
     financeModel.getProfitLoss(quarter.from, quarter.to),
     financeModel.getTvaReport(quarter.from, quarter.to),
     financeModel.getReceivables(),
-    financeModel.getPayables()
+    financeModel.getPayables(),
+    financeModel.getUndatedSupplierInvoices()
   ]);
 
   const approvedPayoutThisMonth = approvedThisMonth.reduce((sum, s) => sum + Number(s.total_payout), 0);
@@ -83,7 +84,8 @@ async function show(req, res) {
     pnl,
     tva,
     receivables,
-    payables
+    payables,
+    undatedInvoices
   });
 }
 

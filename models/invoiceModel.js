@@ -50,17 +50,21 @@ async function findIdsForSubmission(submissionId) {
   return result;
 }
 
+// invoiceDate ('YYYY-MM-DD') is the date printed on the document - set
+// for a client invoice (issued the day it's generated), null for a
+// simulated supplier invoice until its real document is uploaded (see
+// saveRealInvoice below).
 async function create({
   invoiceNumber, type, submissionId, clientId, consultantId, month,
-  totalDays, rate, totalHt, totalTva, totalTtc, label, pdfPath, isSimulation
+  totalDays, rate, totalHt, totalTva, totalTtc, label, pdfPath, isSimulation, invoiceDate
 }) {
   const [result] = await pool.query(
     `INSERT INTO invoices
        (invoice_number, type, submission_id, client_id, consultant_id, month,
-        total_days, rate, total_ht, total_tva, total_ttc, label, pdf_path, is_simulation)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        total_days, rate, total_ht, total_tva, total_ttc, label, pdf_path, is_simulation, invoice_date)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [invoiceNumber, type, submissionId, clientId, consultantId, month,
-      totalDays, rate, totalHt, totalTva, totalTtc, label, pdfPath, isSimulation ? 1 : 0]
+      totalDays, rate, totalHt, totalTva, totalTtc, label, pdfPath, isSimulation ? 1 : 0, invoiceDate || null]
   );
   return result.insertId;
 }
@@ -126,20 +130,23 @@ async function remove(id) {
   await pool.query('DELETE FROM invoices WHERE id = ?', [id]);
 }
 
-// Swaps in the real PDF the admin received from the supplier, replacing
-// whatever's on file (simulated or a previous real upload) and clearing
-// the simulation flag - the caller is responsible for deleting the old
-// file from disk first. invoiceNumber is editable at the same time since
-// the real document carries the supplier's own numbering, not ours - the
-// UNIQUE constraint on invoice_number surfaces as an ER_DUP_ENTRY error
-// if it collides with an existing invoice, left for the caller to handle.
-// supplierId links the invoice to the company (see the suppliers table)
-// that actually issued this real document - null only for legacy
-// invoices uploaded before that concept existed.
-async function replacePdf(id, { pdfPath, isSimulation, invoiceNumber, supplierId }) {
+// Records the real invoice the admin received from the supplier and
+// clears the simulation flag. pdfPath is either a newly uploaded file
+// replacing whatever's on file (simulated or a previous real upload -
+// the caller deletes the old file from disk) or the current pdf_path
+// unchanged, when an already-real invoice's details are just being
+// edited. invoiceNumber is editable since the real document carries the
+// supplier's own numbering, not ours - the UNIQUE constraint on
+// invoice_number surfaces as an ER_DUP_ENTRY error if it collides with
+// an existing invoice, left for the caller to handle. supplierId links
+// the invoice to the company (see the suppliers table) that actually
+// issued this real document - null only for legacy invoices uploaded
+// before that concept existed. invoiceDate is the date printed on that
+// document, which is what Finance uses to place it in a period.
+async function saveRealInvoice(id, { pdfPath, invoiceNumber, supplierId, invoiceDate }) {
   await pool.query(
-    'UPDATE invoices SET pdf_path = ?, is_simulation = ?, invoice_number = ?, supplier_id = ? WHERE id = ?',
-    [pdfPath, isSimulation ? 1 : 0, invoiceNumber, supplierId || null, id]
+    'UPDATE invoices SET pdf_path = ?, is_simulation = 0, invoice_number = ?, supplier_id = ?, invoice_date = ? WHERE id = ?',
+    [pdfPath, invoiceNumber, supplierId || null, invoiceDate, id]
   );
 }
 
@@ -159,7 +166,7 @@ async function setPaid(id, paid) {
 // client_id NULL on the parent row, so an inner join would silently
 // return zero rows for it. The COALESCE fallbacks cover that case.
 // suppliers is LEFT JOINed too - supplier_id is only ever set once a real
-// invoice has been uploaded and linked (see replacePdf above), so it's
+// invoice has been uploaded and linked (see saveRealInvoice above), so it's
 // NULL for every simulated invoice and every client invoice.
 async function findById(id) {
   const [rows] = await pool.query(
@@ -212,7 +219,7 @@ async function listByType(type, month) {
 
 // Every invoice (simulated or real) ever linked to this supplier - shown
 // on the supplier's own detail page, same idea as a client's Submission
-// History. Simulated invoices never have a supplier_id (see replacePdf),
+// History. Simulated invoices never have a supplier_id (see saveRealInvoice),
 // so in practice this only ever returns real, uploaded invoices.
 async function listBySupplier(supplierId) {
   const [rows] = await pool.query(
@@ -229,7 +236,7 @@ module.exports = {
   createCombined,
   findLineItems,
   remove,
-  replacePdf,
+  saveRealInvoice,
   setPaid,
   findById,
   listByType,

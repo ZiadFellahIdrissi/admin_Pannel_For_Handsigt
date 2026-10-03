@@ -1,0 +1,13 @@
+<%
+  // Paid supplier invoices with no invoice date (financeModel.getUndatedSupplierInvoices) -
+  // they count in no period, so every period-scoped Finance page flags them.
+%>
+<% if (undatedInvoices.length > 0) { %>
+  <div class="mb-6 rounded-lg bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 px-4 py-3 text-sm flex items-start gap-3">
+    <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
+    <div>
+      <strong><%= undatedInvoices.length %> paid supplier invoice<%= undatedInvoices.length === 1 ? ' has' : 's have' %> no invoice date</strong>, so <%= undatedInvoices.length === 1 ? "it's" : "they're" %> missing from these figures. Open each one and use <strong>Edit Real Invoice</strong> to set the date printed on it:
+      <% undatedInvoices.forEach(function(inv, i) { %><a href="/invoices/suppliers/<%= inv.id %>" class="underline font-medium"><%= inv.invoice_number %></a><%= i < undatedInvoices.length - 1 ? ', ' : '' %><% }); %>
+    </div>
+  </div>
+<% } %>

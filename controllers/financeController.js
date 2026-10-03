@@ -44,21 +44,28 @@ function monthRangeLocals(req) {
   return { from, to };
 }
 
+// undatedInvoices (financeModel.getUndatedSupplierInvoices) feeds the
+// warning every period-scoped page below shows while any paid invoice
+// still has no invoice date - those can't be placed in any period.
 async function showDashboard(req, res) {
   const { from, to } = monthRangeLocals(req);
-  const [pnl, tva, receivables, payables] = await Promise.all([
+  const [pnl, tva, receivables, payables, undatedInvoices] = await Promise.all([
     financeModel.getProfitLoss(from, to),
     financeModel.getTvaReport(from, to),
     financeModel.getReceivables(),
-    financeModel.getPayables()
+    financeModel.getPayables(),
+    financeModel.getUndatedSupplierInvoices()
   ]);
-  res.render('finance/dashboard', { from, to, pnl, tva, receivables, payables });
+  res.render('finance/dashboard', { from, to, pnl, tva, receivables, payables, undatedInvoices });
 }
 
 async function showTva(req, res) {
   const { from, to } = monthRangeLocals(req);
-  const tva = await financeModel.getTvaReport(from, to);
-  res.render('finance/tva', { from, to, tva });
+  const [tva, undatedInvoices] = await Promise.all([
+    financeModel.getTvaReport(from, to),
+    financeModel.getUndatedSupplierInvoices()
+  ]);
+  res.render('finance/tva', { from, to, tva, undatedInvoices });
 }
 
 async function exportTvaExcel(req, res) {
@@ -71,7 +78,7 @@ async function exportTvaExcel(req, res) {
   summary.columns = [{ header: '', key: 'label', width: 28 }, { header: '', key: 'value', width: 18 }];
   summary.addRows([
     { label: 'Period', value: from === to ? monthLabel(from) : `${monthLabel(from)} - ${monthLabel(to)}` },
-    { label: 'Basis', value: 'Cash (paid invoices only - TVA sur encaissements)' },
+    { label: 'Basis', value: 'Paid invoices only, each in the month of its invoice date' },
     { label: 'TVA Collectée', value: Number(tva.collected.toFixed(2)) },
     { label: 'TVA Déductible (Suppliers)', value: Number(tva.deductibleSuppliers.toFixed(2)) },
     { label: 'TVA Déductible (Charges)', value: Number(tva.deductibleCharges.toFixed(2)) },
@@ -85,7 +92,7 @@ async function exportTvaExcel(req, res) {
   const clientSheet = workbook.addWorksheet('Client Invoices (Collectée)');
   clientSheet.columns = [
     { header: 'Invoice', key: 'invoice_number', width: 20 },
-    { header: 'Month', key: 'month', width: 10 },
+    { header: 'Invoice Date', key: 'invoice_date', width: 12 },
     { header: 'Total HT', key: 'total_ht', width: 14 },
     { header: 'Total TVA', key: 'total_tva', width: 14 },
     { header: 'Total TTC', key: 'total_ttc', width: 14 }
@@ -100,7 +107,7 @@ async function exportTvaExcel(req, res) {
   const supplierSheet = workbook.addWorksheet('Supplier Invoices (Déductible)');
   supplierSheet.columns = [
     { header: 'Invoice', key: 'invoice_number', width: 20 },
-    { header: 'Month', key: 'month', width: 10 },
+    { header: 'Invoice Date', key: 'invoice_date', width: 12 },
     { header: 'Total HT', key: 'total_ht', width: 14 },
     { header: 'Total TVA', key: 'total_tva', width: 14 },
     { header: 'Total TTC', key: 'total_ttc', width: 14 }
@@ -132,17 +139,21 @@ async function exportTvaExcel(req, res) {
 
 async function showPnl(req, res) {
   const { from, to } = monthRangeLocals(req);
-  const pnl = await financeModel.getProfitLoss(from, to);
-  res.render('finance/pnl', { from, to, pnl });
+  const [pnl, undatedInvoices] = await Promise.all([
+    financeModel.getProfitLoss(from, to),
+    financeModel.getUndatedSupplierInvoices()
+  ]);
+  res.render('finance/pnl', { from, to, pnl, undatedInvoices });
 }
 
 async function showMargins(req, res) {
   const { from, to } = monthRangeLocals(req);
-  const [clientMargins, consultantMargins] = await Promise.all([
+  const [clientMargins, consultantMargins, undatedInvoices] = await Promise.all([
     financeModel.getClientMargins(from, to),
-    financeModel.getConsultantMargins(from, to)
+    financeModel.getConsultantMargins(from, to),
+    financeModel.getUndatedSupplierInvoices()
   ]);
-  res.render('finance/margins', { from, to, clientMargins, consultantMargins });
+  res.render('finance/margins', { from, to, clientMargins, consultantMargins, undatedInvoices });
 }
 
 async function showReceivables(req, res) {

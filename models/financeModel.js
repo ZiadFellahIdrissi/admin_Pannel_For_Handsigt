@@ -4,11 +4,12 @@ function sumBy(rows, key) {
   return rows.reduce((sum, r) => sum + Number(r[key] || 0), 0);
 }
 
-function groupSumByMonth(rows, key) {
+function groupSumByMonth(rows, monthKey, valueKey) {
   const map = {};
   rows.forEach((r) => {
-    if (!r.month) return;
-    map[r.month] = (map[r.month] || 0) + Number(r[key] || 0);
+    const month = r[monthKey];
+    if (!month) return;
+    map[month] = (map[month] || 0) + Number(r[valueKey] || 0);
   });
   return map;
 }
@@ -45,15 +46,26 @@ function buildMonthRange(fromMonth, toMonth) {
 // invoice's TVA isn't collectible/deductible yet either. An invoiced-but-
 // unpaid amount lives on the Receivables/Payables pages instead, not here.
 //
+// Which period a paid invoice counts in is decided by its invoice_date -
+// the date printed on the document itself - exposed on every ledger row
+// as `period` ('YYYY-MM'). Not created_at (for a supplier invoice that's
+// only when its simulation was generated here) and not `month` (the CRA
+// month the work was done, often a month or more before invoicing). An
+// invoice with no invoice_date matches no period at all - see
+// getUndatedSupplierInvoices for the only way that can happen.
+//
 // Client invoices are never combined (unlike supplier ones - see
 // invoicesController.js's comment on handleGenerateCombinedSupplier), so
 // a plain query against `invoices` already gives one row per real unit
 // of revenue - no UNION needed the way the supplier ledger below needs one.
 async function getClientLedger(fromMonth, toMonth) {
   const [rows] = await pool.query(
-    `SELECT id AS invoice_id, invoice_number, client_id, consultant_id, month, total_ht, total_tva, total_ttc
+    `SELECT id AS invoice_id, invoice_number, client_id, consultant_id, invoice_date,
+            DATE_FORMAT(invoice_date, '%Y-%m') AS period, total_ht, total_tva, total_ttc
        FROM invoices
-      WHERE type = 'client' AND paid_at IS NOT NULL AND month >= ? AND month <= ?`,
+      WHERE type = 'client' AND paid_at IS NOT NULL
+        AND DATE_FORMAT(invoice_date, '%Y-%m') >= ? AND DATE_FORMAT(invoice_date, '%Y-%m') <= ?
+      ORDER BY invoice_date ASC, invoice_number ASC`,
     [fromMonth, toMonth]
   );
   return rows;
@@ -62,13 +74,15 @@ async function getClientLedger(fromMonth, toMonth) {
 // One row per actual unit of supplier cost, paid ones only (see the
 // cash-basis comment above getClientLedger). A single-submission
 // supplier invoice contributes its own row directly, gated on its own
-// paid_at; a combined (consolidated) supplier invoice's parent row has
-// no single client_id/consultant_id/month to attribute the cost to (see
-// invoiceModel.createCombined), so it contributes one row per
+// paid_at and invoice_date; a combined (consolidated) supplier invoice's
+// parent row has no single client_id/consultant_id to attribute the cost
+// to (see invoiceModel.createCombined), so it contributes one row per
 // invoice_line_items row instead - each already carrying its own
-// client_id/consultant_id/month/total_ht, gated on the *parent* row's
-// paid_at (payment is recorded once per combined invoice, never per
-// line item - there's no invoice_line_items.paid_at to read).
+// client_id/consultant_id/total_ht, but gated on the *parent* row's
+// paid_at and placed in a period by the parent's invoice_date (payment
+// and the real document are both recorded once per combined invoice,
+// never per line item - there's no invoice_line_items.paid_at or
+// invoice_date to read).
 // total_tva/total_ttc are recomputed as total_ht * 0.2 / * 1.2 rather
 // than read from a stored column, because invoice_line_items only ever
 // stores total_ht - but that recomputation is exact, not an estimate:
@@ -80,17 +94,20 @@ async function getClientLedger(fromMonth, toMonth) {
 // de-duplicate.
 async function getSupplierLedger(fromMonth, toMonth) {
   const [rows] = await pool.query(
-    `SELECT i.id AS invoice_id, i.invoice_number, i.client_id, i.consultant_id, i.month,
-            i.total_ht, i.total_tva, i.total_ttc
+    `SELECT i.id AS invoice_id, i.invoice_number, i.client_id, i.consultant_id, i.invoice_date,
+            DATE_FORMAT(i.invoice_date, '%Y-%m') AS period, i.total_ht, i.total_tva, i.total_ttc
        FROM invoices i
       WHERE i.type = 'supplier' AND i.submission_id IS NOT NULL AND i.paid_at IS NOT NULL
-        AND i.month >= ? AND i.month <= ?
+        AND DATE_FORMAT(i.invoice_date, '%Y-%m') >= ? AND DATE_FORMAT(i.invoice_date, '%Y-%m') <= ?
      UNION ALL
-     SELECT i.id AS invoice_id, i.invoice_number, ili.client_id, ili.consultant_id, ili.month,
+     SELECT i.id AS invoice_id, i.invoice_number, ili.client_id, ili.consultant_id, i.invoice_date,
+            DATE_FORMAT(i.invoice_date, '%Y-%m') AS period,
             ili.total_ht, ROUND(ili.total_ht * 0.2, 2) AS total_tva, ROUND(ili.total_ht * 1.2, 2) AS total_ttc
        FROM invoice_line_items ili
        JOIN invoices i ON i.id = ili.invoice_id
-      WHERE i.type = 'supplier' AND i.paid_at IS NOT NULL AND ili.month >= ? AND ili.month <= ?`,
+      WHERE i.type = 'supplier' AND i.paid_at IS NOT NULL
+        AND DATE_FORMAT(i.invoice_date, '%Y-%m') >= ? AND DATE_FORMAT(i.invoice_date, '%Y-%m') <= ?
+     ORDER BY invoice_date ASC, invoice_number ASC`,
     [fromMonth, toMonth, fromMonth, toMonth]
   );
   return rows;
@@ -164,10 +181,10 @@ async function getProfitLoss(fromMonth, toMonth) {
   const chargesHt = sumBy(charges, 'amount_ht');
   const netResult = grossMargin - salariesGross - chargesHt;
 
-  const revenueByMonth = groupSumByMonth(clientLedger, 'total_ht');
-  const supplierCostByMonth = groupSumByMonth(supplierLedger, 'total_ht');
-  const salariesByMonth = groupSumByMonth(salaries, 'gross_salary');
-  const chargesByMonth = groupSumByMonth(charges, 'amount_ht');
+  const revenueByMonth = groupSumByMonth(clientLedger, 'period', 'total_ht');
+  const supplierCostByMonth = groupSumByMonth(supplierLedger, 'period', 'total_ht');
+  const salariesByMonth = groupSumByMonth(salaries, 'month', 'gross_salary');
+  const chargesByMonth = groupSumByMonth(charges, 'month', 'amount_ht');
 
   const monthlyBreakdown = buildMonthRange(fromMonth, toMonth).map((month) => {
     const revenue = revenueByMonth[month] || 0;
@@ -276,7 +293,7 @@ async function getReceivables() {
        LEFT JOIN users u ON u.id = i.consultant_id
        LEFT JOIN clients c ON c.id = i.client_id
       WHERE i.type = 'client' AND i.paid_at IS NULL
-      ORDER BY i.created_at ASC`
+      ORDER BY i.invoice_date ASC, i.created_at ASC`
   );
   return { rows, total: sumBy(rows, 'total_ttc') };
 }
@@ -295,7 +312,7 @@ async function getPayables() {
        LEFT JOIN users u ON u.id = i.consultant_id
        LEFT JOIN suppliers s ON s.id = i.supplier_id
       WHERE i.type = 'supplier' AND i.is_simulation = 0 AND i.paid_at IS NULL
-      ORDER BY i.created_at ASC`
+      ORDER BY i.invoice_date ASC, i.created_at ASC`
   );
 
   const [pendingRows] = await pool.query(
@@ -314,6 +331,23 @@ async function getPayables() {
   };
 }
 
+// Paid supplier invoices with no invoice_date - only possible for real
+// invoices uploaded (and paid) before that column existed: the upload
+// form requires a date now, and invoicesController.handleTogglePaid
+// refuses to mark an undated one paid. Every period-scoped ledger above
+// matches on invoice_date, so these would otherwise silently count in no
+// period at all - the Finance pages list them as a warning until their
+// date is filled in.
+async function getUndatedSupplierInvoices() {
+  const [rows] = await pool.query(
+    `SELECT id, invoice_number
+       FROM invoices
+      WHERE type = 'supplier' AND paid_at IS NOT NULL AND invoice_date IS NULL
+      ORDER BY created_at ASC`
+  );
+  return rows;
+}
+
 module.exports = {
   getClientLedger,
   getSupplierLedger,
@@ -322,5 +356,6 @@ module.exports = {
   getClientMargins,
   getConsultantMargins,
   getReceivables,
-  getPayables
+  getPayables,
+  getUndatedSupplierInvoices
 };

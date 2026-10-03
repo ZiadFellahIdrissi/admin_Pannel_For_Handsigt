@@ -9,10 +9,22 @@ const supplierModel = require('../models/supplierModel');
 const userModel = require('../models/userModel');
 const companyInfoModel = require('../models/companyInfoModel');
 const { generateInvoicePdf, monthLabelFr } = require('../utils/invoicePdf');
-const { currentMonthKey, shiftMonth } = require('../utils/format');
+const { currentMonthKey, dateKey, shiftMonth } = require('../utils/format');
 const { INVOICE_DIR } = require('../config/uploadPaths');
 
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+// 'YYYY-MM-DD' that's also a real calendar day within a sane range -
+// rejects e.g. '2026-02-30' (which MySQL's strict mode would otherwise
+// turn into a 500) or a mistyped year.
+function isValidDateKey(value) {
+  if (!DATE_RE.test(value)) return false;
+  const [y, m, d] = value.split('-').map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  return y >= 2000 && y <= 2100
+    && date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d;
+}
 
 // 'Ziad' + 'Fellah' -> 'ZIFE' - first 2 letters of each name, uppercased.
 // Falls back to whatever's there if a name is shorter than 2 characters.
@@ -86,7 +98,11 @@ async function handleGenerate(req, res) {
   const totalDays = Number(submission.total_days);
   const clientTjm = Number(submission.client_tjm || 0);
   const label = buildLineLabel(pairing, consultant);
-  const dateLabel = new Date().toLocaleDateString('fr-FR');
+  // One Date for both, so the client invoice's stored invoice_date is
+  // always exactly the day printed on its PDF.
+  const now = new Date();
+  const dateLabel = now.toLocaleDateString('fr-FR');
+  const invoiceDate = dateKey(now);
   const monthLbl = monthLabelFr(submission.month);
 
   const clientRate = clientTjm;
@@ -140,7 +156,8 @@ async function handleGenerate(req, res) {
       totalTva: clientTva,
       totalTtc: clientTtc,
       label,
-      pdfPath: clientPdfFilename
+      pdfPath: clientPdfFilename,
+      invoiceDate
     });
 
     generatedNumbers.push(`${clientInvoiceNumber} (Client)`);
@@ -347,6 +364,13 @@ async function handleTogglePaid(req, res) {
     req.flash('error', 'Upload the real invoice before marking this as paid.');
     return res.redirect(redirectPath);
   }
+  // Finance places a paid invoice in a period by its invoice date - a
+  // real supplier invoice uploaded before invoice_date existed has none,
+  // and would silently drop out of every total if marked paid as-is.
+  if (invoice.type === 'supplier' && !invoice.paid_at && !invoice.invoice_date) {
+    req.flash('error', 'Set the invoice date (Edit Real Invoice) before marking this as paid.');
+    return res.redirect(redirectPath);
+  }
 
   await invoiceModel.setPaid(invoice.id, !invoice.paid_at);
   req.flash('success', invoice.paid_at ? 'Invoice marked as unpaid.' : 'Invoice marked as paid.');
@@ -381,15 +405,33 @@ async function showSupplierDetail(req, res) {
 // this step (unlike at generation time, when nothing is known about the
 // real issuer yet): either supplierId is set, or newSupplierLegalName is
 // - if neither is, that's a validation error rather than a silent no-op.
+// So is the invoice date printed on the real document, since Finance
+// places every invoice in a period by it. Once the real invoice is on
+// file, the same form doubles as "edit its details" - the PDF is then
+// optional, and the current file is kept when no new one is chosen.
 async function handleUploadReal(req, res) {
   const invoice = await invoiceModel.findById(req.params.id);
   if (!invoice || invoice.type !== 'supplier') {
     return res.status(404).render('error', { message: 'Invoice not found.' });
   }
+  const redirectPath = `/invoices/suppliers/${invoice.id}`;
 
-  if (!req.file) {
+  // multer has already saved any uploaded file to disk by the time this
+  // runs - every early exit below cleans it up so it isn't orphaned.
+  function discardUpload() {
+    if (req.file) fs.unlink(path.join(INVOICE_DIR, req.file.filename), () => {});
+  }
+
+  if (!req.file && invoice.is_simulation) {
     req.flash('error', 'Choose a PDF file to upload.');
-    return res.redirect(`/invoices/suppliers/${invoice.id}`);
+    return res.redirect(redirectPath);
+  }
+
+  const invoiceDate = (req.body.invoiceDate || '').trim();
+  if (!isValidDateKey(invoiceDate)) {
+    discardUpload();
+    req.flash('error', 'Enter the invoice date printed on the real invoice.');
+    return res.redirect(redirectPath);
   }
 
   const invoiceNumber = (req.body.invoiceNumber || '').trim() || invoice.invoice_number;
@@ -398,9 +440,9 @@ async function handleUploadReal(req, res) {
   if (!supplierId) {
     const newLegalName = (req.body.newSupplierLegalName || '').trim();
     if (!newLegalName) {
-      fs.unlink(path.join(INVOICE_DIR, req.file.filename), () => {});
+      discardUpload();
       req.flash('error', 'Select a registered supplier, or quick-add one (legal name required).');
-      return res.redirect(`/invoices/suppliers/${invoice.id}`);
+      return res.redirect(redirectPath);
     }
     supplierId = await supplierModel.create({
       legalName: newLegalName,
@@ -413,24 +455,27 @@ async function handleUploadReal(req, res) {
   }
 
   try {
-    await invoiceModel.replacePdf(invoice.id, { pdfPath: req.file.filename, isSimulation: false, invoiceNumber, supplierId });
+    await invoiceModel.saveRealInvoice(invoice.id, {
+      pdfPath: req.file ? req.file.filename : invoice.pdf_path,
+      invoiceNumber,
+      supplierId,
+      invoiceDate
+    });
   } catch (err) {
-    // Uploaded file was already saved to disk by multer before this ran -
-    // clean it up so it isn't orphaned with no invoice row pointing at it.
-    fs.unlink(path.join(INVOICE_DIR, req.file.filename), () => {});
+    discardUpload();
     if (err.code === 'ER_DUP_ENTRY') {
       req.flash('error', `Invoice number "${invoiceNumber}" is already used by another invoice.`);
-      return res.redirect(`/invoices/suppliers/${invoice.id}`);
+      return res.redirect(redirectPath);
     }
     throw err;
   }
 
-  if (invoice.pdf_path) {
+  if (req.file && invoice.pdf_path) {
     fs.unlink(path.join(INVOICE_DIR, invoice.pdf_path), () => {});
   }
 
-  req.flash('success', 'Real invoice uploaded.');
-  res.redirect(`/invoices/suppliers/${invoice.id}`);
+  req.flash('success', req.file ? 'Real invoice uploaded.' : 'Real invoice details updated.');
+  res.redirect(redirectPath);
 }
 
 // Private/authenticated only - invoice PDFs are financial documents and

@@ -434,3 +434,27 @@ CREATE TABLE bank_statements (
   file_original_name VARCHAR(255) DEFAULT NULL,
   uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- ---------------------------------------------------------------------
+-- MIGRATION - run once in phpMyAdmin's SQL tab (both statements).
+--
+-- invoice_date is the date printed on the invoice document itself, and
+-- the date Finance uses to decide which period an invoice counts in (see
+-- models/financeModel.js). Distinct from created_at, which only records
+-- when the row was generated in this app:
+--   - Client invoices: Handsight issues them the moment they're
+--     generated, so both are the same day - set automatically at
+--     generation (invoicesController.handleGenerate), and backfilled
+--     below from created_at for every client invoice that already exists.
+--   - Supplier invoices: NULL while still a simulation (there's no real
+--     document yet), then typed in from the real invoice on the Upload
+--     Real Invoice dialog (invoicesController.handleUploadReal). Real
+--     supplier invoices uploaded before this column existed stay NULL
+--     until their date is filled in from that same dialog - Finance lists
+--     them in a warning meanwhile, since an undated invoice can't be
+--     placed in any period.
+-- ---------------------------------------------------------------------
+ALTER TABLE invoices
+  ADD COLUMN invoice_date DATE DEFAULT NULL;
+
+UPDATE invoices SET invoice_date = DATE(created_at) WHERE type = 'client';

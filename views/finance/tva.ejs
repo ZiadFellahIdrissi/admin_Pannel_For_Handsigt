@@ -17,8 +17,9 @@
 
   <%- include('../partials/financeNav', { active: 'tva', from, to }) %>
   <%- include('../partials/monthRangeFilter', { actionPath: '/finance/tva', from, to }) %>
+  <%- include('../partials/undatedInvoicesWarning', { undatedInvoices }) %>
 
-  <p class="text-xs text-brand-gray2 mb-4"><i class="fa-solid fa-circle-info mr-1"></i>Cash-basis: only invoices actually marked <strong>Paid</strong> are counted here (TVA sur encaissements) - an invoiced-but-unpaid amount shows on <a href="/finance/receivables" class="text-brand-accent hover:underline">Receivables</a> / <a href="/finance/payables" class="text-brand-accent hover:underline">Payables</a> instead.</p>
+  <p class="text-xs text-brand-gray2 mb-4"><i class="fa-solid fa-circle-info mr-1"></i>Only invoices actually marked <strong>Paid</strong> are counted here, each in the month of its <strong>invoice date</strong> - an invoiced-but-unpaid amount shows on <a href="/finance/receivables" class="text-brand-accent hover:underline">Receivables</a> / <a href="/finance/payables" class="text-brand-accent hover:underline">Payables</a> instead.</p>
 
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
     <div class="stat-tile">
@@ -52,14 +53,14 @@
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
           <thead><tr class="text-left text-brand-gray2 border-b border-brand-borderLight">
-            <th class="py-2 pr-3">Invoice</th><th class="py-2 pr-3">Month</th>
+            <th class="py-2 pr-3">Invoice</th><th class="py-2 pr-3">Invoice Date</th>
             <th class="py-2 pr-3 text-right">HT</th><th class="py-2 pr-3 text-right">TVA</th><th class="py-2 text-right">TTC</th>
           </tr></thead>
           <tbody>
             <% tva.clientLedger.forEach(function(r) { %>
               <tr class="border-b border-brand-borderLight last:border-0">
                 <td class="py-2 pr-3"><a href="/invoices/clients/<%= r.invoice_id %>" class="hover:text-brand-accent"><%= r.invoice_number %></a></td>
-                <td class="py-2 pr-3"><%= monthLabel(r.month) %></td>
+                <td class="py-2 pr-3"><%= r.invoice_date %></td>
                 <td class="py-2 pr-3 text-right"><%= formatCurrency(r.total_ht) %></td>
                 <td class="py-2 pr-3 text-right"><%= formatCurrency(r.total_tva) %></td>
                 <td class="py-2 text-right"><%= formatCurrency(r.total_ttc) %></td>
@@ -79,14 +80,14 @@
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
           <thead><tr class="text-left text-brand-gray2 border-b border-brand-borderLight">
-            <th class="py-2 pr-3">Invoice</th><th class="py-2 pr-3">Month</th>
+            <th class="py-2 pr-3">Invoice</th><th class="py-2 pr-3">Invoice Date</th>
             <th class="py-2 pr-3 text-right">HT</th><th class="py-2 pr-3 text-right">TVA</th><th class="py-2 text-right">TTC</th>
           </tr></thead>
           <tbody>
             <% tva.supplierLedger.forEach(function(r) { %>
               <tr class="border-b border-brand-borderLight last:border-0">
                 <td class="py-2 pr-3"><a href="/invoices/suppliers/<%= r.invoice_id %>" class="hover:text-brand-accent"><%= r.invoice_number %></a></td>
-                <td class="py-2 pr-3"><%= monthLabel(r.month) %></td>
+                <td class="py-2 pr-3"><%= r.invoice_date %></td>
                 <td class="py-2 pr-3 text-right"><%= formatCurrency(r.total_ht) %></td>
                 <td class="py-2 pr-3 text-right"><%= formatCurrency(r.total_tva) %></td>
                 <td class="py-2 text-right"><%= formatCurrency(r.total_ttc) %></td>
