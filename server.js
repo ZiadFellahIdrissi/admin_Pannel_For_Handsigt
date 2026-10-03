@@ -8,7 +8,7 @@ const fs = require('fs');
 
 const sessionMiddleware = require('./config/session');
 const { attachToken } = require('./middleware/csrf');
-const { formatCurrency, monthLabel, yearsSince } = require('./utils/format');
+const { formatCurrency, formatPercentChange, monthLabel, yearsSince } = require('./utils/format');
 const asyncHandler = require('./utils/asyncHandler');
 const monthSubmissionModel = require('./models/monthSubmissionModel');
 const dashboardRoutes = require('./routes/dashboardRoutes');
@@ -48,6 +48,7 @@ try {
 }
 
 app.locals.formatCurrency = formatCurrency;
+app.locals.formatPercentChange = formatPercentChange;
 app.locals.monthLabel = monthLabel;
 app.locals.yearsSince = yearsSince;
 

@@ -430,6 +430,20 @@
   .chart-line-point {
     fill: var(--blue);
   }
+  /* A comparison series drawn behind the main one (last year, on the
+     Revenue page) - muted and dashed so the main line always reads as
+     the primary one. */
+  .chart-line-path-previous {
+    fill: none;
+    stroke: var(--viz-series-other);
+    stroke-width: 2;
+    stroke-dasharray: 5 4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .chart-line-point-previous {
+    fill: var(--viz-series-other);
+  }
   .chart-legend-swatch {
     @apply inline-block w-2.5 h-2.5 rounded-sm shrink-0;
   }

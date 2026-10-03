@@ -10,6 +10,63 @@
         Dashboard
       </h1>
 
+      <!-- Revenue (chiffre d'affaires) so far this year vs the same period
+           last year - see revenueModel.getYearSummary. Green when ahead,
+           red when behind, neutral when last year has nothing to compare. -->
+      <%
+        var caTrend = revenue.changePct === null ? 'neutral' : (revenue.changePct >= 0 ? 'up' : 'down');
+        var caAccent = {
+          up: 'border-l-emerald-500',
+          down: 'border-l-red-500',
+          neutral: 'border-l-slate-300 dark:border-l-slate-600'
+        }[caTrend];
+        var caPill = {
+          up: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800',
+          down: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800',
+          neutral: 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+        }[caTrend];
+        var caBarFill = { up: 'fill-emerald-500', down: 'fill-red-500', neutral: 'fill-brand-accent' }[caTrend];
+      %>
+      <a href="/finance/revenue" class="card-interactive block p-5 sm:p-6 mb-6 border-l-4 <%= caAccent %>">
+        <div class="flex items-start justify-between gap-4 flex-wrap">
+          <div class="min-w-0">
+            <div class="section-title !mb-1"><i class="fa-solid fa-chart-column"></i>Revenue <%= revenue.year %> &middot; Chiffre d'Affaires</div>
+            <div class="text-2xl sm:text-3xl font-bold leading-tight"><%= formatCurrency(revenue.total) %></div>
+            <div class="text-xs text-brand-gray2 mt-1">
+              Invoiced to clients so far this year, excl. VAT<% if (revenue.unpaid > 0) { %> &middot; <%= formatCurrency(revenue.unpaid) %> not yet paid<% } %>
+            </div>
+          </div>
+          <div class="sm:text-right">
+            <span class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-semibold <%= caPill %>">
+              <% if (caTrend === 'neutral') { %>
+                No <%= revenue.year - 1 %> revenue <%= revenue.previousTotal > 0 ? 'for this period' : 'recorded' %>
+              <% } else { %>
+                <i class="fa-solid <%= caTrend === 'up' ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down' %>"></i><%= formatPercentChange(revenue.changePct) %> vs <%= revenue.year - 1 %>
+              <% } %>
+            </span>
+            <div class="text-xs text-brand-gray2 mt-1.5">
+              <% if (caTrend !== 'neutral') { %>
+                Same period <%= revenue.year - 1 %>: <%= formatCurrency(revenue.previousComparable) %>
+              <% } else if (revenue.previousTotal === 0) { %>
+                Enter past months on the Revenue page to compare
+              <% } %>
+            </div>
+          </div>
+        </div>
+        <% if (revenue.progressPct !== null) { %>
+          <div class="mt-4">
+            <div class="h-2 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700">
+              <svg viewBox="0 0 100 1" preserveAspectRatio="none" class="block w-full h-full" aria-hidden="true">
+                <rect width="<%= Math.min(100, revenue.progressPct).toFixed(1) %>" height="1" class="<%= caBarFill %>"></rect>
+              </svg>
+            </div>
+            <div class="text-xs text-brand-gray2 mt-1.5">
+              <%= Math.round(revenue.progressPct) %>% of <%= revenue.year - 1 %>'s full year (<%= formatCurrency(revenue.previousTotal) %>)<%= revenue.progressPct >= 100 ? ' - already beaten' : '' %>
+            </div>
+          </div>
+        <% } %>
+      </a>
+
       <!-- Needs Attention - action-oriented, not just vanity counts -->
       <h2 class="section-title"><i class="fa-solid fa-triangle-exclamation"></i>Needs Attention</h2>
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">

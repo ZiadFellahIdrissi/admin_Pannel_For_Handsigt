@@ -7,6 +7,7 @@ const careerOfferModel = require('../models/careerOfferModel');
 const monthSubmissionModel = require('../models/monthSubmissionModel');
 const salaryPaymentModel = require('../models/salaryPaymentModel');
 const financeModel = require('../models/financeModel');
+const revenueModel = require('../models/revenueModel');
 const { currentMonthKey, shiftMonth, currentQuarterRange, monthLabel } = require('../utils/format');
 
 // One landing page pulling a headline number from every module built
@@ -37,7 +38,8 @@ async function show(req, res) {
     candidatesTotal, candidatesAddedThisMonth, candidatesHiredThisMonth,
     publishedOffers,
     salaryRowsForPayrollMonth,
-    pnl, tva, receivables, payables, undatedInvoices
+    pnl, tva, receivables, payables, undatedInvoices,
+    revenue
   ] = await Promise.all([
     userModel.list(1),
     clientModel.list(1),
@@ -54,7 +56,10 @@ async function show(req, res) {
     financeModel.getTvaReport(quarter.from, quarter.to),
     financeModel.getReceivables(),
     financeModel.getPayables(),
-    financeModel.getUndatedSupplierInvoices()
+    financeModel.getUndatedSupplierInvoices(),
+    // This year's revenue (chiffre d'affaires) so far vs the same period
+    // last year - the headline card at the top of the page.
+    revenueModel.getYearSummary(new Date().getFullYear())
   ]);
 
   const approvedPayoutThisMonth = approvedThisMonth.reduce((sum, s) => sum + Number(s.total_payout), 0);
@@ -85,7 +90,8 @@ async function show(req, res) {
     tva,
     receivables,
     payables,
-    undatedInvoices
+    undatedInvoices,
+    revenue
   });
 }
 

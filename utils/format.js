@@ -3,6 +3,13 @@ function formatCurrency(amount) {
   return `${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD`;
 }
 
+// 12.43 -> '+12.4%', -8.1 -> '-8.1%' - a signed change for year-over-year
+// comparisons; an em dash when there's nothing to compare against (null).
+function formatPercentChange(pct) {
+  if (pct === null || pct === undefined || !Number.isFinite(pct)) return '—';
+  return `${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%`;
+}
+
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
@@ -86,4 +93,4 @@ function toTitleCase(str) {
     .replace(/(^|[\s'-])([a-zà-ÿ])/g, (match, sep, letter) => sep + letter.toUpperCase());
 }
 
-module.exports = { formatCurrency, monthLabel, yearsSince, toTitleCase, currentMonthKey, dateKey, shiftMonth, currentQuarterRange };
+module.exports = { formatCurrency, formatPercentChange, monthLabel, yearsSince, toTitleCase, currentMonthKey, dateKey, shiftMonth, currentQuarterRange };

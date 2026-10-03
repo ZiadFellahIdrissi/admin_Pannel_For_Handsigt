@@ -1,0 +1,211 @@
+<%
+  var previousYear = year - 1;
+  // Green when ahead of last year, red when behind, neutral when there's
+  // nothing to compare with (null).
+  function trendTextClass(pct) {
+    if (pct === null) return 'text-brand-gray2';
+    return pct >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400';
+  }
+%>
+<%- include('../partials/head', { title: 'Revenue' }) %>
+<div class="flex min-h-screen">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0">
+    <%- include('../partials/topbar', { title: 'Revenue' }) %>
+    <%- include('../partials/flash') %>
+    <div class="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full viz-root">
+  <h1 class="text-lg sm:text-xl font-bold mb-4 sm:mb-6 flex items-center gap-3">
+    <div class="icon-circle-accent"><i class="fa-solid fa-chart-column"></i></div>
+    Revenue (Chiffre d'Affaires)
+  </h1>
+
+  <%- include('../partials/financeNav', { active: 'revenue' }) %>
+
+  <div class="card p-4 mb-6 flex items-center gap-2 flex-wrap">
+    <a href="/finance/revenue?year=<%= previousYear %>" class="btn-secondary !px-3" aria-label="Previous year">
+      <i class="fa-solid fa-chevron-left"></i>
+    </a>
+    <span class="font-semibold px-2"><%= year %> <span class="font-normal text-brand-gray2">vs <%= previousYear %></span></span>
+    <% if (year < currentYear) { %>
+      <a href="/finance/revenue?year=<%= year + 1 %>" class="btn-secondary !px-3" aria-label="Next year">
+        <i class="fa-solid fa-chevron-right"></i>
+      </a>
+      <a href="/finance/revenue" class="btn-secondary">This Year</a>
+    <% } %>
+  </div>
+
+  <p class="text-xs text-brand-gray2 mb-4"><i class="fa-solid fa-circle-info mr-1"></i>Everything invoiced to clients, excl. VAT - <strong>paid or not</strong>, unlike the rest of Finance - each in the month of its invoice date, plus any revenue entered manually below. What's still unpaid is shown separately, and on <a href="/finance/receivables" class="text-brand-accent hover:underline">Receivables</a>.</p>
+
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+    <div class="stat-tile">
+      <div class="icon-circle-accent"><i class="fa-solid fa-sack-dollar"></i></div>
+      <div class="min-w-0">
+        <div class="stat-tile-value text-base sm:text-xl"><%= formatCurrency(summary.total) %></div>
+        <div class="stat-tile-label"><%= year %><%= summary.isToDate ? ' so far' : '' %><% if (summary.unpaid > 0) { %> &middot; <%= formatCurrency(summary.unpaid) %> not yet paid<% } %></div>
+      </div>
+    </div>
+    <div class="stat-tile">
+      <% if (summary.changePct === null) { %>
+        <div class="icon-circle-slate"><i class="fa-solid fa-minus"></i></div>
+      <% } else if (summary.changePct >= 0) { %>
+        <div class="icon-circle-emerald"><i class="fa-solid fa-arrow-trend-up"></i></div>
+      <% } else { %>
+        <div class="icon-circle bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400"><i class="fa-solid fa-arrow-trend-down"></i></div>
+      <% } %>
+      <div class="min-w-0">
+        <div class="stat-tile-value text-base sm:text-xl <%= trendTextClass(summary.changePct) %>"><%= formatPercentChange(summary.changePct) %></div>
+        <div class="stat-tile-label">vs <%= formatCurrency(summary.previousComparable) %> <%= summary.isToDate ? 'same period ' + previousYear : 'in ' + previousYear %></div>
+      </div>
+    </div>
+    <div class="stat-tile">
+      <div class="icon-circle-slate"><i class="fa-solid fa-flag-checkered"></i></div>
+      <div class="min-w-0">
+        <div class="stat-tile-value text-base sm:text-xl"><%= formatCurrency(summary.previousTotal) %></div>
+        <div class="stat-tile-label"><%= previousYear %> full year<% if (summary.progressPct !== null) { %> &middot; <%= Math.round(summary.progressPct) %>% reached so far<% } %></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p-5 sm:p-6 mb-6">
+    <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
+      <h2 class="section-title !mb-0"><i class="fa-solid fa-chart-line"></i>Cumulative Revenue</h2>
+      <div class="flex items-center gap-4 text-xs text-brand-gray2">
+        <span class="inline-flex items-center gap-1.5">
+          <svg width="18" height="6" aria-hidden="true"><line x1="1" y1="3" x2="17" y2="3" class="chart-line-path"></line></svg><%= year %>
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <svg width="18" height="6" aria-hidden="true"><line x1="1" y1="3" x2="17" y2="3" class="chart-line-path-previous"></line></svg><%= previousYear %>
+        </span>
+      </div>
+    </div>
+    <% if (yearTotal === 0 && previousYearTotal === 0) { %>
+      <div class="p-6 text-center">
+        <i class="fa-solid fa-chart-line text-2xl text-brand-gray2 mb-2"></i>
+        <p class="text-sm text-brand-gray2">No revenue recorded for <%= year %> or <%= previousYear %> yet.</p>
+      </div>
+    <% } else { %>
+      <svg viewBox="0 0 <%= chartWidth %> <%= chartHeight + 20 %>" class="w-full" role="img" aria-label="Cumulative revenue, <%= year %> vs <%= previousYear %>">
+        <% [0.25, 0.5, 0.75].forEach(function(frac) { %>
+          <line x1="0" x2="<%= chartWidth %>" y1="<%= (chartHeight - 20) * frac + 10 %>" y2="<%= (chartHeight - 20) * frac + 10 %>" class="chart-gridline"></line>
+        <% }); %>
+        <path d="<%= previousYearLinePath %>" class="chart-line-path-previous"></path>
+        <% previousYearPoints.forEach(function(p) { %>
+          <circle cx="<%= p.x %>" cy="<%= p.y %>" r="3" class="chart-line-point-previous">
+            <title>End of <%= monthLabel(p.month) %>: <%= formatCurrency(p.value) %> cumulative</title>
+          </circle>
+        <% }); %>
+        <% if (yearPoints.length > 0) { %>
+          <path d="<%= yearLinePath %>" class="chart-line-path"></path>
+          <% yearPoints.forEach(function(p) { %>
+            <circle cx="<%= p.x %>" cy="<%= p.y %>" r="3.5" class="chart-line-point">
+              <title><%= monthLabel(p.month) %>: <%= formatCurrency(p.value) %> cumulative</title>
+            </circle>
+          <% }); %>
+        <% } %>
+        <% axisLabels.forEach(function(a) { %>
+          <text x="<%= a.x %>" y="<%= chartHeight + 15 %>" text-anchor="middle" class="chart-axis-label"><%= a.label %></text>
+        <% }); %>
+      </svg>
+    <% } %>
+  </div>
+
+  <div class="card p-5 sm:p-6 mb-6">
+    <h2 class="section-title"><i class="fa-solid fa-calendar-days"></i>Month by Month</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead><tr class="text-left text-brand-gray2 border-b border-brand-borderLight">
+          <th class="py-2 pr-3">Month</th>
+          <th class="py-2 pr-3 text-right"><%= year %></th>
+          <th class="py-2 pr-3 text-right"><%= previousYear %></th>
+          <th class="py-2 text-right">Change</th>
+        </tr></thead>
+        <tbody>
+          <% rows.forEach(function(r) { %>
+            <tr class="border-b border-brand-borderLight last:border-0">
+              <td class="py-2 pr-3 font-medium"><%= r.name %><% if (r.isInProgress) { %> <span class="text-xs font-normal text-brand-gray2">(in progress)</span><% } %></td>
+              <td class="py-2 pr-3 text-right">
+                <%= r.isFuture ? '—' : formatCurrency(r.value) %>
+                <% if (r.external > 0) { %><i class="fa-solid fa-pen-to-square text-xs text-brand-gray2 ml-1" title="Includes <%= formatCurrency(r.external) %> entered manually"></i><% } %>
+              </td>
+              <td class="py-2 pr-3 text-right text-brand-gray2">
+                <%= formatCurrency(r.previousValue) %>
+                <% if (r.previousExternal > 0) { %><i class="fa-solid fa-pen-to-square text-xs ml-1" title="Includes <%= formatCurrency(r.previousExternal) %> entered manually"></i><% } %>
+              </td>
+              <td class="py-2 text-right font-medium <%= trendTextClass(r.changePct) %>"><%= formatPercentChange(r.changePct) %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+        <tfoot>
+          <tr class="border-t-2 border-brand-borderLight font-semibold">
+            <td class="py-2 pr-3">Total<%= summary.isToDate ? ' so far' : '' %></td>
+            <td class="py-2 pr-3 text-right"><%= formatCurrency(yearTotal) %></td>
+            <td class="py-2 pr-3 text-right"><%= formatCurrency(previousYearTotal) %></td>
+            <td class="py-2 text-right <%= summary.isToDate ? '' : trendTextClass(summary.changePct) %>"><%= summary.isToDate ? '' : formatPercentChange(summary.changePct) %></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <% if (summary.isToDate) { %>
+      <p class="text-xs text-brand-gray2 mt-3">The month in progress isn't compared yet - part of a month against a whole one would always look like a drop. The tiles above compare <%= year %> so far with exactly the same period of <%= previousYear %>.</p>
+    <% } %>
+  </div>
+
+  <div class="card p-5 sm:p-6">
+    <h2 class="section-title"><i class="fa-solid fa-pen-to-square"></i>Revenue Invoiced Outside This App</h2>
+    <p class="text-sm text-brand-gray2 mb-4">For months whose client invoices weren't generated here - typically before you started invoicing in this app - enter that month's total invoiced (excl. VAT, by invoice date) so the comparison with last year is complete. It's added on top of the app's own invoices for that month, so never re-enter invoices that already exist here. Saving a month that already has an amount replaces it.</p>
+
+    <form action="/finance/revenue/external" method="POST" class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end mb-5">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="year" value="<%= year %>">
+      <div>
+        <label class="field-label" for="externalMonth">Month</label>
+        <input class="field-input" type="month" id="externalMonth" name="month" required>
+      </div>
+      <div>
+        <label class="field-label" for="externalAmount">Amount (excl. VAT)</label>
+        <input class="field-input" type="number" id="externalAmount" name="amountHt" min="0" step="0.01" required>
+      </div>
+      <div>
+        <label class="field-label" for="externalNote">Note (optional)</label>
+        <input class="field-input" type="text" id="externalNote" name="note" maxlength="255">
+      </div>
+      <button type="submit" class="btn-primary"><i class="fa-solid fa-floppy-disk"></i>Save</button>
+    </form>
+
+    <% if (externalEntries.length === 0) { %>
+      <p class="text-sm text-brand-gray2">Nothing entered manually for <%= previousYear %> or <%= year %>.</p>
+    <% } else { %>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-brand-gray2 border-b border-brand-borderLight">
+            <th class="py-2 pr-3">Month</th>
+            <th class="py-2 pr-3 text-right">Amount (excl. VAT)</th>
+            <th class="py-2 pr-3">Note</th>
+            <th class="py-2"></th>
+          </tr></thead>
+          <tbody>
+            <% externalEntries.forEach(function(e) { %>
+              <tr class="border-b border-brand-borderLight last:border-0">
+                <td class="py-2 pr-3 font-medium"><%= monthLabel(e.month) %></td>
+                <td class="py-2 pr-3 text-right"><%= formatCurrency(e.amount_ht) %></td>
+                <td class="py-2 pr-3 text-brand-gray2"><%= e.note || '' %></td>
+                <td class="py-2 text-right">
+                  <form action="/finance/revenue/external/<%= e.id %>/delete" method="POST" data-confirm="Delete the revenue entered for <%= monthLabel(e.month) %>?">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="hidden" name="year" value="<%= year %>">
+                    <button type="submit" class="btn-danger text-xs !px-2.5 !py-1.5" aria-label="Delete"><i class="fa-solid fa-trash"></i></button>
+                  </form>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+    </div>
+  </div>
+</div>
+<script src="/js/confirm-submit.js?v=<%= assetVersion %>" defer></script>
+
+<%- include('../partials/foot') %>
