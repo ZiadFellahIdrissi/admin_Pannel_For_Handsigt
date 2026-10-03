@@ -54,13 +54,17 @@ function buildMonthRange(fromMonth, toMonth) {
 // invoice with no invoice_date matches no period at all - see
 // getUndatedSupplierInvoices for the only way that can happen.
 //
+// pdf_path (and charges' invoice_path below) let the TVA documents ZIP
+// (financeController.exportTvaDocuments) bundle exactly the documents
+// behind the figures, straight from the same rows.
+//
 // Client invoices are never combined (unlike supplier ones - see
 // invoicesController.js's comment on handleGenerateCombinedSupplier), so
 // a plain query against `invoices` already gives one row per real unit
 // of revenue - no UNION needed the way the supplier ledger below needs one.
 async function getClientLedger(fromMonth, toMonth) {
   const [rows] = await pool.query(
-    `SELECT id AS invoice_id, invoice_number, client_id, consultant_id, invoice_date,
+    `SELECT id AS invoice_id, invoice_number, pdf_path, client_id, consultant_id, invoice_date,
             DATE_FORMAT(invoice_date, '%Y-%m') AS period, total_ht, total_tva, total_ttc
        FROM invoices
       WHERE type = 'client' AND paid_at IS NOT NULL
@@ -94,13 +98,13 @@ async function getClientLedger(fromMonth, toMonth) {
 // de-duplicate.
 async function getSupplierLedger(fromMonth, toMonth) {
   const [rows] = await pool.query(
-    `SELECT i.id AS invoice_id, i.invoice_number, i.client_id, i.consultant_id, i.invoice_date,
+    `SELECT i.id AS invoice_id, i.invoice_number, i.pdf_path, i.client_id, i.consultant_id, i.invoice_date,
             DATE_FORMAT(i.invoice_date, '%Y-%m') AS period, i.total_ht, i.total_tva, i.total_ttc
        FROM invoices i
       WHERE i.type = 'supplier' AND i.submission_id IS NOT NULL AND i.paid_at IS NOT NULL
         AND DATE_FORMAT(i.invoice_date, '%Y-%m') >= ? AND DATE_FORMAT(i.invoice_date, '%Y-%m') <= ?
      UNION ALL
-     SELECT i.id AS invoice_id, i.invoice_number, ili.client_id, ili.consultant_id, i.invoice_date,
+     SELECT i.id AS invoice_id, i.invoice_number, i.pdf_path, ili.client_id, ili.consultant_id, i.invoice_date,
             DATE_FORMAT(i.invoice_date, '%Y-%m') AS period,
             ili.total_ht, ROUND(ili.total_ht * 0.2, 2) AS total_tva, ROUND(ili.total_ht * 1.2, 2) AS total_ttc
        FROM invoice_line_items ili
@@ -116,7 +120,7 @@ async function getSupplierLedger(fromMonth, toMonth) {
 async function getChargesInRange(fromMonth, toMonth) {
   const [rows] = await pool.query(
     `SELECT ch.id, ch.label, ch.charge_date, DATE_FORMAT(ch.charge_date, '%Y-%m') AS month,
-            ch.amount_ht, ch.amount_tva, ch.amount_ttc, cc.name AS category_name
+            ch.amount_ht, ch.amount_tva, ch.amount_ttc, ch.invoice_path, cc.name AS category_name
        FROM charges ch
        JOIN charge_categories cc ON cc.id = ch.category_id
       WHERE DATE_FORMAT(ch.charge_date, '%Y-%m') >= ? AND DATE_FORMAT(ch.charge_date, '%Y-%m') <= ?

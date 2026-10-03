@@ -1,6 +1,11 @@
+const fs = require('fs');
+const path = require('path');
 const ExcelJS = require('exceljs');
+const archiver = require('archiver');
 const financeModel = require('../models/financeModel');
-const { currentMonthKey, monthLabel } = require('../utils/format');
+const bankStatementModel = require('../models/bankStatementModel');
+const { currentMonthKey, monthLabel, shiftMonth } = require('../utils/format');
+const { INVOICE_DIR, CHARGE_INVOICE_DIR, BANK_STATEMENT_DIR } = require('../config/uploadPaths');
 
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 
@@ -68,10 +73,10 @@ async function showTva(req, res) {
   res.render('finance/tva', { from, to, tva, undatedInvoices });
 }
 
-async function exportTvaExcel(req, res) {
-  const { from, to } = monthRangeLocals(req);
-  const tva = await financeModel.getTvaReport(from, to);
-
+// The TVA report as a workbook - a Summary sheet plus one sheet per
+// ledger. Shared by the standalone Excel export and the documents ZIP,
+// which bundles it as the index of the documents next to it.
+function buildTvaWorkbook(from, to, tva) {
   const workbook = new ExcelJS.Workbook();
 
   const summary = workbook.addWorksheet('Summary');
@@ -131,10 +136,166 @@ async function exportTvaExcel(req, res) {
     ...r, amount_ht: Number(r.amount_ht), amount_tva: Number(r.amount_tva), amount_ttc: Number(r.amount_ttc)
   })));
 
+  return workbook;
+}
+
+async function exportTvaExcel(req, res) {
+  const { from, to } = monthRangeLocals(req);
+  const tva = await financeModel.getTvaReport(from, to);
+  const workbook = buildTvaWorkbook(from, to, tva);
+
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   res.setHeader('Content-Disposition', `attachment; filename="tva-${from}_${to}.xlsx"`);
   await workbook.xlsx.write(res);
   res.end();
+}
+
+const ZIP_FOLDER_CLIENT = '1 - Client Invoices (TVA Collectee)';
+const ZIP_FOLDER_SUPPLIER = '2 - Supplier Invoices (TVA Deductible)';
+const ZIP_FOLDER_CHARGES = '3 - Charges (TVA Deductible)';
+const ZIP_FOLDER_BANK = '4 - Bank Statements';
+
+// Safe as a file name inside a ZIP on any OS: accents stripped (Windows'
+// built-in unzip garbles non-ASCII names), the characters Windows
+// forbids replaced - a real supplier invoice number like "FA/2026/012"
+// is common - and capped to a sane length.
+function safeFileName(value) {
+  const name = String(value)
+    .normalize('NFD') // 'é' -> 'e' + a separate accent mark, which the next line drops
+    .replace(/[^\x20-\x7E]/g, '')
+    .replace(/[\\/:*?"<>|]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 120);
+  return name || 'document';
+}
+
+// Every document behind a TVA report's figures, as ZIP entries - client
+// invoices (collectée), supplier invoices and charge receipts
+// (déductible) - plus the bank statements covering the same months, the
+// proof the money actually moved. Anything that should be there but
+// can't be (a charge recorded without its receipt, a month's statement
+// never uploaded, a file gone from disk) is listed in `missing` instead,
+// so the ZIP never looks complete when it isn't.
+function collectTvaDocuments(tva, bankStatements, from, to) {
+  const documents = [];
+  const missing = [];
+  const usedNames = new Set();
+
+  function add(folder, baseName, filePath, description) {
+    if (!filePath) {
+      missing.push(`${description} - no document uploaded`);
+      return;
+    }
+    if (!fs.existsSync(filePath)) {
+      missing.push(`${description} - file not found on the server`);
+      return;
+    }
+    let name = `${folder}/${baseName}.pdf`;
+    for (let n = 2; usedNames.has(name); n += 1) {
+      name = `${folder}/${baseName} (${n}).pdf`;
+    }
+    usedNames.add(name);
+    documents.push({ filePath, name });
+  }
+
+  tva.clientLedger.forEach((r) => {
+    add(
+      ZIP_FOLDER_CLIENT,
+      safeFileName(`${r.invoice_date}_${r.invoice_number}`),
+      r.pdf_path && path.join(INVOICE_DIR, r.pdf_path),
+      `Client invoice ${r.invoice_number} (${r.invoice_date})`
+    );
+  });
+
+  // A combined supplier invoice appears once per line item in the
+  // ledger (see financeModel.getSupplierLedger) but is one document.
+  const seenSupplierInvoices = new Set();
+  tva.supplierLedger.forEach((r) => {
+    if (seenSupplierInvoices.has(r.invoice_id)) return;
+    seenSupplierInvoices.add(r.invoice_id);
+    add(
+      ZIP_FOLDER_SUPPLIER,
+      safeFileName(`${r.invoice_date}_${r.invoice_number}`),
+      r.pdf_path && path.join(INVOICE_DIR, r.pdf_path),
+      `Supplier invoice ${r.invoice_number} (${r.invoice_date})`
+    );
+  });
+
+  tva.charges.forEach((r) => {
+    const label = r.label ? `${r.category_name} - ${r.label}` : r.category_name;
+    add(
+      ZIP_FOLDER_CHARGES,
+      safeFileName(`${r.charge_date}_${label}`),
+      r.invoice_path && path.join(CHARGE_INVOICE_DIR, r.invoice_path),
+      `Charge "${label}" (${r.charge_date})`
+    );
+  });
+
+  // One statement per month (see bankStatementModel), so every month of
+  // the period is expected - except one that isn't over yet, whose
+  // statement can't exist yet (the bank only issues it once the month ends).
+  const statementByMonth = new Map(bankStatements.map((s) => [s.month, s]));
+  const currentMonth = currentMonthKey();
+  for (let month = from; month <= to; month = shiftMonth(month, 1)) {
+    const statement = statementByMonth.get(month);
+    if (!statement && month >= currentMonth) continue;
+    add(
+      ZIP_FOLDER_BANK,
+      `bank-statement-${month}`,
+      statement && path.join(BANK_STATEMENT_DIR, statement.file_path),
+      `Bank statement ${monthLabel(month)}`
+    );
+  }
+
+  return { documents, missing };
+}
+
+// One download with everything needed to justify a TVA declaration for
+// the selected period: the same Excel workbook as exportTvaExcel, plus
+// every invoice/receipt PDF counted in it, one folder per section of the
+// report, and the period's bank statements. Built from getTvaReport's
+// own rows, so the documents always match the figures exactly. Streamed
+// straight from disk rather than assembled in memory - a quarter's worth
+// of PDFs can add up.
+async function exportTvaDocuments(req, res) {
+  const { from, to } = monthRangeLocals(req);
+  const [tva, bankStatements] = await Promise.all([
+    financeModel.getTvaReport(from, to),
+    bankStatementModel.list({ from, to })
+  ]);
+  const summaryBuffer = await buildTvaWorkbook(from, to, tva).xlsx.writeBuffer();
+  const { documents, missing } = collectTvaDocuments(tva, bankStatements, from, to);
+
+  const archive = archiver('zip');
+  archive.on('warning', (err) => console.error('[tva documents zip]', err));
+  // Headers are already sent once the archive starts streaming, so a
+  // failure past that point can't become an error page anymore - abort
+  // the half-sent download instead, so it shows as failed rather than
+  // as a silently truncated ZIP.
+  archive.on('error', () => res.destroy());
+  // Stop reading files if the browser cancels the download midway.
+  res.on('close', () => {
+    if (!res.writableFinished) archive.abort();
+  });
+
+  res.setHeader('Content-Type', 'application/zip');
+  res.setHeader('Content-Disposition', `attachment; filename="tva-documents-${from}_${to}.zip"`);
+  archive.pipe(res);
+
+  archive.append(Buffer.from(summaryBuffer), { name: `tva-${from}_${to}.xlsx` });
+  documents.forEach((doc) => archive.file(doc.filePath, { name: doc.name }));
+  if (missing.length > 0) {
+    const periodLabel = from === to ? monthLabel(from) : `${monthLabel(from)} - ${monthLabel(to)}`;
+    const lines = [
+      `Documents missing from this ZIP (TVA period: ${periodLabel})`,
+      '',
+      ...missing.map((m) => `- ${m}`)
+    ];
+    archive.append(lines.join('\r\n'), { name: 'MISSING DOCUMENTS.txt' });
+  }
+
+  await archive.finalize();
 }
 
 async function showPnl(req, res) {
@@ -170,6 +331,7 @@ module.exports = {
   showDashboard,
   showTva,
   exportTvaExcel,
+  exportTvaDocuments,
   showPnl,
   showMargins,
   showReceivables,

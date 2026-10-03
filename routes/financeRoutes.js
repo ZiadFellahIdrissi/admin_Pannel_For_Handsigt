@@ -11,6 +11,7 @@ router.use(requireAuth);
 router.get('/finance', asyncHandler(financeController.showDashboard));
 router.get('/finance/tva', asyncHandler(financeController.showTva));
 router.get('/finance/tva/export', asyncHandler(financeController.exportTvaExcel));
+router.get('/finance/tva/documents', asyncHandler(financeController.exportTvaDocuments));
 router.get('/finance/pnl', asyncHandler(financeController.showPnl));
 router.get('/finance/margins', asyncHandler(financeController.showMargins));
 router.get('/finance/receivables', asyncHandler(financeController.showReceivables));
