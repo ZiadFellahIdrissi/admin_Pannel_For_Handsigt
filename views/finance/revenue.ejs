@@ -34,7 +34,7 @@
     <% } %>
   </div>
 
-  <p class="text-xs text-brand-gray2 mb-4"><i class="fa-solid fa-circle-info mr-1"></i>Everything invoiced to clients, excl. VAT - <strong>paid or not</strong>, unlike the rest of Finance - each in the month of its invoice date, plus any revenue entered manually below. What's still unpaid is shown separately, and on <a href="/finance/receivables" class="text-brand-accent hover:underline">Receivables</a>.</p>
+  <p class="text-xs text-brand-gray2 mb-4"><i class="fa-solid fa-circle-info mr-1"></i>Everything invoiced to clients, excl. VAT - <strong>paid or not</strong>, unlike the rest of Finance - each in the month of its invoice date. What's still unpaid is shown separately, and on <a href="/finance/receivables" class="text-brand-accent hover:underline">Receivables</a>.</p>
 
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
     <div class="stat-tile">
@@ -109,7 +109,7 @@
     <% } %>
   </div>
 
-  <div class="card p-5 sm:p-6 mb-6">
+  <div class="card p-5 sm:p-6">
     <h2 class="section-title"><i class="fa-solid fa-calendar-days"></i>Month by Month</h2>
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
@@ -123,14 +123,8 @@
           <% rows.forEach(function(r) { %>
             <tr class="border-b border-brand-borderLight last:border-0">
               <td class="py-2 pr-3 font-medium"><%= r.name %><% if (r.isInProgress) { %> <span class="text-xs font-normal text-brand-gray2">(in progress)</span><% } %></td>
-              <td class="py-2 pr-3 text-right">
-                <%= r.isFuture ? '—' : formatCurrency(r.value) %>
-                <% if (r.external > 0) { %><i class="fa-solid fa-pen-to-square text-xs text-brand-gray2 ml-1" title="Includes <%= formatCurrency(r.external) %> entered manually"></i><% } %>
-              </td>
-              <td class="py-2 pr-3 text-right text-brand-gray2">
-                <%= formatCurrency(r.previousValue) %>
-                <% if (r.previousExternal > 0) { %><i class="fa-solid fa-pen-to-square text-xs ml-1" title="Includes <%= formatCurrency(r.previousExternal) %> entered manually"></i><% } %>
-              </td>
+              <td class="py-2 pr-3 text-right"><%= r.isFuture ? '—' : formatCurrency(r.value) %></td>
+              <td class="py-2 pr-3 text-right text-brand-gray2"><%= formatCurrency(r.previousValue) %></td>
               <td class="py-2 text-right font-medium <%= trendTextClass(r.changePct) %>"><%= formatPercentChange(r.changePct) %></td>
             </tr>
           <% }); %>
@@ -149,63 +143,8 @@
       <p class="text-xs text-brand-gray2 mt-3">The month in progress isn't compared yet - part of a month against a whole one would always look like a drop. The tiles above compare <%= year %> so far with exactly the same period of <%= previousYear %>.</p>
     <% } %>
   </div>
-
-  <div class="card p-5 sm:p-6">
-    <h2 class="section-title"><i class="fa-solid fa-pen-to-square"></i>Revenue Invoiced Outside This App</h2>
-    <p class="text-sm text-brand-gray2 mb-4">For months whose client invoices weren't generated here - typically before you started invoicing in this app - enter that month's total invoiced (excl. VAT, by invoice date) so the comparison with last year is complete. It's added on top of the app's own invoices for that month, so never re-enter invoices that already exist here. Saving a month that already has an amount replaces it.</p>
-
-    <form action="/finance/revenue/external" method="POST" class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end mb-5">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <input type="hidden" name="year" value="<%= year %>">
-      <div>
-        <label class="field-label" for="externalMonth">Month</label>
-        <input class="field-input" type="month" id="externalMonth" name="month" required>
-      </div>
-      <div>
-        <label class="field-label" for="externalAmount">Amount (excl. VAT)</label>
-        <input class="field-input" type="number" id="externalAmount" name="amountHt" min="0" step="0.01" required>
-      </div>
-      <div>
-        <label class="field-label" for="externalNote">Note (optional)</label>
-        <input class="field-input" type="text" id="externalNote" name="note" maxlength="255">
-      </div>
-      <button type="submit" class="btn-primary"><i class="fa-solid fa-floppy-disk"></i>Save</button>
-    </form>
-
-    <% if (externalEntries.length === 0) { %>
-      <p class="text-sm text-brand-gray2">Nothing entered manually for <%= previousYear %> or <%= year %>.</p>
-    <% } else { %>
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead><tr class="text-left text-brand-gray2 border-b border-brand-borderLight">
-            <th class="py-2 pr-3">Month</th>
-            <th class="py-2 pr-3 text-right">Amount (excl. VAT)</th>
-            <th class="py-2 pr-3">Note</th>
-            <th class="py-2"></th>
-          </tr></thead>
-          <tbody>
-            <% externalEntries.forEach(function(e) { %>
-              <tr class="border-b border-brand-borderLight last:border-0">
-                <td class="py-2 pr-3 font-medium"><%= monthLabel(e.month) %></td>
-                <td class="py-2 pr-3 text-right"><%= formatCurrency(e.amount_ht) %></td>
-                <td class="py-2 pr-3 text-brand-gray2"><%= e.note || '' %></td>
-                <td class="py-2 text-right">
-                  <form action="/finance/revenue/external/<%= e.id %>/delete" method="POST" data-confirm="Delete the revenue entered for <%= monthLabel(e.month) %>?">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <input type="hidden" name="year" value="<%= year %>">
-                    <button type="submit" class="btn-danger text-xs !px-2.5 !py-1.5" aria-label="Delete"><i class="fa-solid fa-trash"></i></button>
-                  </form>
-                </td>
-              </tr>
-            <% }); %>
-          </tbody>
-        </table>
-      </div>
-    <% } %>
-  </div>
     </div>
   </div>
 </div>
-<script src="/js/confirm-submit.js?v=<%= assetVersion %>" defer></script>
 
 <%- include('../partials/foot') %>

@@ -39,18 +39,14 @@
           <div class="sm:text-right">
             <span class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-semibold <%= caPill %>">
               <% if (caTrend === 'neutral') { %>
-                No <%= revenue.year - 1 %> revenue <%= revenue.previousTotal > 0 ? 'for this period' : 'recorded' %>
+                No <%= revenue.year - 1 %> revenue <%= revenue.previousTotal > 0 ? 'for this period' : 'to compare' %>
               <% } else { %>
                 <i class="fa-solid <%= caTrend === 'up' ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down' %>"></i><%= formatPercentChange(revenue.changePct) %> vs <%= revenue.year - 1 %>
               <% } %>
             </span>
-            <div class="text-xs text-brand-gray2 mt-1.5">
-              <% if (caTrend !== 'neutral') { %>
-                Same period <%= revenue.year - 1 %>: <%= formatCurrency(revenue.previousComparable) %>
-              <% } else if (revenue.previousTotal === 0) { %>
-                Enter past months on the Revenue page to compare
-              <% } %>
-            </div>
+            <% if (caTrend !== 'neutral') { %>
+              <div class="text-xs text-brand-gray2 mt-1.5">Same period <%= revenue.year - 1 %>: <%= formatCurrency(revenue.previousComparable) %></div>
+            <% } %>
           </div>
         </div>
         <% if (revenue.progressPct !== null) { %>

@@ -458,22 +458,3 @@ ALTER TABLE invoices
   ADD COLUMN invoice_date DATE DEFAULT NULL;
 
 UPDATE invoices SET invoice_date = DATE(created_at) WHERE type = 'client';
-
--- ---------------------------------------------------------------------
--- MIGRATION - run once in phpMyAdmin's SQL tab.
---
--- Revenue (chiffre d'affaires) invoiced OUTSIDE this app - mainly every
--- month before client invoicing moved into it. One amount per month
--- (UNIQUE, re-saving a month replaces it), excl. VAT, by invoice date,
--- added on top of the app's own client invoices for that month (see
--- models/revenueModel.js). Lets the Revenue page and the Dashboard
--- compare this year with last year before the app holds a full year of
--- invoices of its own.
--- ---------------------------------------------------------------------
-CREATE TABLE external_revenue (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  month VARCHAR(7) NOT NULL UNIQUE,
-  amount_ht DECIMAL(12,2) NOT NULL,
-  note VARCHAR(255) DEFAULT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
