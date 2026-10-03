@@ -18,7 +18,7 @@
     </a>
   </div>
 
-  <div class="card p-5 sm:p-6 mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+  <div class="card p-5 sm:p-6 mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm break-anywhere">
     <div>
       <div class="text-brand-gray2 text-xs font-semibold uppercase tracking-wide mb-1">Username</div>
       <div class="font-semibold"><%= consultant.username %></div>
@@ -100,7 +100,7 @@
         <label class="field-label" for="client-search">Attach clients</label>
         <input type="text" id="client-search" class="field-input mb-2" placeholder="Start typing to search clients&hellip;"
                data-client-search-input="client-checklist" autocomplete="off">
-        <div id="client-checklist" class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3" style="display: none;">
+        <div id="client-checklist" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
           <% unattachedClients.forEach(function(cl) { %>
             <label class="flex items-center gap-2 rounded-lg border border-brand-borderLight px-3 py-2 text-sm cursor-pointer hover:border-brand-accent" data-client-search-item>
               <input type="checkbox" name="clientIds" value="<%= cl.id %>" class="rounded">

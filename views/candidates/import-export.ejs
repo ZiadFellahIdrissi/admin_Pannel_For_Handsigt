@@ -45,13 +45,13 @@
           <div class="max-h-56 overflow-y-auto space-y-1 mb-3 border border-brand-borderLight rounded-lg p-2">
             <% candidates.forEach(function(c) { %>
               <label class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm cursor-pointer hover:bg-brand-light">
-                <input type="checkbox" name="candidateIds" value="<%= c.id %>" data-bulk-select-item="candidates-export" class="rounded">
-                <%= c.first_name %> <%= c.last_name %>
-                <span class="text-brand-gray2 text-xs ml-auto"><%= c.email || '—' %></span>
+                <input type="checkbox" name="candidateIds" value="<%= c.id %>" data-bulk-select-item="candidates-export" class="rounded shrink-0">
+                <span class="truncate"><%= c.first_name %> <%= c.last_name %></span>
+                <span class="text-brand-gray2 text-xs ml-auto truncate min-w-0"><%= c.email || '—' %></span>
               </label>
             <% }); %>
           </div>
-          <div data-bulk-select-bar="candidates-export" class="flex items-center gap-3" style="display: none;">
+          <div data-bulk-select-bar="candidates-export" class="hidden flex items-center gap-3">
             <span class="text-sm font-medium"><span data-bulk-select-count>0</span> selected</span>
             <button type="submit" class="btn-primary text-sm !px-3 !py-1.5"><i class="fa-solid fa-download"></i>Download Selected</button>
           </div>

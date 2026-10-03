@@ -25,7 +25,7 @@
       </div>
 
       <!-- KPI row -->
-      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+      <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 mb-6">
         <div class="stat-tile">
           <div class="icon-circle-accent"><i class="fa-solid fa-users"></i></div>
           <div>
@@ -54,7 +54,7 @@
             <div class="stat-tile-label">Fees Paid &mdash; cost to Handsight</div>
           </div>
         </div>
-        <div class="stat-tile">
+        <div class="stat-tile col-span-2 sm:col-span-1">
           <div class="icon-circle-slate"><i class="fa-solid fa-scale-balanced"></i></div>
           <div>
             <div class="stat-tile-value text-base sm:text-xl"><%= hasBillingData ? formatCurrency(totalMargin) : '—' %></div>
@@ -111,8 +111,9 @@
             <% bars.forEach(function(r) { %>
               <div class="flex items-center gap-3" title="<%= r.consultantName %>: <%= formatCurrency(r.totalPayout) %> (<%= r.totalDays %> days)">
                 <div class="w-28 sm:w-36 truncate text-xs sm:text-sm shrink-0"><%= r.consultantName %></div>
-                <div class="flex-1 h-5 rounded-md bg-brand-light overflow-hidden">
-                  <div class="h-5 rounded-md chart-bar" style="width: <%= r.percent.toFixed(1) %>%"></div>
+                <%# An SVG width attribute, not style="width:" - the CSP blocks inline style attributes. %>
+                <div class="flex-1 h-5 rounded-md bg-slate-100 dark:bg-white/5 overflow-hidden">
+                  <svg viewBox="0 0 100 1" preserveAspectRatio="none" class="block w-full h-full" aria-hidden="true"><rect width="<%= r.percent.toFixed(1) %>" height="1" class="chart-bar"></rect></svg>
                 </div>
                 <div class="w-20 sm:w-24 text-right text-xs sm:text-sm font-semibold shrink-0"><%= formatCurrency(r.totalPayout) %></div>
               </div>
@@ -167,7 +168,7 @@
             <div class="space-y-1.5 text-sm">
               <% pieSlices.forEach(function(s) { %>
                 <div class="flex items-center gap-2">
-                  <span class="chart-legend-swatch" style="background-color: <%= s.color %>"></span>
+                  <svg viewBox="0 0 10 10" class="chart-legend-swatch" aria-hidden="true"><rect width="10" height="10" rx="2" fill="<%= s.color %>"></rect></svg>
                   <span class="font-medium"><%= s.label %></span>
                   <span class="text-brand-gray2">&middot; <%= s.value %> days &middot; <%= s.percent.toFixed(0) %>%</span>
                 </div>

@@ -18,7 +18,7 @@
       <div class="icon-circle-accent"><i class="fa-solid fa-file-invoice-dollar"></i></div>
       <%= invoice.invoice_number %>
     </h1>
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2 flex-wrap">
       <a href="<%= listPath %>" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i>Back</a>
       <% if (!isClientType) { %>
         <button type="button" class="btn-secondary" data-dialog-open="upload-real-invoice">
@@ -75,7 +75,7 @@
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 items-start">
     <!-- Left: written details -->
     <div class="card p-5 sm:p-6">
-      <div class="space-y-4 text-sm">
+      <div class="space-y-4 text-sm break-anywhere">
         <div>
           <h2 class="section-title"><i class="fa-solid fa-circle-info"></i>Invoice</h2>
           <div class="grid grid-cols-2 gap-x-4 gap-y-2">
@@ -163,9 +163,9 @@
     </div>
 
     <!-- Right: PDF preview -->
-    <div class="card p-5 sm:p-6 lg:sticky lg:top-6">
+    <div class="card p-5 sm:p-6 lg:sticky lg:top-32">
       <h2 class="section-title"><i class="fa-solid fa-file-pdf"></i>PDF</h2>
-      <iframe src="/invoices/<%= invoice.id %>/pdf" class="w-full rounded-lg border border-brand-borderLight" style="height: 70vh;" title="Invoice PDF"></iframe>
+      <iframe src="/invoices/<%= invoice.id %>/pdf" class="w-full h-[70vh] lg:h-[calc(100vh-17rem)] rounded-lg border border-brand-borderLight" title="Invoice PDF"></iframe>
     </div>
   </div>
 

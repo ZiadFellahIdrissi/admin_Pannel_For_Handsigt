@@ -25,7 +25,7 @@
   </form>
 
   <form action="/candidates" method="GET" class="card p-4 mb-6">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3 items-end">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3 items-end">
       <div class="sm:col-span-2 lg:col-span-2">
         <label class="field-label" for="q">Search</label>
         <input class="field-input" type="text" id="q" name="q" placeholder="Name or email..." value="<%= q %>">
@@ -62,7 +62,7 @@
       Advanced filters
     </button>
 
-    <div id="advanced-filters" class="<%= hasAdvancedFilters ? '' : 'hidden' %> grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3 items-end mt-3 pt-3 border-t border-brand-borderLight">
+    <div id="advanced-filters" class="<%= hasAdvancedFilters ? '' : 'hidden' %> grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3 items-end mt-3 pt-3 border-t border-brand-borderLight">
       <div>
         <label class="field-label" for="country">Country</label>
         <input class="field-input" type="text" id="country" name="country" placeholder="Morocco..." value="<%= country %>">
@@ -125,7 +125,7 @@
       </div>
       <div class="sm:col-span-2 lg:col-span-3">
         <label class="field-label">Open to</label>
-        <div class="flex items-center gap-4 h-[42px]">
+        <div class="flex items-center gap-4 flex-wrap min-h-[42px]">
           <label class="flex items-center gap-1.5 text-sm cursor-pointer">
             <input type="checkbox" name="openToCdd" <%= openToCdd ? 'checked' : '' %> class="rounded w-4 h-4">CDD
           </label>
@@ -183,7 +183,7 @@
         <% }); %>
       </div>
 
-      <div data-bulk-select-bar="candidates-list" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 card px-4 py-3 shadow-xl flex items-center gap-3" style="display: none;">
+      <div data-bulk-select-bar="candidates-list" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-20 card px-4 py-3 shadow-xl flex flex-wrap items-center justify-center gap-3 w-max max-w-[calc(100vw-2rem)]">
         <span class="text-sm font-medium"><span data-bulk-select-count>0</span> selected</span>
         <button type="submit" class="btn-danger text-sm !px-3 !py-1.5"><i class="fa-solid fa-trash"></i>Delete Selected</button>
       </div>

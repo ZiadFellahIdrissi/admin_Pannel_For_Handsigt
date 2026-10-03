@@ -73,7 +73,7 @@
               <div class="text-xs text-red-700 dark:text-red-400 mt-1"><strong>Comment:</strong> <%= s.admin_comment %></div>
             <% } %>
           </div>
-          <div class="flex items-center gap-2 shrink-0">
+          <div class="flex items-center gap-2 flex-wrap shrink-0 max-w-full">
             <span class="badge-<%= s.status %>"><%= s.status.charAt(0).toUpperCase() + s.status.slice(1) %></span>
             <button type="button" class="btn-secondary text-xs !px-3 !py-1.5" data-dialog-open="details-<%= s.id %>">
               <i class="fa-solid fa-eye"></i>View Details
@@ -207,9 +207,9 @@
       <% }); %>
     </div>
 
-    <div data-bulk-select-bar="consolidate-supplier" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 card px-4 py-3 shadow-xl flex items-center gap-3" style="display: none;">
+    <div data-bulk-select-bar="consolidate-supplier" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-20 card px-4 py-3 shadow-xl flex flex-wrap items-center justify-center gap-3 w-max max-w-[calc(100vw-2rem)]">
       <span class="text-sm font-medium"><span data-bulk-select-count>0</span> selected</span>
-      <button type="submit" form="consolidate-supplier-form" class="btn-primary text-sm !px-3 !py-1.5"><i class="fa-solid fa-layer-group"></i>Generate Consolidated Supplier Invoice</button>
+      <button type="submit" form="consolidate-supplier-form" class="btn-primary text-sm !px-3 !py-1.5"><i class="fa-solid fa-layer-group"></i><span class="sm:hidden">Consolidated Invoice</span><span class="hidden sm:inline">Generate Consolidated Supplier Invoice</span></button>
     </div>
   <% } %>
     </div>

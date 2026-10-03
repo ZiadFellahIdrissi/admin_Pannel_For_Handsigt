@@ -36,11 +36,12 @@
 %>
 <div class="card p-4 mb-6">
   <form action="<%= actionPath %>" method="GET" class="flex items-end gap-3 flex-wrap mb-3">
-    <div>
+    <%# flex-1 below sm: From and To share one row on a phone instead of each taking its own. %>
+    <div class="flex-1 min-w-[9rem] sm:flex-none">
       <label class="field-label" for="from">From</label>
       <input type="month" name="from" id="from" value="<%= from %>" class="field-input">
     </div>
-    <div>
+    <div class="flex-1 min-w-[9rem] sm:flex-none">
       <label class="field-label" for="to">To</label>
       <input type="month" name="to" id="to" value="<%= to %>" class="field-input">
     </div>

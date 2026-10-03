@@ -15,7 +15,7 @@
     </a>
   </div>
 
-  <div class="flex items-center gap-2 mb-4 text-sm">
+  <div class="flex items-center gap-2 flex-wrap mb-4 text-sm">
     <a href="/clients?active=1" class="btn-secondary <%= activeFilter === '1' ? '!border-brand-accent !text-brand-accent' : '' %>">Active</a>
     <a href="/clients?active=0" class="btn-secondary <%= activeFilter === '0' ? '!border-brand-accent !text-brand-accent' : '' %>">Inactive</a>
     <a href="/clients?active=all" class="btn-secondary <%= activeFilter === 'all' ? '!border-brand-accent !text-brand-accent' : '' %>">All</a>
@@ -38,7 +38,7 @@
               <div class="text-xs text-brand-gray2 mt-0.5">Raison Sociale: <%= cl.legal_name %></div>
             <% } %>
           </div>
-          <div class="flex items-center gap-2 shrink-0">
+          <div class="flex items-center gap-2 flex-wrap shrink-0 max-w-full">
             <span class="<%= cl.active ? 'badge-approved' : 'badge-draft' %>"><%= cl.active ? 'Active' : 'Inactive' %></span>
             <a href="/clients/<%= cl.id %>/edit" class="btn-secondary text-sm"><i class="fa-solid fa-pen"></i></a>
             <form action="/clients/<%= cl.id %>/toggle-active" method="POST">

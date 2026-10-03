@@ -15,7 +15,7 @@
     </a>
   </div>
 
-  <div class="flex items-center gap-2 mb-4 text-sm">
+  <div class="flex items-center gap-2 flex-wrap mb-4 text-sm">
     <a href="/consultants?active=1" class="btn-secondary <%= activeFilter === '1' ? '!border-brand-accent !text-brand-accent' : '' %>">Active</a>
     <a href="/consultants?active=0" class="btn-secondary <%= activeFilter === '0' ? '!border-brand-accent !text-brand-accent' : '' %>">Inactive</a>
     <a href="/consultants?active=all" class="btn-secondary <%= activeFilter === 'all' ? '!border-brand-accent !text-brand-accent' : '' %>">All</a>
@@ -30,14 +30,15 @@
     <div class="space-y-3">
       <% consultants.forEach(function(c) { %>
         <div class="card-interactive p-4 flex items-center justify-between gap-3 flex-wrap">
-          <a href="/consultants/<%= c.id %>" class="flex items-center gap-3 min-w-0 flex-1">
+          <%# basis-56: the name keeps a readable width - when name + actions don't fit on one line (phones), the actions wrap below instead of squeezing the name down to a few letters. %>
+          <a href="/consultants/<%= c.id %>" class="flex items-center gap-3 min-w-0 flex-1 basis-56">
             <div class="icon-circle-slate font-bold text-sm"><%= (c.first_name.charAt(0) + c.last_name.charAt(0)).toUpperCase() %></div>
             <div class="min-w-0">
               <div class="font-semibold truncate"><%= c.first_name %> <%= c.last_name %></div>
-              <div class="text-xs text-brand-gray2 mt-0.5"><%= c.username %> &middot; <%= c.email %></div>
+              <div class="text-xs text-brand-gray2 mt-0.5 truncate"><%= c.username %> &middot; <%= c.email %></div>
             </div>
           </a>
-          <div class="flex items-center gap-2 shrink-0">
+          <div class="flex items-center gap-2 flex-wrap shrink-0 max-w-full">
             <span class="<%= c.active ? 'badge-approved' : 'badge-draft' %>"><%= c.active ? 'Active' : 'Inactive' %></span>
             <a href="/consultants/<%= c.id %>/edit" class="btn-secondary text-sm"><i class="fa-solid fa-pen"></i></a>
             <form action="/consultants/<%= c.id %>/toggle-active" method="POST">

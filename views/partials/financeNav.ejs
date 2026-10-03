@@ -17,9 +17,10 @@
     { key: 'payables', href: '/finance/payables', label: 'Payables', icon: 'fa-money-bill-transfer' }
   ];
 %>
-<div class="flex items-center gap-2 mb-6 flex-wrap">
+<%# Phones: one swipeable row instead of 7 tabs wrapping into 3-4 rows above every Finance page. %>
+<div class="flex items-center gap-2 mb-6 overflow-x-auto scrollbar-none sm:flex-wrap sm:overflow-visible">
   <% tabs.forEach(function(tab) { %>
-    <a href="<%= tab.href %>" class="btn-secondary text-sm <%= active === tab.key ? '!border-brand-accent !text-brand-accent' : '' %>">
+    <a href="<%= tab.href %>" class="btn-secondary text-sm shrink-0 whitespace-nowrap <%= active === tab.key ? '!border-brand-accent !text-brand-accent' : '' %>">
       <i class="fa-solid <%= tab.icon %>"></i><%= tab.label %>
     </a>
   <% }); %>

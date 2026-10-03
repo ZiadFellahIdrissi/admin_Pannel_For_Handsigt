@@ -15,7 +15,7 @@
     </a>
   </div>
 
-  <div class="flex items-center gap-2 mb-4 text-sm">
+  <div class="flex items-center gap-2 flex-wrap mb-4 text-sm">
     <a href="/career-offers?status=" class="btn-secondary <%= status === '' ? '!border-brand-accent !text-brand-accent' : '' %>">All</a>
     <a href="/career-offers?status=draft" class="btn-secondary <%= status === 'draft' ? '!border-brand-accent !text-brand-accent' : '' %>">Draft</a>
     <a href="/career-offers?status=published" class="btn-secondary <%= status === 'published' ? '!border-brand-accent !text-brand-accent' : '' %>">Published</a>
@@ -48,9 +48,10 @@
             <% if (o.image_path) { %>
               <img src="<%= o.image_path %>" alt="" class="w-full h-28 rounded-lg object-cover mb-3">
             <% } %>
-            <div class="font-semibold truncate">
-              <%= o.title %>
-              <span class="<%= o.status === 'published' ? 'badge-approved' : 'badge-draft' %> ml-1"><%= o.status === 'published' ? 'Published' : 'Draft' %></span>
+            <%# Title truncates on its own - the status badge stays visible however long the title is. %>
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="font-semibold truncate"><%= o.title %></span>
+              <span class="<%= o.status === 'published' ? 'badge-approved' : 'badge-draft' %> shrink-0"><%= o.status === 'published' ? 'Published' : 'Draft' %></span>
             </div>
             <div class="flex flex-wrap gap-1 mt-1.5">
               <% (o.tags || '').split(',').map(function(t) { return t.trim(); }).filter(Boolean).forEach(function(t) { %>
@@ -73,7 +74,7 @@
       <% }); %>
     </div>
 
-    <div data-bulk-select-bar="career-offers-list" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 card px-4 py-3 shadow-xl flex items-center gap-3" style="display: none;">
+    <div data-bulk-select-bar="career-offers-list" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-20 card px-4 py-3 shadow-xl flex flex-wrap items-center justify-center gap-3 w-max max-w-[calc(100vw-2rem)]">
       <span class="text-sm font-medium"><span data-bulk-select-count>0</span> selected</span>
       <button type="submit" form="career-offers-bulk-delete" class="btn-danger text-sm !px-3 !py-1.5"><i class="fa-solid fa-trash"></i>Delete Selected</button>
     </div>

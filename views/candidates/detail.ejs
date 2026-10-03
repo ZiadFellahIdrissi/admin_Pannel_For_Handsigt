@@ -15,7 +15,7 @@
         <span class="ml-2 <%= statusBadgeClass[candidateRow.status] %>"><%= statusLabels[candidateRow.status] %></span>
       </span>
     </h1>
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2 flex-wrap">
       <a href="/candidates/<%= candidateRow.id %>/edit" class="btn-secondary">
         <i class="fa-solid fa-pen"></i>Edit
       </a>
@@ -30,7 +30,7 @@
     <!-- Left: info -->
     <div class="space-y-4 sm:space-y-6">
       <div class="card p-5 sm:p-6">
-        <div class="space-y-4 text-sm">
+        <div class="space-y-4 text-sm break-anywhere">
           <div>
             <h2 class="section-title"><i class="fa-solid fa-id-card"></i>Personal Info</h2>
             <div class="grid grid-cols-2 gap-x-4 gap-y-2">
@@ -115,19 +115,22 @@
     </div>
 
     <!-- Right: resume -->
-    <div class="card p-5 sm:p-6 lg:sticky lg:top-6">
+    <div class="card p-5 sm:p-6 lg:sticky lg:top-32">
       <div class="flex items-center justify-between gap-3 mb-4">
-        <h2 class="section-title mb-0"><i class="fa-solid fa-file-pdf"></i>Resume</h2>
+        <h2 class="section-title !mb-0"><i class="fa-solid fa-file-pdf"></i>Resume</h2>
         <button type="button" class="btn-secondary text-sm !px-3 !py-1.5" data-dialog-open="reupload-cv">
           <i class="fa-solid fa-upload"></i>Reupload
         </button>
       </div>
 
       <% if (candidateRow.cv_filename) { %>
-        <iframe src="/candidates/<%= candidateRow.id %>/cv" class="w-full rounded-lg border border-brand-borderLight" style="height: 70vh;" title="CV"></iframe>
-        <p class="text-xs text-brand-gray2 mt-2 truncate"><%= candidateRow.cv_original_name || 'cv.pdf' %></p>
+        <iframe src="/candidates/<%= candidateRow.id %>/cv" class="w-full h-[70vh] lg:h-[calc(100vh-17rem)] rounded-lg border border-brand-borderLight" title="CV"></iframe>
+        <%# Phone browsers often can't show a PDF inside an iframe - opening it in its own tab always works. %>
+        <a href="/candidates/<%= candidateRow.id %>/cv" target="_blank" class="text-xs text-brand-accent hover:underline mt-2 flex items-center gap-1.5 min-w-0">
+          <i class="fa-solid fa-arrow-up-right-from-square shrink-0"></i><span class="truncate"><%= candidateRow.cv_original_name || 'cv.pdf' %></span>
+        </a>
       <% } else { %>
-        <div class="rounded-lg border border-dashed border-brand-borderLight flex flex-col items-center justify-center text-center p-8" style="height: 40vh;">
+        <div class="rounded-lg border border-dashed border-brand-borderLight flex flex-col items-center justify-center text-center p-8 h-[40vh]">
           <i class="fa-regular fa-file-pdf text-3xl text-brand-gray2 mb-2"></i>
           <p class="text-sm text-brand-gray2">No CV uploaded yet.</p>
         </div>

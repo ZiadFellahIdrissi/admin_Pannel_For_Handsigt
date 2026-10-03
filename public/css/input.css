@@ -92,8 +92,10 @@
     background-color: var(--surface);
   }
 
+  /* 16px text below `sm` - iOS Safari zooms the whole page into any
+     focused input whose font is smaller than that. */
   .field-input {
-    @apply block w-full rounded-lg px-3 py-2.5 text-sm transition-colors focus:outline-none;
+    @apply block w-full rounded-lg px-3 py-2.5 text-base sm:text-sm transition-colors focus:outline-none;
     background-color: var(--surface);
     border: 1px solid var(--border-light);
     color: var(--text);
@@ -169,14 +171,23 @@
   }
 
   .stat-tile {
-    @apply rounded-xl p-3.5 sm:p-4 flex items-center gap-3;
+    @apply rounded-xl p-3.5 sm:p-4 flex flex-wrap items-center gap-3;
     background-color: var(--surface);
     border: 1px solid var(--border-light);
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
   }
+  /* The text next to a tile's icon needs ~8rem to sit beside it - on a
+     tile narrower than that (2-column phone grids, 3-4 column tablet
+     grids, long currency values) it drops under the icon instead of
+     spilling out of the tile. */
+  .stat-tile > [class*="icon-circle"] + * {
+    flex: 1 1 8rem;
+    min-width: 0;
+  }
   .stat-tile-value {
     @apply text-xl sm:text-2xl font-bold leading-tight;
     color: var(--text);
+    overflow-wrap: anywhere;
   }
   .stat-tile-label {
     @apply text-[11px] sm:text-xs font-medium mt-0.5;
@@ -202,13 +213,20 @@
     from { opacity: 0; transform: translateY(-3px); }
     to { opacity: 1; transform: translateY(0); }
   }
+  /* One line that scrolls sideways on phones rather than wrapping - the
+     header is sticky, so every extra wrapped line would permanently eat
+     into an already small screen. */
   .breadcrumb-bar {
-    @apply px-3 sm:px-4 pb-2.5 pt-2 flex items-center gap-1 flex-wrap text-xs;
+    @apply px-3 sm:px-4 pb-2.5 pt-2 flex items-center gap-1 overflow-x-auto sm:flex-wrap text-xs;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     animation: breadcrumb-in 0.25s ease-out;
+    scrollbar-width: none;
+  }
+  .breadcrumb-bar::-webkit-scrollbar {
+    display: none;
   }
   .breadcrumb-chip {
-    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-medium transition-all duration-150;
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-medium transition-all duration-150 shrink-0 whitespace-nowrap;
     color: rgba(255, 255, 255, 0.6);
   }
   a.breadcrumb-chip:hover {
@@ -225,9 +243,11 @@
     background-color: rgba(255, 255, 255, 0.25);
   }
 
-  /* Left sidebar navigation */
+  /* Left sidebar navigation. Below lg it's an overlay, stacked above the
+     sticky topbar (z-30) - at an equal z-index the topbar, coming later in
+     the page, painted over the panel's logo row and first links. */
   .sidebar-panel {
-    @apply fixed inset-y-0 left-0 z-30 w-64 shrink-0 -translate-x-full transition-transform duration-200 flex flex-col lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 lg:z-auto;
+    @apply fixed inset-y-0 left-0 z-50 w-64 shrink-0 -translate-x-full transition-transform duration-200 flex flex-col lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 lg:z-auto;
     background-color: var(--surface);
     border-right: 1px solid var(--border-light);
   }
@@ -246,7 +266,7 @@
     @apply translate-x-0;
   }
   .sidebar-backdrop {
-    @apply fixed inset-0 bg-black/40 z-20 lg:hidden hidden;
+    @apply fixed inset-0 bg-black/40 z-40 lg:hidden hidden;
   }
   .sidebar-backdrop.sidebar-open {
     @apply block;
@@ -451,8 +471,34 @@
 
 /* Tailwind's `list-none` only clears `list-style`, which doesn't remove
    Chrome's disclosure-triangle marker on <summary> (that's a separate
-   ::-webkit-details-marker pseudo-element) - used by the reject-with-
-   comment popover in the approvals queue. */
+   ::-webkit-details-marker pseudo-element) - used by the topbar's
+   notification bell and the sidebar's collapsible groups. */
 summary::-webkit-details-marker {
   display: none;
+}
+
+/* Right-aligned table cells are always amounts/counts in this app - keep
+   "1,234.00 MAD" on one line; a narrow screen scrolls the table (every
+   table sits in an overflow-x-auto wrapper) instead of wrapping figures. */
+td.text-right,
+th.text-right {
+  white-space: nowrap;
+}
+
+@layer utilities {
+  /* Long unbroken values (emails, RIB/IBAN, URLs, ICE...) wrap instead of
+     pushing a narrow phone layout sideways. Unlike break-words, `anywhere`
+     also shrinks the min-content size grid/flex items are sized from. */
+  .break-anywhere {
+    overflow-wrap: anywhere;
+  }
+
+  /* Horizontally scrollable strips (Finance tabs on phones) - still
+     swipeable, just without a scrollbar track under them. */
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }

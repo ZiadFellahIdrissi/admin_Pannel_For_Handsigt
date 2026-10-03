@@ -26,7 +26,9 @@
     function update() {
       var checked = Array.prototype.filter.call(checkboxes, function (cb) { return cb.checked; }).length;
       if (countEl) countEl.textContent = checked;
-      bar.style.display = checked > 0 ? '' : 'none';
+      // A class, not an inline style - the bar starts out `hidden` in the
+      // markup, since the CSP blocks inline style="" attributes.
+      bar.classList.toggle('hidden', checked === 0);
 
       var allChecked = checkboxes.length > 0 && checked === checkboxes.length;
       toggles.forEach(function (toggle) {

@@ -10,7 +10,7 @@
       <div class="icon-circle-accent"><i class="fa-solid fa-sack-dollar"></i></div>
       <%= payment.employee_name %> &middot; <%= monthLabel(payment.month) %>
     </h1>
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2 flex-wrap">
       <a href="/salaries" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i>Back</a>
       <button type="button" class="btn-secondary" data-dialog-open="upload-payslip">
         <i class="fa-solid fa-upload"></i><%= payment.payslip_path ? 'Replace Payslip' : 'Upload Payslip' %>
@@ -31,7 +31,7 @@
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 items-start">
     <div class="card p-5 sm:p-6">
-      <div class="space-y-4 text-sm">
+      <div class="space-y-4 text-sm break-anywhere">
         <div>
           <h2 class="section-title"><i class="fa-solid fa-circle-info"></i>Payment</h2>
           <div class="grid grid-cols-2 gap-x-4 gap-y-2">
@@ -53,10 +53,10 @@
     </div>
 
     <!-- Right: payslip preview -->
-    <div class="card p-5 sm:p-6 lg:sticky lg:top-6">
+    <div class="card p-5 sm:p-6 lg:sticky lg:top-32">
       <h2 class="section-title"><i class="fa-solid fa-file-pdf"></i>Payslip</h2>
       <% if (payment.payslip_path) { %>
-        <iframe src="/salaries/payment/<%= payment.id %>/pdf" class="w-full rounded-lg border border-brand-borderLight" style="height: 70vh;" title="Payslip"></iframe>
+        <iframe src="/salaries/payment/<%= payment.id %>/pdf" class="w-full h-[70vh] lg:h-[calc(100vh-17rem)] rounded-lg border border-brand-borderLight" title="Payslip"></iframe>
         <a href="/salaries/payment/<%= payment.id %>/pdf?download=1" class="btn-secondary w-full mt-3"><i class="fa-solid fa-download"></i>Download</a>
       <% } else { %>
         <p class="text-sm text-brand-gray2">No payslip uploaded yet.</p>

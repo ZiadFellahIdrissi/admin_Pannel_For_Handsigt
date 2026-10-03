@@ -13,7 +13,7 @@
         <span class="ml-2 <%= offerRow.status === 'published' ? 'badge-approved' : 'badge-draft' %>"><%= offerRow.status === 'published' ? 'Published' : 'Draft' %></span>
       </span>
     </h1>
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2 flex-wrap">
       <form action="/career-offers/<%= offerRow.id %>/toggle-status" method="POST">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <button type="submit" class="btn-secondary"><%= offerRow.status === 'published' ? 'Unpublish' : 'Publish' %></button>

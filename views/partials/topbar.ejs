@@ -75,7 +75,8 @@
             <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] leading-none rounded-full min-w-[16px] h-4 flex items-center justify-center px-1"><%= notificationCount %></span>
           <% } %>
         </summary>
-        <div class="absolute right-0 mt-2 w-72 sm:w-80 card p-2 z-20 shadow-xl text-brand-text">
+        <%# Phones: full width just under the header - anchored to the bell, a fixed-width panel ran off the screen's left edge. %>
+        <div class="fixed inset-x-3 top-16 sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-80 card p-2 z-20 shadow-xl text-brand-text">
           <div class="px-2 py-1.5 text-xs font-bold uppercase tracking-wide text-brand-gray2">Pending Submissions</div>
           <% if (notificationPending.length === 0) { %>
             <p class="px-2 py-3 text-sm text-brand-gray2">Nothing waiting on you right now.</p>
